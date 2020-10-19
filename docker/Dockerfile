@@ -22,5 +22,5 @@ RUN apt-get -yq install --no-install-recommends cmake ninja-build unzip
 # Dependencies
 RUN git clone git://github.com/apple/swift-protobuf /swift-protobuf
 
-WORKDIR /swift-models
+WORKDIR /dsharp-models
 COPY . .

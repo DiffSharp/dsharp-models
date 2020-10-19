@@ -5,7 +5,7 @@
 CLI demo with option to run benchmarks on a local image file. Very fast at over 200 fps on a GeForce GTX 1080 Ti, which it vastly underutilizes.
 
 ## Checkpoints
-Download the [checkpoint](https://github.com/joaqo/swift-models/releases/download/PersonlabDemo/personlabCheckpoint.tar.gz) from the releases page in this repo, whose path you'll have to provide to the CLI demo.
+Download the [checkpoint](https://github.com/joaqo/dsharp-models/releases/download/PersonlabDemo/personlabCheckpoint.tar.gz) from the releases page in this repo, whose path you'll have to provide to the CLI demo.
 
 ## Running
 ```bash

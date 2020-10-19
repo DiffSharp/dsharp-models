@@ -1,6 +1,6 @@
 # MiniGo
 
-This is an implementation of [MiniGo] using [Swift for TensorFlow].
+This is an implementation of [MiniGo] using [DiffSharp].
 The implementation is adapted from the
 [MLPerf reference model](https://github.com/mlperf/training/tree/master/reinforcement).
 
@@ -8,14 +8,14 @@ The implementation is adapted from the
 > for now. We hope to soon lift these restrictions.
 
 Parameters like "board size" and "simulations per move" are defined as constants at the top of
-[`Sources/MiniGo/main.swift`](https://github.com/tensorflow/swift-models/blob/stable/MiniGo/Sources/MiniGo/main.swift)
+[`Sources/MiniGo/main.swift`](https://github.com/tensorflow/dsharp-models/blob/stable/MiniGo/Sources/MiniGo/main.swift)
 and can be modified.
 
 ## Getting started
 
-### Install Swift for TensorFlow
+### Install DiffSharp
 
-Building MiniGo requires a Swift for TensorFlow toolchain.
+Building MiniGo requires a DiffSharp toolchain.
 To get a toolchain, you can:
 
 1. [Download a pre-built package](https://github.com/tensorflow/swift/blob/master/Installation.md).
@@ -25,9 +25,9 @@ To get a toolchain, you can:
 
 ```sh
 # Run inference (self-plays).
-cd swift-models
+cd dsharp-models
 swift run -c release MiniGoDemo
 ```
 
-[Swift for TensorFlow]: https://www.tensorflow.org/swift
+[DiffSharp]: https://www.tensorflow.org/swift
 [MiniGo]: https://github.com/mlperf/training/blob/master/reinforcement/tensorflow/minigo

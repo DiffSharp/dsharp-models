@@ -1,6 +1,6 @@
 # WordSeg Model
 
-This is a Swift implementation of the paper
+This is a DiffSharp implementation of the paper
 ["Learning to Discover, Ground, and Use Words with Segmental Neural Language
 Models"][paper]
 by Kazuya Kawakami, Chris Dyer, and Phil Blunsom.

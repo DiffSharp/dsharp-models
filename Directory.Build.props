@@ -1,0 +1,10 @@
+<Project>
+
+  <PropertyGroup>
+
+    <LibTorchNugetVersion>1.5.6</LibTorchNugetVersion>
+    <TorchSharpVersion>0.3.52276</TorchSharpVersion>
+    <FSharpCoreVersion>4.7.2</FSharpCoreVersion>
+  </PropertyGroup>
+
+</Project>

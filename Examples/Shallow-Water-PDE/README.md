@@ -1,10 +1,10 @@
 # Differentiable Shallow Water PDE Solver
 
-This example contains source code of a shallow water partial differential equation (PDE) solver. The solver is written in differentiable Swift which allows end-to-end propagation of derivatives through time. In physics this kind of solution is traditionally called adjoint and it unlocks a new class of algorithms for optimal control of PDEs.
+This example contains source code of a shallow water partial differential equation (PDE) solver. The solver allows end-to-end propagation of derivatives through time. In physics this kind of solution is traditionally called adjoint and it unlocks a new class of algorithms for optimal control of PDEs.
 
 More details about the PDE and how to derive it from general Navier-Stokes equations can found for example on [Wikipedia](https://en.wikipedia.org/wiki/Shallow_water_equations).
 
-The code is re-implemented from the [DiffTaichi paper](https://arxiv.org/abs/1910.00935), in particular the [`wave.py`](https://github.com/yuanming-hu/difftaichi/blob/master/examples/wave.py) problem. The main goal is to provide a benchmark of differentiable Swift against the DiffTaichi framework.
+The code is re-implemented from the [DiffTaichi paper](https://arxiv.org/abs/1910.00935), in particular the [`wave.py`](https://github.com/yuanming-hu/difftaichi/blob/master/examples/wave.py) problem. The main goal is to provide a benchmark against the DiffTaichi framework.
 
 
 ## Splash in a Bathtub
@@ -15,7 +15,7 @@ The following code builds and runs a demo simulation of a water surface behavior
 
 ```sh
 # Make sure you run the example from this directory
-cd swift-models/Examples/Shallow-Water-PDE
+cd dsharp-models/Examples/Shallow-Water-PDE
 
 # Build and run the example app with the splash flag
 swift run -c release Shallow-Water-PDE --splash
@@ -36,7 +36,7 @@ The goal is represented by a MSE cost function that measures difference between 
 
 ```sh
 # Make sure you run the example from this directory
-cd swift-models/Examples/Shallow-Water-PDE
+cd dsharp-models/Examples/Shallow-Water-PDE
 
 # Build and run the example app with the optimization flag
 swift run -c release Shallow-Water-PDE --optimization

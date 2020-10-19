@@ -6,13 +6,3 @@ A modified ResNet-50 network is instantiated from the ImageClassificationModels 
 
 ## Setup
 
-To begin, you'll need the [latest version of Swift for
-TensorFlow](https://github.com/tensorflow/swift/blob/master/Installation.md)
-installed. Make sure you've added the correct version of `swift` to your path.
-
-To train the model, run:
-
-```sh
-cd swift-models
-swift run -c release ResNet-CIFAR10
-```

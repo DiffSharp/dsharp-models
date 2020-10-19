@@ -1,0 +1,69 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\DiffSharp\tools\DiffSharp.Backends.ShapeChecking\DiffSharp.Backends.ShapeChecking.fsproj" />
+    <ProjectReference Include="..\..\DiffSharp\src\DiffSharp.Core\DiffSharp.Core.fsproj" />
+	<PackageReference Update="FSharp.Core" Version="$(FSharpCoreVersion)" />
+  <!--
+	<PackageReference Update="DiffSharp.Core" Version="$(DiffSharpVersion)" />
+	<PackageReference Update="DiffSharp.Backends.ShapeChecking" Version="$(FSharpCoreVersion)" />
+    -->
+  </ItemGroup>
+
+  <ItemGroup>
+	<Compile Include="Extensions\Extensions.fs" />
+	<Compile Include="Support\Text\TextBatch.fs" />
+	<Compile Include="Support\Text\Tokenization.fs" />
+	<Compile Include="Support\Text\BytePairEncoder.fs" />
+	<Compile Include="Checkpoints\CheckpointIndexReader.fs" />
+    <Compile Include="Checkpoints\CheckpointIndexWriter.fs" />
+    <Compile Include="Checkpoints\CheckpointReader.fs" />
+    <Compile Include="Checkpoints\CheckpointWriter.fs" />
+    <Compile Include="Checkpoints\SnappyDecompression.fs" />
+    <Compile Include="Datasets\DatasetUtilities.fs" />
+    <Compile Include="Datasets\ImageClassificationDataset.fs" />
+    <Compile Include="Datasets\ImageSegmentationDataset.fs" />
+    <Compile Include="Datasets\LanguageModelDataset.fs" />
+    <Compile Include="Datasets\ObjectDetectionDataset.fs" />
+    <Compile Include="Support\AnyLayer.fs" />
+    <Compile Include="Support\AnyLayerTangentVector.fs" />
+    <Compile Include="Support\BijectiveDictionary.fs" />
+    <Compile Include="Support\FileManagement.fs" />
+    <Compile Include="Support\FileSystem.fs" />
+    <Compile Include="Support\FoundationFileSystem.fs" />
+    <Compile Include="Support\Image.fs" />
+    <Compile Include="Support\LabeledData.fs" />
+    <Compile Include="TrainingLoop\LossFunctions.fs" />
+    <Compile Include="TrainingLoop\Metrics.fs" />
+    <Compile Include="TrainingLoop\TrainingLoop.fs" />
+    <Compile Include="TrainingLoop\Callbacks\CSVLogger.fs" />
+    <Compile Include="TrainingLoop\Callbacks\ProgressPrinter.fs" />
+    <Compile Include="TrainingLoop\Callbacks\StatisticsRecorder.fs" />
+	  <Compile Include="Datasets\BostonHousing\BostonHousing.fs" />
+	  <Compile Include="Datasets\CIFAR10\CIFAR10.fs" />
+	  <Compile Include="Datasets\COCO\COCO.fs" />
+	  <Compile Include="Datasets\COCO\COCODataset.fs" />
+	  <Compile Include="Datasets\COCO\COCOVariant.fs" />
+	  <Compile Include="Datasets\CoLA\CoLA.fs" />
+	  <Compile Include="Datasets\CoLA\DataUtilities.fs" />
+	  <Compile Include="Datasets\Imagenette\Imagenette.fs" />
+	  <Compile Include="Datasets\Imagenette\Imagewoof.fs" />
+	  <Compile Include="Datasets\MNIST\MNISTDatasetHandler.fs" />
+	  <Compile Include="Datasets\MNIST\FashionMNIST.fs" />
+	  <Compile Include="Datasets\MNIST\KuzushijiMNIST.fs" />
+	  <Compile Include="Datasets\MNIST\MNIST.fs" />
+	  <Compile Include="Datasets\MovieLens\MovieLens.fs" />
+	  <Compile Include="Datasets\OxfordIIITPets\OxfordIIITPets.fs" />
+	  <Compile Include="Datasets\TextUnsupervised\TextUnsupervised.fs" />
+	  <Compile Include="Datasets\WordSeg\Phrase.fs" />
+	  <Compile Include="Datasets\WordSeg\WordSegDataset.fs" />
+	  <Compile Include="ImageLoader\JPEGImageOperations\JPEGImageOperations.fs" />
+  </ItemGroup>
+
+</Project>

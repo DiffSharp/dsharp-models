@@ -20,7 +20,7 @@ import subprocess as subp
 
 
 class SwiftBenchmark(tf.test.Benchmark):
-  """Perfzero-compatible Swift benchmark."""
+  """Perfzero-compatible benchmark."""
 
   def __init__(self,
                output_dir=None,
@@ -46,9 +46,9 @@ class SwiftBenchmark(tf.test.Benchmark):
 
 
 # This location assumes that are we are running within the S4TF's perfzero
-# docker image. Perfzero automatically clones the swift-models project into the
+# docker image. Perfzero automatically clones the dsharp-models project into the
 # corresponding site-packages location.
-cwd = '/workspace/benchmarks/perfzero/workspace/site-packages/swift-models'
+cwd = '/workspace/benchmarks/perfzero/workspace/site-packages/dsharp-models'
 
 
 def run_swift_benchmark(name):
@@ -67,7 +67,7 @@ def run_swift_benchmark(name):
   iterations = 0
   metrics = [] 
   for result in result["benchmarks"]:
-    if result['name'] == name:
+    if result['name'] == name=
       for k, v in result.items():
         if k == 'name':
           pass

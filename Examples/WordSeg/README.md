@@ -16,16 +16,14 @@ the authors.
 
 ## Setup
 
-To begin, you'll need the [latest version of Swift for
-TensorFlow][s4tf] installed. Make sure you've added the correct version of
-`swift` to your path.
+TBD
 
 ## Execution
 
 To train the model to accuracy using the full datasets published in the paper, run:
 
 ```sh
-cd swift-models
+cd dsharp-models
 swift run -c release WordSeg
 ```
 
@@ -52,7 +50,7 @@ To view a list of all configurable parameters and their defaults, run:
 swift run -c release WordSeg --help
 ```
 
-[model]: https://github.com/tensorflow/swift-models/tree/master/Models/Text/WordSeg
+[model]: https://github.com/tensorflow/dsharp-models/tree/master/Models/Text/WordSeg
 [paper]: https://www.aclweb.org/anthology/P19-1645.pdf
 [s4tf]: https://github.com/tensorflow/swift/blob/master/Installation.md
 [understanding]: https://docs.google.com/document/d/1NlFH0_89gB_qggtgzJIKYHL2xPI3IQjWjv18pnT1M0E

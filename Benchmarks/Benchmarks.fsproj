@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+	<Compile Include="main.fs" />
+	  <Compile Include="BenchmarksCore\Layers\DenseNet.fs" />
+	  <Compile Include="BenchmarksCore\Layers\Dimensions.fs" />
+	  <Compile Include="BenchmarksCore\Layers\EfficientNet.fs" />
+	  <Compile Include="BenchmarksCore\Layers\LayerSuite.fs" />
+	  <Compile Include="BenchmarksCore\Layers\LayerSuites.fs" />
+	  <Compile Include="BenchmarksCore\Layers\LeNet.fs" />
+	  <Compile Include="BenchmarksCore\Layers\MobileNetV1.fs" />
+	  <Compile Include="BenchmarksCore\Layers\MobileNetV2.fs" />
+	  <Compile Include="BenchmarksCore\Layers\MobileNetV3.fs" />
+	  <Compile Include="BenchmarksCore\Layers\ResNet.fs" />
+	  <Compile Include="BenchmarksCore\Layers\ResNetV2.fs" />
+	  <Compile Include="BenchmarksCore\Layers\ShuffleNetV2.fs" />
+	  <Compile Include="BenchmarksCore\Layers\SqueezeNet.fs" />
+	  <Compile Include="BenchmarksCore\Layers\VGG.fs" />
+	  <Compile Include="BenchmarksCore\Layers\WideResNet.fs" />
+	  <Compile Include="BenchmarksCore\Models\ImageClassificationInference.fs" />
+	  <Compile Include="BenchmarksCore\Models\ImageClassificationTraining.fs" />
+	  <Compile Include="BenchmarksCore\Models\LeNetMNIST.fs" />
+	  <Compile Include="BenchmarksCore\Models\ModelSuites.fs" />
+	  <Compile Include="BenchmarksCore\Models\ResNetCIFAR10.fs" />
+	  <Compile Include="BenchmarksCore\Models\ResNetImageNet.fs" />
+	  <Compile Include="BenchmarksCore\Models\SyntheticImageDataset.fs" />
+	  <Compile Include="BenchmarksCore\Models\WordSeg.fs" />
+	  <Compile Include="BenchmarksCore\BenchmarkArguments.fs" />
+	<Compile Include="BenchmarksCore\BenchmarkColumns.fs" />
+	<Compile Include="BenchmarksCore\BenchmarkCommand.fs" />
+	<Compile Include="BenchmarksCore\BenchmarkSettings.fs" />
+	<Compile Include="BenchmarksCore\Suites.fs" />
+  </ItemGroup>
+
+</Project>

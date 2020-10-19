@@ -1,0 +1,212 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <LibTorchNugetVersion>1.5.6</LibTorchNugetVersion>
+    <TorchSharpVersion>0.3.52276</TorchSharpVersion>
+    <FSharpCoreVersion>4.7.2</FSharpCoreVersion>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DiffSharp\tools\DiffSharp.Backends.ShapeChecking\DiffSharp.Backends.ShapeChecking.fsproj" />
+    <ProjectReference Include="..\DiffSharp\src\DiffSharp.Backends.Reference\DiffSharp.Backends.Reference.fsproj" />
+    <ProjectReference Include="..\DiffSharp\src\DiffSharp.Backends.Torch\DiffSharp.Backends.Torch.fsproj" />
+    <ProjectReference Include="..\DiffSharp\src\DiffSharp.Core\DiffSharp.Core.fsproj" />
+    <ProjectReference Include="Library\Library.fsproj" />
+	<PackageReference Update="FSharp.Core" Version="$(FSharpCoreVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Catch\main.fsx" />
+    <None Include="CycleGAN\Utils.fsx" />
+    <None Include="DCGAN\main.fsx" />
+    <None Include="GAN\main.fsx" />
+    <None Include="PersonLab\Utils.fsx" />
+    <None Include="PersonLab\Backbone.fsx" />
+    <None Include="PersonLab\Decoder.fsx" />
+    <None Include="PersonLab\Heads.fsx" />
+    <None Include="PersonLab\Personlab.fsx" />
+    <None Include="PersonLab\Pose.fsx" />
+    <None Include="PersonLab\main.fsx" />
+    <None Include="pix2pix\Utils.fsx" />
+    <None Include="pix2pix\Dataset.fsx" />
+    <None Include="pix2pix\Discriminator.fsx" />
+    <None Include="pix2pix\Generator.fsx" />
+    <None Include="pix2pix\Layers.fsx" />
+    <None Include="pix2pix\CLI.fsx" />
+    <None Include="pix2pix\main.fsx" />
+    <None Include="Autoencoder\Autoencoder1D\main.fsx" />
+    <None Include="Autoencoder\Autoencoder2D\main.fsx" />
+    <None Include="Autoencoder\VAE1D\main.fsx" />
+    <None Include="CycleGAN\Data\Dataset.fsx" />
+    <None Include="CycleGAN\Models\Layers.fsx" />
+    <None Include="CycleGAN\Models\Discriminator.fsx" />
+    <None Include="CycleGAN\Models\Generator.fsx" />
+    <None Include="CycleGAN\CLI.fsx" />
+    <None Include="CycleGAN\main.fsx" />
+    <None Include="Examples\BERT-CoLA\main.fsx" />
+    <None Include="Examples\Custom-CIFAR10\main.fsx" />
+    <None Include="Examples\Custom-CIFAR10\Models.fsx" />
+    <None Include="Examples\Fractals\ComplexTensor.fsx" />
+    <None Include="Examples\Fractals\ImageUtilities.fsx" />
+    <None Include="Examples\Fractals\JuliaSet.fsx" />
+    <None Include="Examples\Fractals\main.fsx" />
+    <None Include="Examples\Fractals\MandelbrotSet.fsx" />
+    <None Include="Examples\GPT2-Inference\main.fsx" />
+    <None Include="Examples\GPT2-WikiText2\main.fsx" />
+    <None Include="Examples\LeNet-MNIST\main.fsx" />
+    <None Include="Examples\MobileNetV1-Imagenette\main.fsx" />
+    <None Include="Examples\MobileNetV2-Imagenette\main.fsx" />
+    <None Include="Examples\NeuMF-MovieLens\main.fsx" />
+    <None Include="Examples\Regression-BostonHousing\main.fsx" />
+    <None Include="Examples\ResNet-CIFAR10\main.fsx" />
+    <None Include="Examples\Shallow-Water-PDE\ArrayLoopSolution.fsx" />
+    <None Include="Examples\Shallow-Water-PDE\main.fsx" />
+    <None Include="Examples\Shallow-Water-PDE\Solution.fsx" />
+    <None Include="Examples\Shallow-Water-PDE\TensorConvSolution.fsx" />
+    <None Include="Examples\Shallow-Water-PDE\TensorLoopSolution.fsx" />
+    <None Include="Examples\Shallow-Water-PDE\TensorSliceSolution.fsx" />
+    <None Include="Examples\Shallow-Water-PDE\Visualization.fsx" />
+    <None Include="Examples\VGG-Imagewoof\main.fsx" />
+    <None Include="Examples\WordSeg\main.fsx" />
+    <None Include="Examples\WordSeg\WordSegCommand.fsx" />
+    <None Include="Examples\WordSeg\WordSegSettings.fsx" />
+    <None Include="FastStyleTransfer\Demo\Helpers.fsx" />
+    <None Include="FastStyleTransfer\Demo\main.fsx" />
+    <None Include="FastStyleTransfer\Layers\Helpers.fsx" />
+    <None Include="FastStyleTransfer\Layers\Normalization.fsx" />
+    <None Include="FastStyleTransfer\Models\TransformerNet.fsx" />
+    <None Include="FastStyleTransfer\Utility\ImportableLayer.fsx" />
+    <None Include="Gym\Blackjack\main.fsx" />
+    <None Include="Gym\CartPole\main.fsx" />
+    <None Include="Gym\DQN\Agent.fsx" />
+    <None Include="Gym\DQN\Gathering.fsx" />
+    <None Include="Gym\DQN\main.fsx" />
+    <None Include="Gym\DQN\ReplayBuffer.fsx" />
+    <None Include="Gym\FrozenLake\main.fsx" />
+    <None Include="Gym\PPO\ActorCritic.fsx" />
+    <None Include="Gym\PPO\Agent.fsx" />
+    <None Include="Gym\PPO\Categorical.fsx" />
+    <None Include="Gym\PPO\Gathering.fsx" />
+    <None Include="Gym\PPO\main.fsx" />
+    <None Include="Gym\PPO\Memory.fsx" />
+    <None Include="MiniGo\GameLib\Board.fsx" />
+    <None Include="MiniGo\GameLib\BoardState.fsx" />
+    <None Include="MiniGo\GameLib\Color.fsx" />
+    <None Include="MiniGo\GameLib\GameConfiguration.fsx" />
+    <None Include="MiniGo\GameLib\LibertyTracker.fsx" />
+    <None Include="MiniGo\GameLib\Position.fsx" />
+    <None Include="MiniGo\Models\GoModel.fsx" />
+    <None Include="MiniGo\Models\MiniGoCheckpointReader.fsx" />
+    <None Include="MiniGo\Play\PlayOneGame.fsx" />
+    <None Include="MiniGo\Strategies\HumanPolicy.fsx" />
+    <None Include="MiniGo\Strategies\Policy.fsx" />
+    <None Include="MiniGo\Strategies\RandomPolicy.fsx" />
+    <None Include="MiniGo\main.fsx" />
+    <None Include="Models\ImageClassification\DenseNet121.fsx" />
+    <None Include="Models\ImageClassification\EfficientNet.fsx" />
+    <None Include="Models\ImageClassification\LeNet-5.fsx" />
+    <None Include="Models\ImageClassification\MobileNetV1.fsx" />
+    <None Include="Models\ImageClassification\MobileNetV2.fsx" />
+    <None Include="Models\ImageClassification\MobileNetV3.fsx" />
+    <None Include="Models\ImageClassification\ResNet.fsx" />
+    <None Include="Models\ImageClassification\ResNetV2.fsx" />
+    <None Include="Models\ImageClassification\ShuffleNetV2.fsx" />
+    <None Include="Models\ImageClassification\SqueezeNet.fsx" />
+    <None Include="Models\ImageClassification\VGG.fsx" />
+    <None Include="Models\ImageClassification\WideResNet.fsx" />
+    <None Include="Models\Recommendation\DLRM.fsx" />
+    <None Include="Models\Recommendation\MLP.fsx" />
+    <None Include="Models\Recommendation\NeuMF.fsx" />
+    <None Include="Models\Spatiotemporal\C3D.fsx" />
+    <None Include="Models\Text\Attention.fsx" />
+    <None Include="Models\Text\BERT.fsx" />
+    <None Include="Models\Text\BERTClassifier.fsx" />
+    <None Include="Models\Text\Evaluation.fsx" />
+    <None Include="Models\Text\ScheduledParameters.fsx" />
+    <None Include="Models\Text\TransformerBERT.fsx" />
+    <None Include="Models\Text\Utilities.fsx" />
+    <None Include="Models\Text\WeightDecayedAdam.fsx" />
+    <!--
+    <None Include="Tests\CheckpointTests\CheckpointIndexReaderTests.fsx" />
+    <None Include="Tests\CheckpointTests\CheckpointReaderTests.fsx" />
+    <None Include="Tests\CheckpointTests\CheckpointWriterTests.fsx" />
+    <None Include="Tests\CheckpointTests\SnappyDecompressionTests.fsx" />
+    <None Include="Tests\CheckpointTests\XCTestManifests.fsx" />
+    <None Include="Tests\DatasetsTests\XCTestManifests.fsx" />
+    <None Include="Tests\FastStyleTransferTests\FastStyleTransferTests.fsx" />
+    <None Include="Tests\FastStyleTransferTests\XCTestManifests.fsx" />
+    <None Include="Tests\ImageClassificationTests\Inference.fsx" />
+    <None Include="Tests\ImageClassificationTests\XCTestManifests.fsx" />
+    <None Include="Tests\RecommendationModelTests\DLRMTests.fsx" />
+    <None Include="Tests\RecommendationModelTests\XCTestManifests.fsx" />
+    <None Include="Tests\SupportTests\AnyLayerTests.fsx" />
+    <None Include="Tests\SupportTests\ImageTests.fsx" />
+    <None Include="Tests\SupportTests\SupportTests.fsx" />
+    <None Include="Tests\SupportTests\WordSegSupportTests.fsx" />
+    <None Include="Tests\SupportTests\XCTestManifests.fsx" />
+    <None Include="Tests\TextTests\GPT2Tests.fsx" />
+    <None Include="Tests\TextTests\XCTestManifests.fsx" />
+    <None Include="Tests\VideoClassificationTests\VideoClassificationInferenceTests.fsx" />
+    <None Include="Tests\VideoClassificationTests\XCTestManifests.fsx" />
+    <None Include="MiniGo\Strategies\MCTS\MCTSConfiguration.fsx" />
+    <None Include="MiniGo\Strategies\MCTS\MCTSModelBasePredictor.fsx" />
+    <None Include="MiniGo\Strategies\MCTS\MCTSNode.fsx" />
+    <None Include="MiniGo\Strategies\MCTS\MCTSPolicy.fsx" />
+    <None Include="MiniGo\Strategies\MCTS\MCTSPredictor.fsx" />
+    <None Include="MiniGo\Strategies\MCTS\MCTSRandomPredictor.fsx" />
+    <None Include="MiniGo\Strategies\MCTS\MCTSTree.fsx" />
+    <None Include="Models\Text\BERT\BERTCheckpointReader.fsx" />
+    <None Include="Models\Text\GPT2\CheckpointWriter.fsx" />
+    <None Include="Models\Text\GPT2\GPT2.fsx" />
+    <None Include="Models\Text\GPT2\Operators.fsx" />
+    <None Include="Models\Text\GPT2\PythonCheckpointReader.fsx" />
+    <None Include="Models\Text\GPT2\TransformerLM.fsx" />
+    <None Include="Models\Text\WordSeg\Lattice.fsx" />
+    <None Include="Models\Text\WordSeg\Model.fsx" />
+    <None Include="Models\Text\WordSeg\SemiRing.fsx" />
+    <None Include="Support\Text\SentencePiece\SentencePieceModel.pb.fsx" />
+    <None Include="Support\Text\WordSeg\Alphabet.fsx" />
+    <None Include="Support\Text\WordSeg\CharacterSequence.fsx" />
+    <None Include="Support\Text\WordSeg\Lexicon.fsx" />
+    <None Include="Tests\DatasetsTests\BostonHousing\BostonHousingTests.fsx" />
+    <None Include="Tests\DatasetsTests\CIFAR10\CIFAR10Tests.fsx" />
+    <None Include="Tests\DatasetsTests\COCO\COCODatasetTests.fsx" />
+    <None Include="Tests\DatasetsTests\COCO\COCOVariantTests.fsx" />
+    <None Include="Tests\DatasetsTests\Imagenette\ImagenetteTests.fsx" />
+    <None Include="Tests\DatasetsTests\MNIST\MNISTTests.fsx" />
+    <None Include="Tests\DatasetsTests\MovieLens\MovieLensTests.fsx" />
+    <None Include="Tests\DatasetsTests\OxfordIIITPets\OxfordIIITPetsTests.fsx" />
+    <None Include="Tests\DatasetsTests\TextUnsupervised\TextUnsupervisedTests.fsx" />
+    <None Include="Tests\DatasetsTests\WordSeg\WordSegDatasetTests.fsx" />
+    <None Include="Tests\MiniGoTests\GameLib\BoardStateTests.fsx" />
+    <None Include="Tests\MiniGoTests\GameLib\XCTestManifests.fsx" />
+    <None Include="Tests\MiniGoTests\Models\GoModelTests.fsx" />
+    <None Include="Tests\TextTests\WordSegmentationTests\ExampleData.fsx" />
+    <None Include="Tests\TextTests\WordSegmentationTests\Parameters.fsx" />
+    <None Include="Tests\TextTests\WordSegmentationTests\ProbeLayers.fsx" />
+    <None Include="Tests\TextTests\WordSegmentationTests\SemiRing.fsx" />
+    <None Include="Examples\GPT2-Inference\UI\macOS\main.fsx" />
+    <None Include="Examples\GPT2-Inference\UI\Windows\main.fsx" />
+    <None Include="Tests\MiniGoTests\Strategies\MCTS\MCTSModelBasedPredictorTests.fsx" />
+    <None Include="Tests\MiniGoTests\Strategies\MCTS\MCTSNodeTests.fsx" />
+    <None Include="Tests\MiniGoTests\Strategies\MCTS\MCTSPolicyTests.fsx" />
+    -->
+  </ItemGroup>
+
+  <!-- Choose the appropriate version of libtorch for our current OS and environment -->
+  <ItemGroup Condition="'$(DIFFSHARP_TESTGPU)' == 'true' AND $([MSBuild]::IsOsPlatform(Linux))">
+    <PackageReference Include="libtorch-cuda-10.2-linux-x64" Version="$(LibTorchNugetVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DIFFSHARP_TESTGPU)' == 'true' AND $([MSBuild]::IsOsPlatform(Windows))">
+    <PackageReference Include="libtorch-cuda-10.2-win-x64" Version="$(LibTorchNugetVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DIFFSHARP_TESTGPU)' != 'true'">
+    <PackageReference Include="libtorch-cpu" Version="$(LibTorchNugetVersion)" />
+  </ItemGroup>
+</Project>

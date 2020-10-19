@@ -15,4 +15,4 @@ swift run FastStyleTransferDemo --style=mosaic --image=FastStyleTransfer/Demo/ex
 <img src="Demo/examples/cat_mosaic.jpg" height="240" width="240">
 
 ## Jupyter Notebook
-Run [demo notebook](Demo/ColabDemo.ipynb) in [Colab](https://colab.research.google.com/github/vvmnnnkv/swift-models/blob/fast-style/FastStyleTransfer/Demo/ColabDemo.ipynb)!
+Run [demo notebook](Demo/ColabDemo.ipynb) in [Colab](https://colab.research.google.com/github/vvmnnnkv/dsharp-models/blob/fast-style/FastStyleTransfer/Demo/ColabDemo.ipynb)!

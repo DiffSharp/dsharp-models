@@ -16,20 +16,3 @@ This directory contains reinforcement learning algorithms in [OpenAI Gym](https:
 
 ## Setup
 
-To begin, you'll need the [latest version of Swift for
-TensorFlow](https://github.com/tensorflow/swift/blob/master/Installation.md)
-installed. Make sure you've added the correct version of `swift` to your path.
-
-Please install OpenAI Gym to run these models.
-```bash
-pip install gym
-```
-
-To build and run the models, run:
-
-```bash
-swift run Gym-CartPole
-swift run Gym-FrozenLake
-swift run Gym-Blackjack
-swift run Gym-DQN
-```
