@@ -24,12 +24,12 @@ open DiffSharp
 type NeuMF: Module {
 
     type Scalar = Float
-    @noDerivative let numUsers: int
-    @noDerivative let numItems: int
-    @noDerivative let numLatentFeatures: int
-    @noDerivative let matrixRegularization: Scalar
-    @noDerivative let mlpLayerSizes: [Int] = [64, 32, 16, 8]
-    @noDerivative let mlpRegularizations: [Scalar] = [0, 0, 0, 0]
+    let numUsers: int
+    let numItems: int
+    let numLatentFeatures: int
+    let matrixRegularization: Scalar
+    let mlpLayerSizes: [Int] = [64, 32, 16, 8]
+    let mlpRegularizations: [Scalar] = [0, 0, 0, 0]
 
     let mfUserEmbedding: Embedding<Scalar>
     let mfItemEmbedding: Embedding<Scalar>
@@ -91,8 +91,8 @@ type NeuMF: Module {
         neuMFLayer = Dense(inputSize=(self.mlpLayerSizes.last! + self.numLatentFeatures), outputSize=1)
 
 
-    @differentiable
-    member _.forward(input: Tensor (*<int32>*)) : Tensor =
+    
+    override _.forward(input: Tensor (*<int32>*)) : Tensor =
         // Extracting user and item from dataset
         let userIndices = input.unstacked(alongAxis: 1)[0]
         let itemIndices = input.unstacked(alongAxis: 1)[1]

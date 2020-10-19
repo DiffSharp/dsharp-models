@@ -121,7 +121,7 @@ open class CheckpointReader {
             else {
                 return nil
 
-            for case let location as URL in directoryEnumerator {
+            for case let location as URL in directoryEnumerator do
                 let resourceValues = try location.resourceValues(forKeys: [.isDirectoryKey])
                 if !(resourceValues.isDirectory ?? false) && location.path.hasSuffix(".index") = 
                     return Uri(
@@ -174,7 +174,7 @@ open class CheckpointReader {
             try download(shardLocation, temporaryDirectory)
 
         let checkpointDirectory = checkpointLocation.deletingLastPathComponent()
-        for file in additionalFiles {
+        for file in additionalFiles do
             let additionalFile = checkpointDirectory </> (file)
             try download(additionalFile, temporaryDirectory)
 
@@ -210,7 +210,7 @@ open class CheckpointReader {
             fatalError("Bundle entry for \(name) is missing a shape parameter.")
 
 
-        return TensorShape(bundleEntry.shape.dim.map { int($0.size))
+        return [bundleEntry.shape.dim.map { int($0.size))
 
 
     /// Returns the scalar type of the tensor with the provided name stored in the checkpoint.

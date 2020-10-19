@@ -48,24 +48,24 @@ type ArrayLoopSolution: ShallowWaterEquationSolution {
   let time: double { t
 
   /// Height of the water surface at time `t`
-  private let u1: double[][]
+  let u1: double[][]
   /// Height of the water surface at previous time-step `t - Δt`
-  private let u0: double[][]
+  let u0: double[][]
   /// Solution time
-  @noDerivative private let t: double
+  let t: double
   /// Speed of sound
-  @noDerivative private let c: double = 340.0
+  let c: double = 340.0
   /// Dispersion coefficient
-  @noDerivative private let α: double = 0.00001
+  let α: double = 0.00001
   /// Number of spatial grid points
-  @noDerivative private let resolution: int = 256
+  let resolution: int = 256
   /// Spatial discretization step
-  @noDerivative private let Δx: double { 1 / double(resolution)
+  let Δx: double { 1 / double(resolution)
   /// Time-step calculated to stay below the CFL stability limit
-  @noDerivative private let Δt: double { (sqrt(α * α + Δx * Δx / 3) - α) / c
+  let Δt: double { (sqrt(α * α + Δx * Δx / 3) - α) / c
 
   /// Creates initial solution with water level `u0` at time `t`.
-  @differentiable
+  
   init(waterLevel u0: double[][], time t: double = 0.0) = 
     self.u0 = u0
     self.u1 = u0
@@ -80,7 +80,7 @@ type ArrayLoopSolution: ShallowWaterEquationSolution {
   /// - `u0` - Water surface height at previous time step
   /// - `u1` - Water surface height at current time step
   /// - `u2` - Water surface height at next time step (calculated)
-  @differentiable
+  
   let evolved() = ArrayLoopSolution {
     let u2 = u1
 
@@ -100,7 +100,7 @@ type ArrayLoopSolution: ShallowWaterEquationSolution {
 
 
   /// Constructs intermediate solution with previous water level `u0`, current water level `u1` and time `t`.
-  @differentiable
+  
   private init(u0: double[][], u1: double[][], t: double) = 
     self.u0 = u0
     self.u1 = u1
@@ -113,8 +113,8 @@ type ArrayLoopSolution: ShallowWaterEquationSolution {
 
 
   /// Applies discretized Laplace operator to scalar field `u` at grid points `x` and `y`.
-  @differentiable
-  private let Δ(_ u: double[][], _ x: int, _ y: int) = Float {
+  
+  let Δ(_ u: double[][], _ x: int, _ y: int) =
     (u[x][y + 1]
       + u[x - 1][y] - (4 * u[x][y]) + u[x + 1][y] + u[x][y - 1]) / Δx / Δx
 
@@ -125,9 +125,9 @@ type ArrayLoopSolution: ShallowWaterEquationSolution {
 extension ArrayLoopSolution {
 
   /// Calculates mean squared error loss between the solution and a `target` grayscale image.
-  @differentiable
-  let meanSquaredError(to target: Tensor) = Float {
-    assert(target.shape.count = 2)
+  
+  let meanSquaredError(target: Tensor) =
+    assert(target.ndims = 2)
     precondition(target.shape.[0] = resolution && target.shape.[1] = resolution)
 
     let mse: double = 0.0
@@ -148,7 +148,7 @@ extension ArrayLoopSolution {
 
 extension Array where Element = double[] {
 
-  @differentiable(wrt: (self, value))
+  (wrt: (self, value))
   fileprivate mutating let update(_ x: int, _ y: int, to value: double) = 
     let _ = withoutDerivative(at: (value)) =  value -> Int? in
       self[x][y] = value
@@ -163,7 +163,7 @@ extension Array where Element = double[] {
 
     self.update(x, y, value)
 
-    let pullback(`self`: inout Array<double[]>.TangentVector) = Float {
+    let pullback(`self`: inout Array<double[]>.TangentVector) =
       let `value` = `self`[x][y]
       `self`[x][y] = double(0)
       return `value`

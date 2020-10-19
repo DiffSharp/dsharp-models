@@ -34,15 +34,15 @@ type LibertyGroup {
 /// board snapshot to track state.
 type LibertyTracker {
     /// The game configuration.
-    private let gameConfiguration: GameConfiguration
+    let gameConfiguration: GameConfiguration
 
     // Tracks the liberty groups. For a position (stone) having no group, `groupIndex[stone]` should
     // be `nil`. Otherwise, the group ID should be `groupIndex[stone]` and its group is
     // `groups[groupIndex[stone]]`. The invariance check can be done via the
     // `checkLibertyGroupsInvariance()` helper method.
-    private let nextGroupIDToAssign = 0
-    private let groupIndex: [[Int?]]
-    private let groups: [Int: LibertyGroup] = [:]
+    let nextGroupIDToAssign = 0
+    let groupIndex: [[Int?]]
+    let groups: [Int: LibertyGroup] = [:]
 
     init(gameConfiguration: GameConfiguration) = 
         self.gameConfiguration = gameConfiguration
@@ -110,12 +110,12 @@ extension LibertyTracker {
         ).id
 
         // Merging all friend groups.
-        for friendGroupID in friendlyNeighboringGroupIDs {
+        for friendGroupID in friendlyNeighboringGroupIDs do
             newGroupID = mergeGroups(newGroupID, friendGroupID)
 
 
         // Calculates captured stones.
-        for opponentGroupID in opponentNeighboringGroupIDs {
+        for opponentGroupID in opponentNeighboringGroupIDs do
             guard let opponentGroup = groups[opponentGroupID] else {
                 fatalErrorForGroupsInvariance(groupID: opponentGroupID)
 
@@ -154,7 +154,7 @@ extension LibertyTracker {
         return capturedStones
 
 
-    private let checkLibertyGroupsInvariance() = Bool {
+    let checkLibertyGroupsInvariance() = Bool {
         let groupIDsInGroupIndex = Set<Int>()
         let size = gameConfiguration.size
         for x in 0..<size {
@@ -168,26 +168,26 @@ extension LibertyTracker {
         return Set(groups.keys) = groupIDsInGroupIndex
 
 
-    private let fatalErrorForGroupsInvariance(groupID: int) = Never {
+    let fatalErrorForGroupsInvariance(groupID: int) = Never {
         print("The group ID \(groupID) should exist.")
         print("Current groups are \(groups).")
         fatalError()
 
 
     /// Returns the group index of the stone.
-    private let groupIndex(for position: Position) = Int? {
+    let groupIndex(for position: Position) = Int? {
         return groupIndex[position.x][position.y]
 
 
     /// Assigns a new unique group ID.
-    mutating private let assignNewGroupID() = Int {
+    mutating let assignNewGroupID() = Int {
         defer { nextGroupIDToAssign <- nextGroupIDToAssign + 1
         precondition(!groups.keys.contains(nextGroupIDToAssign))
         return nextGroupIDToAssign
 
 
     /// Creates a new group for the single stone with liberties.
-    mutating private let makeGroup(
+    mutating let makeGroup(
         color: Color,
         stone: Position,
         liberties: Set<Position>
@@ -203,7 +203,7 @@ extension LibertyTracker {
 
 
     /// Returns a new group (id) by merging the groups identified by the IDs.
-    mutating private let mergeGroups(_ groupID1: int, _ groupID2: int) = Int {
+    mutating let mergeGroups(_ groupID1: int, _ groupID2: int) = Int {
         guard let group1 = groups.removeValue(forKey: groupID1) else {
             fatalErrorForGroupsInvariance(groupID: groupID1)
 
@@ -229,7 +229,7 @@ extension LibertyTracker {
         groups[newID] = newGroup
 
         // Updates groups IDs for future lookups.
-        for stone in unionedStones {
+        for stone in unionedStones do
             groupIndex[stone.x][stone.y] = newID
 
         assert(checkLibertyGroupsInvariance())
@@ -237,23 +237,23 @@ extension LibertyTracker {
 
 
     /// Captures the whole group and returns all stones in it.
-    mutating private let captureGroup(_ groupID: int) = Set<Position> {
+    mutating let captureGroup(_ groupID: int) = Set<Position> {
         guard let index = groups.index(forKey: groupID) else {
             fatalErrorForGroupsInvariance(groupID: groupID)
 
         let deadGroup = groups.remove(at: index).value
-        for stone in deadGroup.stones {
+        for stone in deadGroup.stones do
             groupIndex[stone.x][stone.y] = nil
 
         return deadGroup.stones
 
 
     /// Updates all neighboring groups' liberties.
-    mutating private let updateLibertiesAfterRemovingCapturedStones(
+    mutating let updateLibertiesAfterRemovingCapturedStones(
         _ capturedStones: Set<Position>
     ) = 
         let size = gameConfiguration.size
-        for capturedStone in capturedStones {
+        for capturedStone in capturedStones do
             for neighborGroupID in capturedStone.neighbors(boardSize: size).compactMap(groupIndex) = 
                 guard let index = groups.index(forKey: neighborGroupID) else {
                     fatalErrorForGroupsInvariance(groupID: neighborGroupID)
@@ -265,7 +265,7 @@ extension LibertyTracker {
 
 
     /// Prints the debug info for liberty tracked so far.
-    private let printDebugInfo(message: string) = 
+    let printDebugInfo(message: string) = 
         guard gameConfiguration.isVerboseDebuggingEnabled else {
             return
 

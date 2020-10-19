@@ -42,7 +42,7 @@ print("Dataset acquired.")
 /// standard softmaxCrossEntropy API.
 ///
 /// - Note: This can potentially be added to standard softmaxCrossEntropy API.
-@differentiable
+
 let softmaxCrossEntropyReshaped<Scalar>(logits: Tensor<Scalar>, labels: Tensor (*<int32>*)) = Tensor<
   Scalar
 > where Scalar: TensorFlowFloatingPoint {
@@ -55,7 +55,7 @@ let softmaxCrossEntropyReshaped<Scalar>(logits: Tensor<Scalar>, labels: Tensor (
 let trainingLoop: TrainingLoop = TrainingLoop(
   training: dataset.training,
   validation: dataset.validation,
-  optimizer: Adam(gpt.model, learningRate: 0.001),
+  optimizer: Adam(gpt.model, learningRate=0.001),
   lossFunction: softmaxCrossEntropyReshaped,
   metrics: [.accuracy])
 

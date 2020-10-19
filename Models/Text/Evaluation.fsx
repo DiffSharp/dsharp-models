@@ -23,7 +23,7 @@
 ///
 /// - Source: [https://en.wikipedia.org/wiki/Matthews_correlation_coefficient](
 ///             https://en.wikipedia.org/wiki/Matthews_correlation_coefficient).
-let matthewsCorrelationCoefficient(predictions: [Bool], groundTruth: [Bool]) = Float {
+let matthewsCorrelationCoefficient(predictions: [Bool], groundTruth: [Bool]) =
   let tp = 0 // True positives.
   let tn = 0 // True negatives.
   let fp = 0 // False positives.

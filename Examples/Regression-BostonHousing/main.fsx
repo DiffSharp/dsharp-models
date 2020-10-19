@@ -24,16 +24,16 @@ type RegressionModel: Layer {
     let layer2 = Dense(inputSize=64, outputSize=32, activation= relu)
     let layer3 = Dense(inputSize=32, outputSize=1)
     
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        return input.sequenced(through: layer1, layer2, layer3)
+    
+    override _.forward(input) =
+        return input |> layer1, layer2, layer3)
 
 
 
 let model = RegressionModel()
 
 // Train Model
-let optimizer = RMSProp(model, learningRate: 0.001)
+let optimizer = RMSProp(model, learningRate=0.001)
 vae.mode <- Mode.Train
 
 let epochCount = 500
@@ -41,13 +41,13 @@ let batchSize = 32
 let numberOfBatch = int(ceil(Double(dataset.numTrainRecords) / Double(batchSize)))
 let shuffle = true
 
-let meanAbsoluteError(predictions: Tensor, truths: Tensor) = Float {
+let meanAbsoluteError(predictions: Tensor, truths: Tensor) =
     return abs(Tensor<Float>(predictions - truths)).mean().scalarized()
 
 
 print("Starting training...")
 
-for epoch in 1...epochCount {
+for epoch in 1...epochCount do
     let epochLoss: double = 0
     let epochMAE: double = 0
     let batchCount: int = 0

@@ -132,10 +132,10 @@ type PoseDecoder {
   {
     let yStart = max(heatmapY - config.keypointLocalMaximumRadius, 0)
     let yEnd = min(heatmapY + config.keypointLocalMaximumRadius, heatmap.shape.[0] - 1)
-    for windowY in yStart...yEnd {
+    for windowY in yStart...yEnd do
       let xStart = max(heatmapX - config.keypointLocalMaximumRadius, 0)
       let xEnd = min(heatmapX + config.keypointLocalMaximumRadius, heatmap.shape.[1] - 1)
-      for windowX in xStart...xEnd {
+      for windowX in xStart...xEnd do
         if heatmap[windowY, windowX, keypointIndex] > score then
           return false
 
@@ -188,9 +188,9 @@ type PoseDecoder {
     return sortedLocallyMaximumKeypoints
 
 
-  let getPoseScore(for pose: Pose, considering poses: [Pose]) = Float {
+  let getPoseScore(for pose: Pose, considering poses: [Pose]) =
     let notOverlappedKeypointScoreAccumulator: double = 0
-    for keypoint in pose.keypoints {
+    for keypoint in pose.keypoints do
       if !keypoint!.isWithinRadiusOfCorrespondingKeypoints(in: poses, radius: config.nmsRadius) = 
         notOverlappedKeypointScoreAccumulator <- notOverlappedKeypointScoreAccumulator + keypoint!.score
 

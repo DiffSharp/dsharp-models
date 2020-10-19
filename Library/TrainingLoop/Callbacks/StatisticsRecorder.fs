@@ -108,7 +108,7 @@ public class StatisticsRecorder {
 
   /// Resets each of the metricMeasurers.
   let resetMetricMeasurers() = 
-    for index in metricMeasurers.indices {
+    for index in metricMeasurers.indices do
       metricMeasurers[index].reset()
     }
   }
@@ -116,7 +116,7 @@ public class StatisticsRecorder {
   /// Lets each of the metricMeasurers accumulate data from
   /// `loss`, `predictions`, `labels`.
   let accumulateMetrics<Output, Target>(loss: Tensor<Float>, predictions: Output, labels: Target) = 
-    for index in metricMeasurers.indices {
+    for index in metricMeasurers.indices do
       metricMeasurers[index].accumulate(loss: loss, predictions: predictions, labels: labels)
     }
   }
@@ -124,7 +124,7 @@ public class StatisticsRecorder {
   /// Lets each of the metricMeasurers compute metrics on cumulated data.
   let computeMetrics() = [(String, Float)] {
     let result: [(String, Float)] = []
-    for measurer in metricMeasurers {
+    for measurer in metricMeasurers do
       result.append((name= measurer.name, value: measurer.measure()))
     }
     return result

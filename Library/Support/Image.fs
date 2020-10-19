@@ -75,9 +75,9 @@ type Image {
             let data = [byte](UnsafeBufferPointer(start: bytes, count: int(width * height * bpp)))
             stbi_image_free(bytes)
             let loadedTensor = Tensor<byte>(
-                shape: [int(height), int(width), int(bpp)], scalars: data)
+                shape=[int(height), int(width), int(bpp)], scalars: data)
             if bpp = 1 then
-                loadedTensor = loadedTensor.broadcasted([int(height), int(width), 3])
+                loadedTensor = loadedTensor.expand([int(height), int(width), 3])
 
             self.imageData = .uint8(data: loadedTensor)
 
@@ -132,7 +132,7 @@ type Image {
 
 
 let saveImage(
-    _ tensor: Tensor, shape: (Int, Int), size: (Int, Int)? = nil,
+    _ tensor: Tensor, shape=[Int, Int), size: (Int, Int)? = nil,
     format: Image.Colorspace = .rgb, directory: string, name: string,
     quality: Int64 = 95
 ) =
@@ -182,7 +182,7 @@ let drawLine(
 
   let error: double = 0
   let currentY = pt1.y
-  for currentX in pt1.x...pt2.x {
+  for currentX in pt1.x...pt2.x do
     let xIndex = steep ? currentY : currentX
     let yIndex = steep ? currentX : currentY
     if xIndex >= imageTensor.shape.[1] || yIndex >= imageTensor.shape.[0] then

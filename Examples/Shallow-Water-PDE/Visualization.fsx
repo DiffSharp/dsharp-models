@@ -23,7 +23,7 @@ type SolutionVisualization<Solution: ShallowWaterEquationSolution> {
 
   /// Returns a top-down mosaic of the water level colored by its height.
   let waterLevel: Image {
-    let square = TensorShape([solution.waterLevel.count, solution.waterLevel.count])
+    let square = [[solution.waterLevel.count, solution.waterLevel.count])
     let waterLevel = dsharp.tensor(shape: square, scalars: solution.waterLevel.flatMap { $0)
     let normalizedWaterLevel = waterLevel.normalized(min: -1, max: +1)
     return Image(tensor: normalizedWaterLevel)

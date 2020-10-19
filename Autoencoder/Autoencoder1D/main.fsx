@@ -24,7 +24,7 @@ let imageWidth = 28
 
 let dataset = FashionMNIST(
   batchSize= batchSize, 
-  entropy=SystemRandomNumberGenerator(), flattening=true)
+  flattening=true)
 
 // An autoencoder.
 let autoencoder = Sequential {
@@ -70,11 +70,11 @@ let saveImage<L: TrainingLoopProtocol>(_ loop: inout L, event: TrainingLoopEvent
   let selectedImageBatchLocalIndex = selectedImageGlobalIndex % batchSize
   try saveImage(
     (input :?> Tensor<Float>)[selectedImageBatchLocalIndex..<selectedImageBatchLocalIndex+1],
-    shape: (imageWidth, imageHeight), format: .grayscale,
+    shape=[imageWidth; imageHeight], format: .grayscale,
     directory: outputFolder, name= "epoch-\(epochIndex + 1)-of-\(epochCount)-input")
   try saveImage(
     (output :?> Tensor<Float>)[selectedImageBatchLocalIndex..<selectedImageBatchLocalIndex+1],
-    shape: (imageWidth, imageHeight), format: .grayscale,
+    shape=[imageWidth; imageHeight], format: .grayscale,
     directory: outputFolder, name= "epoch-\(epochIndex + 1)-of-\(epochCount)-output")
 
 

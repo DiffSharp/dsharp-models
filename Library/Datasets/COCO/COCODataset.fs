@@ -87,7 +87,7 @@ extension COCODataset: ObjectDetectionData where Entropy = SystemRandomNumberGen
   ) = 
     self.init(
       training: training, validation: validation, includeMasks: includeMasks, batchSize= batchSize,
-      entropy=SystemRandomNumberGenerator(), device=device, transform: transform)
+      device=device, transform: transform)
 
 
 
@@ -135,7 +135,7 @@ let loadCOCOExample(coco: COCO, image: COCO.Image, includeMasks: bool) = ObjectD
 
     let objects: [LabeledObject] = []
     objects.reserveCapacity(annotations.count)
-    for annotation in annotations {
+    for annotation in annotations do
         let bb = annotation["bbox"] :?> [Double]
         let bbX = bb[0]
         let bbY = bb[1]

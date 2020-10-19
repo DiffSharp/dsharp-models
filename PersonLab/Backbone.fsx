@@ -47,14 +47,14 @@ type DepthwiseSeparableConvBlock: Layer {
     )
 
 
-  @differentiable
-  member _.forward(input: Tensor) : Tensor (* <Float> *) {
-    return input.sequenced(through: dConv, conv)
+  
+  override _.forward(input) =
+    return input |> dConv, conv)
 
 
 
 type MobileNetLikeBackbone: Layer {
-  @noDerivative let ckpt: CheckpointReader
+  let ckpt: CheckpointReader
 
   let convBlock0: Conv2D<Float>
   let dConvBlock1: DepthwiseSeparableConvBlock
@@ -174,8 +174,8 @@ type MobileNetLikeBackbone: Layer {
     )
 
 
-  @differentiable
-  member _.forward(input: Tensor) : Tensor (* <Float> *) {
+  
+  override _.forward(input) =
     let x = convBlock0(input)
     x = dConvBlock1(x)
     x = dConvBlock2(x)

@@ -27,7 +27,7 @@ open TrainingLoop
 
 let dataset = Imagenette(batchSize= 64, inputSize= .resized320, outputSize=224, device=device)
 let model = MobileNetV2(classCount: 10)
-let optimizer = SGD(model, learningRate: 0.002, momentum: 0.9)
+let optimizer = SGD(model, learningRate=0.002, momentum: 0.9)
 
 let trainingLoop = TrainingLoop(
   training: dataset.training,

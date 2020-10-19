@@ -57,8 +57,8 @@ type ConvBN: Layer {
         self.norm = BatchNorm(featureCount=filterShape.3, momentum: 0.95, epsilon: 1e-5)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         return norm(conv(input))
 
 
@@ -86,8 +86,8 @@ type ResidualIdentityBlock: Layer {
             bias: false)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let tmp = relu(layer1(input))
         tmp = layer2(tmp)
         return relu(tmp + input)
@@ -109,7 +109,7 @@ type GoModelOutput: Differentiable {
 
 
 type GoModel: Layer {
-    @noDerivative let configuration: ModelConfiguration
+    let configuration: ModelConfiguration
     let initialConv: ConvBN
     let residualBlocks: [ResidualIdentityBlock]
     let policyConv: ConvBN
@@ -154,8 +154,8 @@ type GoModel: Layer {
             activation= tanh)
 
   
-    @differentiable(wrt: (self, input))
-    member _.forward(input: Tensor) = GoModelOutput {
+    (wrt: (self, input))
+    override _.forward(input: Tensor) = GoModelOutput {
         let batchSize = input.shape.[0]
         let output = relu(initialConv(input))
 

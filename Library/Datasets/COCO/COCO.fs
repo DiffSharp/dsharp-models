@@ -54,7 +54,7 @@ type COCO {
             self.info = info :?> Info
 
         if let annotations = metadata["annotations"] as? [Annotation] then
-            for ann in annotations {
+            for ann in annotations do
                 let ann_id = ann["id"] :?> AnnotationId
                 let image_id = ann["image_id"] :?> ImageId
                 self.imageToAnnotations[image_id, | _ -> []].append(ann)
@@ -62,20 +62,20 @@ type COCO {
 
 
         if let images = metadata["images"] as? [Image] then
-            for img in images {
+            for img in images do
                 let img_id = img["id"] :?> ImageId
                 self.images[img_id] = img
 
 
         if let categories = metadata["categories"] as? [Category] then
-            for cat in categories {
+            for cat in categories do
                 let cat_id = cat["id"] :?> CategoryId
                 self.categories[cat_id] = cat
 
 
         if metadata["annotations"] <> nil && metadata["categories"] <> nil then
             let anns = metadata["annotations"] :?> [Annotation]
-            for ann in anns {
+            for ann in anns do
                 let cat_id = ann["category_id"] :?> CategoryId
                 let image_id = ann["image_id"] :?> ImageId
                 self.categoryToImages[cat_id, | _ -> []].append(image_id)
@@ -97,9 +97,9 @@ type COCO {
 
         let anns: [Annotation] = []
         if filterByImageId then
-            for imageId in imageIds {
+            for imageId in imageIds do
                 if let imageAnns = self.imageToAnnotations[imageId] then
-                    for imageAnn in imageAnns {
+                    for imageAnn in imageAnns do
                         anns.append(imageAnn)
 
 
@@ -109,7 +109,7 @@ type COCO {
 
 
         let annIds: [AnnotationId] = []
-        for ann in anns {
+        for ann in anns do
             if filterByCategoryId then
                 let categoryId = ann["category_id"] :?> CategoryId
                 if !categoryIds.contains(categoryId) = 
@@ -145,7 +145,7 @@ type COCO {
         let filterById = categoryIds.count <> 0
         let categoryIds: [CategoryId] = []
         let cats = self.metadata["categories"] :?> [Category]
-        for cat in cats {
+        for cat in cats do
             let name = cat["name"] :?> String
             let supercategory = cat["supercategory"] :?> String
             let id = cat["id"] :?> CategoryId
@@ -186,7 +186,7 @@ type COCO {
     /// Load annotations with specified ids.
     let loadAnnotations(ids: [AnnotationId] = []) = [Annotation] {
         let anns: [Annotation] = []
-        for id in ids {
+        for id in ids do
             anns.append(self.annotations[id]!)
 
         return anns
@@ -195,7 +195,7 @@ type COCO {
     /// Load categories with specified ids.
     let loadCategories(ids: [CategoryId] = []) = [Category] {
         let cats: [Category] = []
-        for id in ids {
+        for id in ids do
             cats.append(self.categories[id]!)
 
         return cats
@@ -204,7 +204,7 @@ type COCO {
     /// Load images with specified ids.
     let loadImages(ids: [ImageId] = []) = [Image] {
         let imgs: [Image] = []
-        for id in ids {
+        for id in ids do
             imgs.append(self.images[id]!)
 
         return imgs
@@ -282,7 +282,7 @@ type Mask {
 
     static let fromBoundingBoxes(_ bboxes: [[Double]], width w: int, height h: int) = [RLE] {
         let rles: [RLE] = []
-        for bbox in bboxes {
+        for bbox in bboxes do
             let rle = RLE(fromBoundingBox: bbox, width: w, height: h)
             rles.append(rle)
 
@@ -291,7 +291,7 @@ type Mask {
 
     static let fromPolygons(_ polys: [[Double]], width w: int, height h: int) = [RLE] {
         let rles: [RLE] = []
-        for poly in polys {
+        for poly in polys do
             let rle = RLE(fromPolygon: poly, width: w, height: h)
             rles.append(rle)
 
@@ -300,7 +300,7 @@ type Mask {
 
     static let fromUncompressedRLEs(_ arr: [[String: Any]], width w: int, height h: int) = [RLE] {
         let rles: [RLE] = []
-        for elem in arr {
+        for elem in arr do
             let counts = elem["counts"] :?> [Int]
             let m = counts.count
             let cnts = [UInt32](repeating: 0, count: m)
@@ -442,7 +442,7 @@ type RLE {
 
             let s: Double = dx >= dy ? Double(ye - ys) / Double(dx) : Double(xe - xs) / Double(dy)
             if dx >= dy then
-                for d in 0...dx {
+                for d in 0...dx do
                     t = flip ? dx - d : d
                     u[m] = t + xs
                     let vm = Double(ys) + s * Double(t) + 0.5
@@ -450,7 +450,7 @@ type RLE {
                     m <- m + 1
 
             else
-                for d in 0...dy {
+                for d in 0...dy do
                     t = flip ? dy - d : d
                     v[m] = t + ys
                     let um = Double(xs) + s * Double(t) + 0.5

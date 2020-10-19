@@ -67,7 +67,7 @@ let collectURLs(
         let dirContents = try Directory.GetFiles(
             at: directory, includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles])
-        for content in dirContents {
+        for content in dirContents do
             if content.hasDirectoryPath && recurse then
                 files <- files + collectURLs(under: content, recurse: recurse, filtering: extensions)
  else if content.isFileURL

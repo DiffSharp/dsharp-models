@@ -45,9 +45,9 @@ type ActorNetwork: Layer {
         )
 
 
-    @differentiable
-    member _.forward(input: Input) = Output {
-        return input.sequenced(through: l1, l2, l3)
+    
+    override _.forward(input: Input) = Output {
+        return input |> l1, l2, l3)
 
 
 
@@ -82,9 +82,9 @@ type CriticNetwork: Layer {
         )
 
 
-    @differentiable
-    member _.forward(input: Input) = Output {
-        return input.sequenced(through: l1, l2, l3)
+    
+    override _.forward(input: Input) = Output {
+        return input |> l1, l2, l3)
 
 
 
@@ -108,8 +108,8 @@ type ActorCritic: Layer {
         )
 
 
-    @differentiable
-    member _.forward(_ state: Tensor) = Categorical<int32> {
+    
+    override _.forward(_ state: Tensor) = Categorical<int32> {
         precondition(state.rank = 2, "The input must be 2-D ([batch size, state size]).")
         let actionProbs = self.actorNetwork(state).flattened()
         let dist = Categorical<int32>(probabilities: actionProbs)

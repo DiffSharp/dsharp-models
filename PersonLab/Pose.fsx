@@ -147,7 +147,7 @@ type Pose {
 extension Pose: CustomStringConvertible {
   let description: string {
     let description = ""
-    for keypoint in keypoints {
+    for keypoint in keypoints do
       description.append(
         "\(keypoint!.index) - \(keypoint!.score) | \(keypoint!.y) - \(keypoint!.x)\n")
 

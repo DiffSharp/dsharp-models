@@ -13,12 +13,17 @@ module DiffSharpExtensions =
     type RandomNumberGenerator = System.Random
     let (</>) (a: FilePath) (b: string) : FilePath = Path.Combine(a,b)
     type Tensor with 
+        member x.ndims = x.dim
         member x.reshape(shape: seq<int>) = x.view(shape)
         member x.reshape(shape: seq<Int>) = x.view(shape)
+        member x.sqr() = x * x
+        member x.toInt32() = x.toScalar() |> Convert.ToInt32
+        member x.toFloat32() = x.toScalar() |> Convert.ToSingle
 
     type dsharp with 
         static member scalar(x: scalar, ?dtype, ?device, ?backend) = dsharp.full(1, x, ?dtype=dtype, ?device=device, ?backend=backend)
         static member randn(shape: seq<int>, stddev: scalar, ?mean: scalar) = dsharp.randn(shape=shape)
+        static member sigmoidCrossEntropy(logits: Tensor, labels: Tensor, ?reduction: string) = logits.oneLike()
 
     type Dense(inputSize: Int, outputSize: Int, ?activation: (Tensor -> Tensor)) =
         inherit Model()
@@ -38,8 +43,24 @@ module DiffSharpExtensions =
 
         override m.forward(value) = f value
 
+    type Flatten() =
+        inherit Model()
+
+        override _.ToString() = sprintf "Flatten()"
+
+        override m.forward(value) = value.flatten()
+
+        
     type Tensor with 
         member t.rsqrt() = 1.0 / t.sqrt()
+
+        member t.unsqueeze (dims: seq<int>) =
+            let dims = dims |> Seq.toArrayQuick
+            (t, Array.rev (Array.sort dims)) ||> Array.fold (fun input dim -> dsharp.unsqueeze(input, dim))
+
+        member t.squeeze (dims: seq<int>) =
+            let dims = dims |> Seq.toArrayQuick
+            (t, Array.rev (Array.sort dims)) ||> Array.fold (fun input dim -> dsharp.squeeze(input, dim))
 
         member t.mean (dims: seq<int>, ?keepDim: bool) =
             let dims = dims |> Seq.toArrayQuick
@@ -69,6 +90,10 @@ module DiffSharpExtensions =
 
     type dsharp with 
         static member rsqrt(input: Tensor) = input.rsqrt()
+
+        static member squeeze (input: Tensor, dims: seq<int>) = input.squeeze(dims)
+
+        static member unsqueeze (input: Tensor, dims: seq<int>) = input.unsqueeze(dims)
 
         static member mean (input: Tensor, dims: seq<int>, ?keepDim: bool) = input.mean(dims, ?keepDim=keepDim)
 

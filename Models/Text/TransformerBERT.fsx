@@ -29,9 +29,9 @@ type TransformerInput<Scalar: TensorFlowFloatingPoint>: Differentiable {
 
     /// The batch size of this input. This is optional because it is only needed if the input
     /// sequences have been reshaped to matrices.
-    @noDerivative let batchSize: int?
+    let batchSize: int?
 
-    @differentiable
+    
     public init(sequence: Tensor<Scalar>, attentionMask: Tensor<Scalar>, batchSize: int? = nil) = 
         self.sequence = sequence
         self.attentionMask = attentionMask
@@ -48,7 +48,7 @@ type TransformerEncoder: Layer, Regularizable {
     // TODO: Convert to a generic constraint once TF-427 is resolved.
     type Scalar = Float
 
-    @noDerivative let hiddenSize: int
+    let hiddenSize: int
 
     let encoderLayers: [TransformerEncoderLayer]
 
@@ -134,8 +134,8 @@ type TransformerEncoder: Layer, Regularizable {
 
 
 
-    @differentiable
-    member _.forward(input: TransformerInput<Scalar>) : Tensor =
+    
+    override _.forward(input: TransformerInput<Scalar>) : Tensor =
         // The transformer performs sum residuals on all layers and so the input needs to have the
         // same depth as hidden size of the transformer.
         precondition(
@@ -179,11 +179,11 @@ type TransformerEncoderLayer: Layer, Regularizable {
     // TODO: Convert to a generic constraint once TF-427 is resolved.
     type Scalar = Float
 
-    @noDerivative let hiddenSize: int
-    @noDerivative let intermediateactivation= Activation<Scalar>
+    let hiddenSize: int
+    let intermediateactivation= Activation<Scalar>
 
     let multiHeadAttention: MultiHeadAttention
-    @noDerivative let hiddenDropout: Dropout<Scalar>
+    let hiddenDropout: Dropout<Scalar>
     let attentionWeight: Tensor<Scalar>
     let attentionBias: Tensor<Scalar>
     let attentionLayerNorm: LayerNorm<Scalar>
@@ -290,8 +290,8 @@ type TransformerEncoderLayer: Layer, Regularizable {
         self.outputLayerNorm = LayerNorm(featureCount=hiddenSize, axis: -1)
 
 
-    @differentiable
-    member _.forward(input: TransformerInput<Scalar>) : Tensor =
+    
+    override _.forward(input: TransformerInput<Scalar>) : Tensor =
         let attentionInput = AttentionInput(
             source: input.sequence,
             target: input.sequence,

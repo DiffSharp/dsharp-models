@@ -64,26 +64,26 @@ type BERT: Module, Regularizable {
     // TODO: Convert to a generic constraint once TF-427 is resolved.
     type Scalar = Float
 
-    @noDerivative let variant: Variant
-    @noDerivative let vocabulary: Vocabulary
-    @noDerivative let tokenizer: Tokenizer
-    @noDerivative let caseSensitive: bool
-    @noDerivative let hiddenSize: int
-    @noDerivative let hiddenLayerCount: int
-    @noDerivative let attentionHeadCount: int
-    @noDerivative let intermediateSize: int
-    @noDerivative let intermediateactivation= Activation<Scalar>
-    @noDerivative let hiddenDropoutProbability: Scalar
-    @noDerivative let attentionDropoutProbability: Scalar
-    @noDerivative let maxSequenceLength: int
-    @noDerivative let typeVocabularySize: int
-    @noDerivative let initializerStandardDeviation: Scalar
+    let variant: Variant
+    let vocabulary: Vocabulary
+    let tokenizer: Tokenizer
+    let caseSensitive: bool
+    let hiddenSize: int
+    let hiddenLayerCount: int
+    let attentionHeadCount: int
+    let intermediateSize: int
+    let intermediateactivation= Activation<Scalar>
+    let hiddenDropoutProbability: Scalar
+    let attentionDropoutProbability: Scalar
+    let maxSequenceLength: int
+    let typeVocabularySize: int
+    let initializerStandardDeviation: Scalar
 
     let tokenEmbedding: Embedding<Scalar>
     let tokenTypeEmbedding: Embedding<Scalar>
     let positionEmbedding: Embedding<Scalar>
     let embeddingLayerNorm: LayerNorm<Scalar>
-    @noDerivative let embeddingDropout: Dropout<Scalar>
+    let embeddingDropout: Dropout<Scalar>
     let embeddingProjection: [Dense<Scalar>]
     let encoderLayers: [TransformerEncoderLayer]
 
@@ -296,7 +296,7 @@ type BERT: Module, Regularizable {
         let tokens = ["[CLS]"]
         let tokenTypeIds = [int32(0)]
         for (sequenceId, sequence) in sequences.enumerated() = 
-            for token in sequence {
+            for token in sequence do
                 tokens.append(token)
                 tokenTypeIds.append(int32(sequenceId))
 
@@ -314,13 +314,13 @@ type BERT: Module, Regularizable {
         let mask = [int32](repeating: 1, count: tokenIds.count)
 
         return TextBatch(
-            tokenIds: dsharp.tensor(tokenIds).expandingShape(at: 0),
-            tokenTypeIds: dsharp.tensor(tokenTypeIds).expandingShape(at: 0),
-            mask: dsharp.tensor(mask).expandingShape(at: 0))
+            tokenIds: dsharp.tensor(tokenIds).unsqueeze(0),
+            tokenTypeIds: dsharp.tensor(tokenTypeIds).unsqueeze(0),
+            mask: dsharp.tensor(mask).unsqueeze(0))
 
 
-    @differentiable(wrt: self)
-    member _.forward(input: TextBatch) : Tensor =
+    (wrt: self)
+    override _.forward(input: TextBatch) : Tensor =
         let sequenceLength = input.tokenIds.shape.[1]
         let variant = withoutDerivative(at: self.variant)
 
@@ -335,7 +335,7 @@ type BERT: Module, Regularizable {
         let positionEmbeddings = positionEmbedding.embeddings.slice(
             lowerBounds: [positionPaddingIndex, 0],
             upperBounds: [positionPaddingIndex + sequenceLength, -1]
-        ).expandingShape(at: 0)
+        ).unsqueeze(0)
         let embeddings = tokenEmbeddings + positionEmbeddings
 
         // Add token type embeddings if needed, based on which BERT variant is being used.
@@ -431,8 +431,8 @@ type BERTTokenizer: Tokenizer {
     let unknownToken: string
     let maxTokenLength: int?
 
-    private let basicTextTokenizer: BasicTokenizer
-    private let greedySubwordTokenizer: GreedySubwordTokenizer
+    let basicTextTokenizer: BasicTokenizer
+    let greedySubwordTokenizer: GreedySubwordTokenizer
 
     /// Creates a BERT tokenizer.
     ///
@@ -470,9 +470,9 @@ type RoBERTaTokenizer: Tokenizer {
     let caseSensitive: bool
     let unknownToken: string
 
-    private let bytePairEncoder: BytePairEncoder
+    let bytePairEncoder: BytePairEncoder
 
-    private let tokenizationRegex: NSRegularExpression = try! NSRegularExpression(
+    let tokenizationRegex: NSRegularExpression = try! NSRegularExpression(
         pattern: "'s|'t|'re|'ve|'m|'ll|'d| ?\\p{L+| ?\\p{N+| ?[^\\s\\p{L\\p{N]+|\\s+(?!\\S)|\\s+")
 
     /// Creates a full text tokenizer.
@@ -819,7 +819,7 @@ extension BERT {
 
         match variant with
         case .bert, .roberta:
-            for layerIndex in encoderLayers.indices {
+            for layerIndex in encoderLayers.indices do
                 encoderLayers[layerIndex].load(bert: reader,
                     prefix: "bert/encoder/layer_\(layerIndex)")
 
@@ -828,12 +828,12 @@ extension BERT {
                 reader.readTensor(name= "bert/encoder/embedding_hidden_mapping_in/kernel")
             embeddingProjection[0].bias =
                 reader.readTensor(name= "bert/encoder/embedding_hidden_mapping_in/bias")
-            for layerIndex in encoderLayers.indices {
+            for layerIndex in encoderLayers.indices do
                 let prefix = "bert/encoder/transformer/group_\(layerIndex)/inner_group_0"
                 encoderLayers[layerIndex].load(albert: reader, prefix: prefix)
 
         | .electra ->
-            for layerIndex in encoderLayers.indices {
+            for layerIndex in encoderLayers.indices do
                 let prefix = "electra/encoder/layer_\(layerIndex)"
                 encoderLayers[layerIndex].multiHeadAttention.queryWeight =
                     reader.readTensor(name=  "\(prefix)/attention/self/query/kernel")

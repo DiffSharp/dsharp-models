@@ -26,7 +26,7 @@ let imageWidth = 28
 
 let outputFolder = "./output/"
 let dataset = KuzushijiMNIST(batchSize= batchSize,  
-    entropy=SystemRandomNumberGenerator(), flattening=true)
+    flattening=true)
 
 // An autoencoder.
 type Autoencoder2D: Layer {
@@ -46,12 +46,12 @@ type Autoencoder2D: Layer {
 
     let output = Conv2d(filterShape=(3, 3, 16, 1), padding="same", activation= sigmoid)
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let resize = input.reshape([batchSize, 28, 28, 1])
-        let encoder = resize.sequenced(through: encoder1,
+        let encoder = resize |> encoder1,
             encoder2, encoder3, encoder4, encoder5, encoder6)
-        let decoder = encoder.sequenced(through: decoder1,
+        let decoder = encoder |> decoder1,
             decoder2, decoder3, decoder4, decoder5, decoder6)
         return output(decoder).reshape([batchSize, imageHeight * imageWidth])
 
@@ -63,7 +63,7 @@ let optimizer = AdaDelta(model)
 // Training loop
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() = 
     vae.mode <- Mode.Train
-    for batch in epochBatches {
+    for batch in epochBatches do
         let x = batch.data
 
         let del_model = TensorFlow.gradient(at: model) =  model -> Tensor<Float> in
@@ -77,16 +77,16 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     vae.mode <- Mode.Eval
     let testLossSum: double = 0
     let testBatchCount = 0
-    for batch in dataset.validation {
+    for batch in dataset.validation do
         let sampleImages = batch.data
         let testImages = model(sampleImages)
 
         try
             try saveImage(
-                sampleImages[0..<1], shape: (imageWidth, imageHeight), format: .grayscale,
+                sampleImages[0..<1], shape=[imageWidth; imageHeight], format: .grayscale,
                 directory: outputFolder, name= "epoch-\(epoch)-input")
             try saveImage(
-                testImages[0..<1], shape: (imageWidth, imageHeight), format: .grayscale,
+                testImages[0..<1], shape=[imageWidth; imageHeight], format: .grayscale,
                 directory: outputFolder, name= "epoch-\(epoch)-output")
         with e ->
             print("Could not save image with error: \(error)")

@@ -89,7 +89,7 @@ type WordSegDataset {
   {
     let phrases = [Phrase]()
 
-    for data in dataset {
+    for data in dataset do
       let trimmed = data.split(separator: " ", omittingEmptySubsequences: true).joined()
       guard
         let numericalizedText = try? CharacterSequence(

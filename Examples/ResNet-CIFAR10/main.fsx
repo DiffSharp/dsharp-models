@@ -27,7 +27,7 @@ open TrainingLoop
 
 let dataset = CIFAR10(batchSize= 10, device=device)
 let model = ResNet(classCount: 10, depth: .resNet56, downsamplingInFirstStage: false)
-let optimizer = SGD(model, learningRate: 0.001)
+let optimizer = SGD(model, learningRate=0.001)
 
 let trainingLoop = TrainingLoop(
   training: dataset.training,

@@ -38,9 +38,9 @@ type ConvBlock: Layer {
         batchNorm = BatchNorm(featureCount=scaledFilterCount)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let convolved = input.sequenced(through: zeroPad, conv, batchNorm)
+    
+    override _.forward(input) =
+        let convolved = input |> zeroPad, conv, batchNorm)
         return relu6(convolved)
 
 
@@ -84,23 +84,23 @@ type DepthwiseConvBlock: Layer {
         batchNorm2 = BatchNorm(featureCount=scaledPointwiseFilterCount)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let convolved1: Tensor
         if self.strides = (1, 1) = 
-            convolved1 = input.sequenced(through: dConv, batchNorm1)
+            convolved1 = input |> dConv, batchNorm1)
         else
-            convolved1 = input.sequenced(through: zeroPad, dConv, batchNorm1)
+            convolved1 = input |> zeroPad, dConv, batchNorm1)
 
         let convolved2 = relu6(convolved1)
-        let convolved3 = relu6(convolved2.sequenced(through: conv, batchNorm2))
+        let convolved3 = relu6(convolved2 |> conv, batchNorm2))
         return convolved3
 
 
 
 type MobileNetV1: Layer {
-    @noDerivative let classCount: int
-    @noDerivative let scaledFilterShape: int
+    let classCount: int
+    let scaledFilterShape: int
 
     let convBlock1: ConvBlock
     let dConvBlock1: DepthwiseConvBlock
@@ -207,15 +207,15 @@ type MobileNetV1: Layer {
             depthMultiplier: depthMultiplier,
             stride=1)
 
-        dropoutLayer = Dropout<Float>(probability: dropout)
+        dropoutLayer = Dropout(probability: dropout)
         convLast = Conv2d(
             filterShape=(1, 1, scaledFilterShape, classCount),
             stride=1,
             padding="same")
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let convolved = input.sequenced(
             through: convBlock1, dConvBlock1,
             dConvBlock2, dConvBlock3, dConvBlock4)
@@ -226,7 +226,7 @@ type MobileNetV1: Layer {
             through: dConvBlock10, dConvBlock11, dConvBlock12, dConvBlock13, avgPool).reshape([
                 input.shape.[0], 1, 1, scaledFilterShape
             ])
-        let convolved4 = convolved3.sequenced(through: dropoutLayer, convLast)
+        let convolved4 = convolved3 |> dropoutLayer, convLast)
         let output = convolved4.reshape([input.shape.[0], classCount])
         return output
 

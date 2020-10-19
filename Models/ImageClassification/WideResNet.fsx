@@ -26,8 +26,8 @@ type BatchNormConv2DBlock: Layer {
     let norm2: BatchNorm<Float>
     let conv2: Conv2D<Float>
     let shortcut: Conv2D<Float>
-    @noDerivative let isExpansion: bool
-    @noDerivative let dropout: Dropout<Float> = Dropout(probability: 0.3)
+    let isExpansion: bool
+    let dropout: Dropout<Float> = Dropout2d(p=0.3)
 
     public init(
         featureCounts: (Int, Int),
@@ -50,8 +50,8 @@ type BatchNormConv2DBlock: Layer {
         self.isExpansion = featureCounts.1 <> featureCounts.0 || strides <> (1, 1) 
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let preact1 = relu(norm1(input))
         let residual = conv1(preact1)
         let preact2: Tensor
@@ -83,8 +83,8 @@ type WideResNetBasicBlock: Layer {
   
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         return blocks.differentiableReduce(input) =  $1($0)
 
 
@@ -98,7 +98,7 @@ type WideResNet: Layer {
 
     let norm: BatchNorm<Float>
     let avgPool: AvgPool2D<Float>
-    let flatten = Flatten<Float>()
+    let flatten = Flatten()
     let classifier: Dense
 
     public init(depthFactor: int = 2, widenFactor: int = 8) = 
@@ -116,11 +116,11 @@ type WideResNet: Layer {
         self.classifier = Dense(inputSize=64 * widenFactor, outputSize=10)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let inputLayer = input.sequenced(through: l1, l2, l3, l4)
+    
+    override _.forward(input) =
+        let inputLayer = input |> l1, l2, l3, l4)
         let finalNorm = relu(norm(inputLayer))
-        return finalNorm.sequenced(through: avgPool, flatten, classifier)
+        return finalNorm |> avgPool, flatten, classifier)
 
 
 

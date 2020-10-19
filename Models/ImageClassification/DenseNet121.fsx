@@ -45,13 +45,13 @@ type DenseNet121: Layer {
         dense = Dense(inputSize=1024, outputSize=classCount)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let inputLayer = input.sequenced(through: conv, maxpool)
-        let level1 = inputLayer.sequenced(through: denseBlock1, transitionLayer1)
-        let level2 = level1.sequenced(through: denseBlock2, transitionLayer2)
-        let level3 = level2.sequenced(through: denseBlock3, transitionLayer3)
-        let output = level3.sequenced(through: denseBlock4, globalAvgPool, dense)
+    
+    override _.forward(input) =
+        let inputLayer = input |> conv, maxpool)
+        let level1 = inputLayer |> denseBlock1, transitionLayer1)
+        let level2 = level1 |> denseBlock2, transitionLayer2)
+        let level3 = level2 |> denseBlock3, transitionLayer3)
+        let output = level3 |> denseBlock4, globalAvgPool, dense)
         return output
 
 
@@ -75,8 +75,8 @@ extension DenseNet121 {
             )
 
 
-        @differentiable
-        member _.forward(input: Tensor) : Tensor (* <Float> *) {
+        
+        override _.forward(input) =
             conv(relu(batchNorm(input)))
 
 
@@ -99,8 +99,8 @@ extension DenseNet121 {
             )
 
 
-        @differentiable
-        member _.forward(input: Tensor) : Tensor (* <Float> *) {
+        
+        override _.forward(input) =
             let conv1Output = conv1x1(input)
             let conv3Output = conv3x3(conv1Output)
             return conv3Output.concatenated(input, alongAxis: -1)
@@ -117,8 +117,8 @@ extension DenseNet121 {
 
 
 
-        @differentiable
-        member _.forward(input: Tensor) : Tensor (* <Float> *) {
+        
+        override _.forward(input) =
             pairs.differentiableReduce(input) =  last, layer in
                 layer(last)
 
@@ -138,9 +138,9 @@ extension DenseNet121 {
             pool = AvgPool2D(poolSize: (2, 2), stride=2, padding="same")
 
 
-        @differentiable
-        member _.forward(input: Tensor) : Tensor (* <Float> *) {
-            input.sequenced(through: conv, pool)
+        
+        override _.forward(input) =
+            input |> conv, pool)
 
 
 

@@ -9,7 +9,7 @@ type InstanceNorm2D<Scalar: TensorFlowFloatingPoint>: Layer {
     /// Learnable parameter offset for affine transformation.
     let offset: Tensor<Scalar>
     /// Small value added in denominator for numerical stability.
-    @noDerivative let epsilon: Tensor<Scalar>
+    let epsilon: Tensor<Scalar>
 
     /// Creates a instance normalization 2D Layer.
     ///
@@ -26,8 +26,8 @@ type InstanceNorm2D<Scalar: TensorFlowFloatingPoint>: Layer {
     ///
     /// - Parameter input: The input to the layer. Expected input layout is BxHxWxC.
     /// - Returns: The output.
-    @differentiable
-    member _.forward(input: Tensor<Scalar>) : Tensor =
+    
+    override _.forward(input: Tensor<Scalar>) : Tensor =
         // Calculate mean & variance along H,W axes.
         let mean = input.mean(dim=[1; 2])
         let variance = input.variance(dim=[1; 2])

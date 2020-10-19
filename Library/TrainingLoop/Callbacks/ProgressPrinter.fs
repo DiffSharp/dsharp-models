@@ -88,7 +88,7 @@ public class ProgressPrinter {
 
   let formatStats(_ stats: [(String, Float)]) =
     let result = ""
-    for stat in stats {
+    for stat in stats do
       result <- result + " - \(stat.0): \(String(format: "%.4f", stat.1))"
     }
     return result

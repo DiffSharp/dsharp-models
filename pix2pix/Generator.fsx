@@ -44,8 +44,8 @@ type NetG: Layer {
                                                   submodule: module6)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         return self.module(input)
 
 

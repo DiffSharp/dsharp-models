@@ -54,10 +54,7 @@ let saveFractalImage(_ divergenceGrid: Tensor, iterations: int, fileName: string
     $0 += prismColor($1, iterations: iterations)
 
   let colorImage = Tensor<Float>(
-    shape: [gridShape[0], gridShape[1], 3], scalars: colorValues, device=divergenceGrid.device)
+    shape=[gridShape[0], gridShape[1], 3], scalars: colorValues, device=divergenceGrid.device)
 
-  try saveImage(
-    colorImage, shape: (gridShape[0], gridShape[1]),
-    format: .rgb, directory: "./", name= fileName,
-    quality: 95)
+  try saveImage(colorImage, shape=gridShape[0..1], format="rgb", directory: "./", name= fileName, quality=95)
 

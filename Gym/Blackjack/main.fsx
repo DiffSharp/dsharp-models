@@ -151,10 +151,10 @@ type Solver {
 
 let learner = Solver()
 
-for solver in SolverType.allCases {
+for solver in SolverType.allCases do
     let totalReward = 0
 
-    for i in 1...iterationCount {
+    for i in 1...iterationCount do
         let isDone = false
         environment.reset()
 

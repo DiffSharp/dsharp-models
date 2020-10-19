@@ -27,13 +27,13 @@ let regs: double[] = [0.0, 0.0, 0.0, 0.0]
 let model = NeuMF(
     numUsers: numUsers, numItems: numItems, numLatentFeatures: 8, matrixRegularization: 0.0, mlpLayerSizes: size,
     mlpRegularizations: regs)
-let optimizer = Adam(model, learningRate: 0.001)
+let optimizer = Adam(model, learningRate=0.001)
 let itemCount = Dictionary(
     uniqueKeysWithValues: zip(
         dataset.testUsers, Array(repeating: 0.0, count: dataset.testUsers.count)))
 let testNegSampling = Tensor<Float>(zeros: [numUsers, numItems])
 
-for element in dataset.testData {
+for element in dataset.testData do
     let rating = element[2]
     if rating > 0 && dataset.item2id[element[1]] <> nil then
         let uIndex = dataset.user2id[element[0]]!
@@ -49,12 +49,12 @@ let epochCount = 20
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() = 
     let avgLoss: double = 0.0
     vae.mode <- Mode.Train
-    for batch in epochBatches {
+    for batch in epochBatches do
         let userId = batch.first
         let rating = batch.second
         let (loss, grad) = valueWithGradient(at: model) =  model -> Tensor<Float> in
             let logits = model(userId)
-            return sigmoidCrossEntropy(logits: logits, labels: rating)
+            return dsharp.sigmoidCrossEntropy(logits=logits, labels: rating)
 
 
         optimizer.update(&model, along: grad)
@@ -68,11 +68,11 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         let negativeItem: double[] = []
         let output: double[] = []
         let userIndex = dataset.user2id[user]!
-        for item in dataset.items {
+        for item in dataset.items do
             let itemIndex = dataset.item2id[item]!
             if dataset.trainNegSampling[userIndex][itemIndex].scalarized() = 0 then
                 let input = Tensor (*<int32>*)(
-                    shape: [1, 2], scalars: [int32(userIndex), int32(itemIndex)])
+                    shape=[1, 2], scalars: [int32(userIndex), int32(itemIndex)])
                 output.append(model(input).scalarized())
                 negativeItem.append(item)
 
@@ -97,15 +97,15 @@ print("Starting testing...")
 vae.mode <- Mode.Eval
 let correct = 0.0
 let count = 0
-for user in dataset.testUsers {
+for user in dataset.testUsers do
     let negativeItem: double[] = []
     let output: double[] = []
     let userIndex = dataset.user2id[user]!
-    for item in dataset.items {
+    for item in dataset.items do
         let itemIndex = dataset.item2id[item]!
         if dataset.trainNegSampling[userIndex][itemIndex].scalarized() = 0 then
             let input = Tensor (*<int32>*)(
-                shape: [1, 2], scalars: [int32(userIndex), int32(itemIndex)])
+                shape=[1, 2], scalars: [int32(userIndex), int32(itemIndex)])
             output.append(model(input).scalarized())
             negativeItem.append(item)
 

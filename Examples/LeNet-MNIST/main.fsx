@@ -35,13 +35,13 @@ let classifier = Sequential {
   AvgPool2D<Float>(poolSize: (2, 2), stride=2)
   Conv2d(filterShape=(5, 5, 6, 16), activation= relu)
   AvgPool2D<Float>(poolSize: (2, 2), stride=2)
-  Flatten<Float>()
+  Flatten()
   Dense(inputSize=400, outputSize=120, activation= relu)
   Dense(inputSize=120, outputSize=84, activation= relu)
   Dense(inputSize=84, outputSize=10)
 
 
-let optimizer = SGD(classifier, learningRate: 0.1)
+let optimizer = SGD(classifier, learningRate=0.1)
 
 let trainingLoop = TrainingLoop(
   training: dataset.training,

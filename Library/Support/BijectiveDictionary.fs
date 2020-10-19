@@ -17,10 +17,10 @@ namespace Datasets
 /// A bijective mapping behaving similar to dictionary with the additional
 /// ability to lookup the key from the value
 type BijectiveDictionary<Key: Hashable, Value: Hashable> {
-  private let valueForKey: [Key:Value] = [:]
+  let valueForKey: [Key:Value] = [:]
   // TODO: specialize where value is int32 such that keyForValue is actually an
   // array?
-  private let keyForValue: [Value:Key] = [:]
+  let keyForValue: [Value:Key] = [:]
 
   /// The number of of key-value pairs in the dictionary
   let count: int { valueForKey.count

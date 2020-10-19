@@ -51,7 +51,7 @@ fileprivate let roundFilterPair(filters: (Int, Int), width: double) = (Int, Int)
 
 
 type InitialMBConvBlock: Layer {
-    @noDerivative let hiddenDimension: int
+    let hiddenDimension: int
     let dConv: DepthwiseConv2D<Float>
     let batchNormDConv: BatchNorm<Float>
     let seAveragePool = GlobalAvgPool2D<Float>()
@@ -83,8 +83,8 @@ type InitialMBConvBlock: Layer {
         batchNormConv2 = BatchNorm(featureCount=filterMult.1)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let depthwise = swish(batchNormDConv(dConv(input)))
         let seAvgPoolReshaped = seAveragePool(depthwise).reshape([
             input.shape.[0], 1, 1, self.hiddenDimension
@@ -96,10 +96,10 @@ type InitialMBConvBlock: Layer {
 
 
 type MBConvBlock: Layer {
-    @noDerivative let addResLayer: bool
-    @noDerivative let strides = [Int, Int)
-    @noDerivative let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
-    @noDerivative let hiddenDimension: int
+    let addResLayer: bool
+    let strides = [Int, Int)
+    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let hiddenDimension: int
 
     let conv1: Conv2D<Float>
     let batchNormConv1: BatchNorm<Float>
@@ -149,8 +149,8 @@ type MBConvBlock: Layer {
         batchNormConv2 = BatchNorm(featureCount=filterMult.1)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let piecewise = swish(batchNormConv1(conv1(input)))
         let depthwise: Tensor
         if self.strides = (1, 1) = 
@@ -198,14 +198,14 @@ type MBConvBlockStack: Layer {
 
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         return blocks.differentiableReduce(input) =  $1($0)
 
 
 
 type EfficientNet: Layer {
-    @noDerivative let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>
     let initialMBConv: InitialMBConvBlock
@@ -268,21 +268,21 @@ type EfficientNet: Layer {
             padding="same")
         outputConvBatchNorm = BatchNorm(featureCount=makeDivisible(filter: 1280, width: width))
 
-        dropoutProb = Dropout<Float>(probability: dropout)
+        dropoutProb = Dropout(probability: dropout)
         outputClassifier = Dense(
             inputSize= makeDivisible(filter: 1280, width: width),
             outputSize=classCount)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let convolved = swish(input.sequenced(through: zeroPad, inputConv, inputConvBatchNorm))
+    
+    override _.forward(input) =
+        let convolved = swish(input |> zeroPad, inputConv, inputConvBatchNorm))
         let initialBlock = initialMBConv(convolved)
         let backbone = initialBlock.sequenced(
             through: residualBlockStack1, residualBlockStack2,
             residualBlockStack3, residualBlockStack4, residualBlockStack5, residualBlockStack6)
-        let output = swish(backbone.sequenced(through: outputConv, outputConvBatchNorm))
-        return output.sequenced(through: avgPool, dropoutProb, outputClassifier)
+        let output = swish(backbone |> outputConv, outputConvBatchNorm))
+        return output |> avgPool, dropoutProb, outputClassifier)
 
 
 

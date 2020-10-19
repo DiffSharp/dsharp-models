@@ -41,14 +41,14 @@ type TransformerNet: Layer {
     ///
     /// - Parameter input: The input to the layer. Expected layout is BxHxWxC.
     /// - Returns: The output.
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let convolved1 = input.sequenced(through: conv1, in1, relu)
-        let convolved2 = convolved1.sequenced(through: conv2, in2, relu)
-        let convolved3 = convolved2.sequenced(through: conv3, in3, relu)
-        let residual = convolved3.sequenced(through: res1, res2, res3, res4, res5)
-        let upscaled1 = residual.sequenced(through: deconv1, in4, relu)
-        let upscaled2 = upscaled1.sequenced(through: deconv2, in5)
+    
+    override _.forward(input) =
+        let convolved1 = input |> conv1, in1, relu)
+        let convolved2 = convolved1 |> conv2, in2, relu)
+        let convolved3 = convolved2 |> conv3, in3, relu)
+        let residual = convolved3 |> res1, res2, res3, res4, res5)
+        let upscaled1 = residual |> deconv1, in4, relu)
+        let upscaled2 = upscaled1 |> deconv2, in5)
         let upscaled3 = deconv3(upscaled2)
         return upscaled3
 
@@ -80,9 +80,9 @@ type ConvLayer: Layer {
     ///
     /// - Parameter input: The input to the layer.
     /// - Returns: The output.
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        return input.sequenced(through: reflectionPad, conv2d)
+    
+    override _.forward(input) =
+        return input |> reflectionPad, conv2d)
 
 
 
@@ -111,9 +111,9 @@ type ResidualBlock: Layer {
     ///
     /// - Parameter input: The input to the layer.
     /// - Returns: The output.
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        return input + input.sequenced(through: conv1, in1, relu, conv2, in2)
+    
+    override _.forward(input) =
+        return input + input |> conv1, in1, relu, conv2, in2)
 
 
 
@@ -123,7 +123,7 @@ type ResidualBlock: Layer {
 /// Reference: http://distill.pub/2016/deconv-checkerboard/
 type UpsampleConvLayer: Layer {
     /// Scale factor.
-    @noDerivative let scaleFactor: double
+    let scaleFactor: double
     /// Padding layer.
     let reflectionPad: ReflectionPad2D<Float>
     /// Convolution layer.
@@ -156,12 +156,12 @@ type UpsampleConvLayer: Layer {
     ///
     /// - Parameter input: The input to the layer.
     /// - Returns: The output.
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let newHeight = int(roundf(double(input.shape.[input.rank - 3]) * scaleFactor))
         let newWidth = int(roundf(double(input.shape.[input.rank - 2]) * scaleFactor))
         let resizedInput = resize(
             images: input, size: (newHeight, newWidth), method: .nearest)
-        return resizedInput.sequenced(through: reflectionPad, conv2d)
+        return resizedInput |> reflectionPad, conv2d)
 
 

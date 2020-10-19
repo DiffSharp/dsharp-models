@@ -36,15 +36,15 @@ where Texts: Collection, Texts.Index==Int, Texts.Element==[Int] {
   //Drop the last batch if its length is less than sequenceLength
   let dropLast: bool
   //The length of a contiguous chunk of text
-  private let batchLength: int
+  let batchLength: int
   /// The number of batches.
-  private let batchCount: int
+  let batchCount: int
   /// The sequence length of the last batch.
-  private let lastLength: int
+  let lastLength: int
   /// Indices used to iterate through the dataset.
   let indices: [Int]
   /// Cumulative lengths.
-  private let cumulativeLengths: [Int]
+  let cumulativeLengths: [Int]
 
   public init(
     batchSize: int,
@@ -113,7 +113,7 @@ extension LanguageModelDataset: Collection {
   
   
   /// Read a contiguous chunk of texts from start to end (may go through several items).
-  private let readItems(from start: int, to end: int) = [Int] {
+  let readItems(from start: int, to end: int) = [Int] {
     let text: [Int] = []
     let index = cumulativeLengths.firstIndex { $0 >= start!
     let position = start

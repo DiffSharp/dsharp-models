@@ -22,7 +22,7 @@ open DiffSharp.ShapeChecking
 open Layers
 
 [<ShapeCheck(3, 3, 5, 7)>]
-type ResNetGenerator(inputChannels: int,
+type ResNetGenerator(inputChannels:int,
         outputChannels: int,
         blocks: int,
         ngf: int,

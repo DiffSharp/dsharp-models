@@ -24,14 +24,14 @@ let dataset = try! Pix2PixDataset(
     trainbatchSize= 1,
     testbatchSize= 1)
 
-let validationImage = dataset.testSamples[0].source.expandingShape(at: 0)
-let validationImageURL = Uri(File.currentDirectoryPath)! </> ("sample.jpg")
+let validationImage = dataset.testSamples[0].source.unsqueeze(0)
+let validationImageURL = Uri(__SOURCE_DIRECTORY__)! </> ("sample.jpg")
 
-let generator = NetG(inputChannels: 3, outputChannels: 3, ngf: 64, useDropout: false)
-let discriminator = NetD(inChannels=6, lastConvFilters: 64)
+let generator = NetG(inputChannels: 3, outputChannels=3, ngf=64, useDropout: false)
+let discriminator = NetD(inChannels=6, lastConvFilters=64)
 
-let optimizerG = Adam(generator, learningRate: 0.0002, beta1: 0.5)
-let optimizerD = Adam(discriminator, learningRate: 0.0002, beta1: 0.5)
+let optimizerG = Adam(generator, learningRate=dsharp.scalar(0.0002), beta1=dsharp.scalar(0.5))
+let optimizerD = Adam(discriminator, learningRate=dsharp.scalar(0.0002), beta1=dsharp.scalar(0.5))
 
 let epochCount = options.epochs
 let step = 0
@@ -44,7 +44,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     let generatorTotalLoss = Tensor<Float>(0)
     let discriminatorCount = 0
     
-    for batch in epochBatches {
+    for batch in epochBatches do
         defer { step <- step + 1
 
         vae.mode <- Mode.Train
@@ -58,16 +58,16 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             croppedImages = _Raw.reverse(croppedImages, dims: [false, false, true, false])
 
         
-        let sourceImages = croppedImages[0].expandingShape(at: 0)
-        let targetImages = croppedImages[1].expandingShape(at: 0)
+        let sourceImages = croppedImages[0].unsqueeze(0)
+        let targetImages = croppedImages[1].unsqueeze(0)
         
         let generatorGradient = TensorFlow.gradient(at: generator) =  g -> Tensor<Float> in
             let fakeImages = g(sourceImages)
             let fakeAB = sourceImages.concatenated(fakeImages, alongAxis: 3)
             let fakePrediction = discriminator(fakeAB)
             
-            let ganLoss = sigmoidCrossEntropy(logits: fakePrediction,
-                                              labels: Tensor.one.broadcasted(fakePrediction.shape))
+            let ganLoss = dsharp.sigmoidCrossEntropy(logits=fakePrediction,
+                                              labels: Tensor.one.expand(fakePrediction.shape))
             let l1Loss = meanAbsoluteError(predicted: fakeImages,
                                            expected: targetImages) * lambdaL1
             
@@ -80,14 +80,14 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             let fakeAB = sourceImages.concatenated(fakeImages,
                                                    alongAxis: 3)
             let fakePrediction = d(fakeAB)
-            let fakeLoss = sigmoidCrossEntropy(logits: fakePrediction,
-                                               labels: Tensor.zero.broadcasted(fakePrediction.shape))
+            let fakeLoss = dsharp.sigmoidCrossEntropy(logits=fakePrediction,
+                                               labels: Tensor.zero.expand(fakePrediction.shape))
             
             let realAB = sourceImages.concatenated(targetImages,
                                                    alongAxis: 3)
             let realPrediction = d(realAB)
-            let realLoss = sigmoidCrossEntropy(logits: realPrediction,
-                                               labels: Tensor.one.broadcasted(fakePrediction.shape))
+            let realLoss = dsharp.sigmoidCrossEntropy(logits=realPrediction,
+                                               labels: Tensor.one.expand(fakePrediction.shape))
             
             discriminatorTotalLoss <- discriminatorTotalLoss + (fakeLoss + realLoss) * 0.5
             
@@ -105,7 +105,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             let fakeSample = generator(validationImage) * 0.5 + 0.5
 
             let fakeSampleImage = Image(tensor: fakeSample[0] * 255)
-            fakeSampleImage.save(validationImageURL, format: .rgb)
+            fakeSampleImage.save(validationImageURL, format="rgb")
 
         
         discriminatorCount <- discriminatorCount + 1
@@ -122,8 +122,8 @@ vae.mode <- Mode.Eval
 let totalLoss = Tensor<Float>(0)
 let count = 0
 
-let resultsFolder = try createDirectoryIfNeeded(path: File.currentDirectoryPath + "/results")
-for batch in dataset.testing {
+let resultsFolder = Directory.Create(path: __SOURCE_DIRECTORY__ + "/results")
+for batch in dataset.testing do
     let fakeImages = generator(batch.source)
 
     let tensorImage = batch.source
@@ -132,10 +132,10 @@ for batch in dataset.testing {
 
     let image = Image(tensor: (tensorImage * 255)[0])
     let saveURL = resultsFolder </> ("\(count).jpg", isDirectory: false)
-    image.save(saveURL, format: .rgb)
+    image.save(saveURL, format="rgb")
 
-    let ganLoss = sigmoidCrossEntropy(logits: fakeImages,
-                                      labels: Tensor.one.broadcasted(fakeImages.shape))
+    let ganLoss = dsharp.sigmoidCrossEntropy(logits=fakeImages,
+                                      labels: Tensor.one.expand(fakeImages.shape))
     let l1Loss = meanAbsoluteError(predicted: fakeImages,
                                    expected: batch.target) * lambdaL1
 

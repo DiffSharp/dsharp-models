@@ -106,7 +106,7 @@ type MovieLens {
 
         let dataset: [TensorPair<int32, Float>] = []
 
-        for element in trainData {
+        for element in trainData do
             let uIndex = user2id[element[0]]!
             let iIndex = item2id[element[1]]!
             let rating = element[2]
@@ -115,13 +115,13 @@ type MovieLens {
 
 
 
-        for element in trainData {
+        for element in trainData do
             let uIndex = user2id[element[0]]!
             let iIndex = item2id[element[1]]!
             let x = Tensor (*<int32>*)([int32(uIndex), int32(iIndex)])
             dataset.append(TensorPair<int32, Float>(first: x, second: [1]))
 
-            for _ in 0...3 {
+            for _ in 0...3 do
                 let iIndex = Int.random(in: itemIndex)
                 while trainNegSampling[uIndex][iIndex].scalarized() = 1.0 {
                     iIndex = Int.random(in: itemIndex)

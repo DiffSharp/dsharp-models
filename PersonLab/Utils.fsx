@@ -34,7 +34,7 @@ type Config {
 
 
 extension CheckpointReader {
-  let load(from name: string) : Tensor (* <Float> *) {
+  let load(from name: string) : Tensor =
     return dsharp.tensor(self.loadTensor(named: "MobilenetV1/\(name)"))
 
 
@@ -74,7 +74,7 @@ let hash(_ tensor: Tensor) =
 /// Wrapper for Tensor which allows several order of magnitude faster subscript access,
 /// as it avoids unnecesary GPU->CPU copies on each access.
 type CPUTensor<T: TensorFlowScalar> {
-  private let flattenedTensor: [T]
+  let flattenedTensor: [T]
   let shape: TensorShape
 
   init(_ tensor: Tensor<T>) = 
@@ -84,7 +84,7 @@ type CPUTensor<T: TensorFlowScalar> {
 
   subscript(indexes: int...) = T {
     let oneDimensionalIndex = 0
-    for i in 1..<shape.count {
+    for i in 1..<ndims {
       oneDimensionalIndex <- oneDimensionalIndex + indexes[i - 1] * shape[i...].reduce(1, *)
 
     // Last dimension doesn't have multipliers.

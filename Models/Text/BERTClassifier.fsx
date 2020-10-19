@@ -35,8 +35,8 @@ type BERTClassifier: Module, Regularizable {
 
 
   /// Returns: logits with shape `[batchSize, classCount]`.
-  @differentiable(wrt: self)
-  member _.forward(input: TextBatch) : Tensor (* <Float> *) {
+  (wrt: self)
+  override _.forward(input: TextBatch) : Tensor =
     dense(bert(input)[0..., 0])
 
 

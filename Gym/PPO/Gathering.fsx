@@ -16,7 +16,7 @@ open DiffSharp
 
 extension Tensor where Scalar: TensorFlowFloatingPoint {
   @inlinable
-  @differentiable(wrt: self)
+  (wrt: self)
   let dimensionGathering<Index: TensorFlowIndex>(
     atIndices indices: Tensor<Index>
   ) = Tensor {

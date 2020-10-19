@@ -27,7 +27,7 @@ open DiffSharp
 type ConvBNV2: Layer {
     let conv: Conv2D<Float>
     let norm: BatchNorm<Float>
-    @noDerivative let isLast: bool
+    let isLast: bool
 
     public init(
         inFilters: int,
@@ -48,8 +48,8 @@ type ConvBNV2: Layer {
             self.norm = BatchNorm(
                  axis: -1, 
                  momentum: 0.9, 
-                 offset: dsharp.tensor(zeros: [outFilters]),
-                 scale: dsharp.tensor(zeros: [outFilters]),
+                 offset: dsharp.zeros([outFilters]),
+                 scale: dsharp.zeros([outFilters]),
                  epsilon: 1e-5,
                  runningMean: dsharp.tensor(0),
                  runningVariance: dsharp.tensor(1))
@@ -58,9 +58,9 @@ type ConvBNV2: Layer {
 
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let convResult = input.sequenced(through: conv, norm)
+    
+    override _.forward(input) =
+        let convResult = input |> conv, norm)
         return isLast ? convResult : relu(convResult)
 
 
@@ -71,8 +71,8 @@ type ConvBNV2: Layer {
 type Shortcut: Layer {
     let projection: ConvBNV2
     let avgPool: AvgPool2D<Float>
-    @noDerivative let needsProjection: bool
-    @noDerivative let needsPool: bool
+    let needsProjection: bool
+    let needsPool: bool
     
     public init(inFilters: int, outFilters: int, stride: int) = 
         avgPool = AvgPool2D<Float>(poolSize: (2, 2), strides = [stride, stride))
@@ -84,8 +84,8 @@ type Shortcut: Layer {
         )
 
     
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let res = input
         if needsProjection then res = projection(res)
         if needsPool       then res = avgPool(res)
@@ -115,8 +115,8 @@ type ResidualBlockV2: Layer {
         shortcut = Shortcut(inFilters: inFilters, outFilters: outFilters, stride: stride)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let convResult = convs.differentiableReduce(input) =  $1($0)
         return relu(convResult + shortcut(input))
 
@@ -128,7 +128,7 @@ type ResNetV2: Layer {
     let maxPool: MaxPool2D<Float>
     let residualBlocks: [ResidualBlockV2] = []
     let avgPool = GlobalAvgPool2D<Float>()
-    let flatten = Flatten<Float>()
+    let flatten = Flatten()
     let classifier: Dense
 
     /// Initializes a new ResNet v2 network model.
@@ -166,11 +166,11 @@ type ResNetV2: Layer {
         classifier = Dense(inputSize=512 * depth.expansion, outputSize=classCount)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let inputLayer = maxPool(inputStem.differentiableReduce(input) =  $1($0))
         let blocksReduced = residualBlocks.differentiableReduce(inputLayer) =  $1($0)
-        return blocksReduced.sequenced(through: avgPool, flatten, classifier)
+        return blocksReduced |> avgPool, flatten, classifier)
 
 
 

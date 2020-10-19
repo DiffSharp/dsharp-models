@@ -37,15 +37,15 @@ type ConvBN: Layer {
         self.norm = BatchNorm(featureCount=filterShape.3, momentum: 0.9, epsilon: 1e-5)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        return input.sequenced(through: conv, norm)
+    
+    override _.forward(input) =
+        return input |> conv, norm)
 
 
 
 type ResidualBlock: Layer {
     let projection: ConvBN
-    @noDerivative let needsProjection: bool
+    let needsProjection: bool
     let earlyConvs: [ConvBN] = []
     let lastConv: ConvBN
 
@@ -83,8 +83,8 @@ type ResidualBlock: Layer {
 
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let residual: Tensor
         // TODO: Find a way for this to be checked only at initialization, not during training or 
         // inference.
@@ -109,7 +109,7 @@ type ResNet: Layer {
     let maxPool: MaxPool2D<Float>
     let residualBlocks: [ResidualBlock] = []
     let avgPool = GlobalAvgPool2D<Float>()
-    let flatten = Flatten<Float>()
+    let flatten = Flatten()
     let classifier: Dense
 
     /// Initializes a new ResNet v1 or v1.5 network model.
@@ -161,13 +161,13 @@ type ResNet: Layer {
             outputSize=classCount)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let inputLayer = maxPool(relu(initialLayer(input)))
         let blocksReduced = residualBlocks.differentiableReduce(inputLayer) =  last, layer in
             layer(last)
 
-        return blocksReduced.sequenced(through: avgPool, flatten, classifier)
+        return blocksReduced |> avgPool, flatten, classifier)
 
 
 

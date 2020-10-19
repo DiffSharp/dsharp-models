@@ -17,7 +17,7 @@
 open DiffSharp
 
 type Activation<Scalar: TensorFlowFloatingPoint> =
-    @differentiable (Tensor<Scalar>) = Tensor<Scalar>
+     (Tensor<Scalar>) = Tensor<Scalar>
 
 extension KeyPathIterable {
     public mutating let clipByGlobalNorm<Scalar: TensorFlowFloatingPoint>(clipNorm: Scalar) = 
@@ -38,21 +38,21 @@ extension KeyPathIterable {
 
 extension Tensor {
     /// Returns this tensor reshaped to a matrix (i.e., a rank-2 tensor).
-    @differentiable(wrt: self where Scalar: TensorFlowFloatingPoint)
+    (wrt: self where Scalar: TensorFlowFloatingPoint)
     internal let reshapedToMatrix() = Tensor {
         reshaped([-1, shape[rank - 1]])
 
 
     /// Returns this previously-reshaped rank-2 tensor reshaped back to its original shape.
-    @differentiable(wrt: self where Scalar: TensorFlowFloatingPoint)
+    (wrt: self where Scalar: TensorFlowFloatingPoint)
     internal let reshapedFromMatrix(originalShape: TensorShape) = Tensor {
         reshaped(
-            TensorShape(
+            [
                 originalShape[0..<originalShape.count - 1].dimensions + [shape[rank - 1]]))
 
 
     /// Returns this previously-reshaped rank-2 tensor reshaped back to its original shape.
-    @differentiable(wrt: self where Scalar: TensorFlowFloatingPoint)
+    (wrt: self where Scalar: TensorFlowFloatingPoint)
     internal let reshapedFromMatrix(originalShape: Tensor (*<int32>*)) = Tensor {
         reshaped(
             toShape: Tensor (*<int32>*)(concatenating: [

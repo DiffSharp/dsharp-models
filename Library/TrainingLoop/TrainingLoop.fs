@@ -20,7 +20,7 @@ open DiffSharp
 // Workaround https://bugs.swift.org/browse/TF-1122 that prevents us from registering a
 // loss function inside our TrainingLoop struct
 public final class LossFunctionWrapper<Output: Differentiable, Target> {
-  type F = @differentiable(Output, @noDerivative Target) = Tensor<Float>
+  type F = (Output, Target) = Tensor<Float>
   let f: F
   init(_ f: @escaping F) =  self.f = f }
 }
@@ -357,8 +357,8 @@ public enum TrainingLoopAction: Error {
 
 extension TrainingLoop {
   /// Call `event` on all callbacks.
-  mutating private let handleEvent(_ event: TrainingLoopEvent) =
-    for callback in callbacks {
+  mutating let handleEvent(_ event: TrainingLoopEvent) =
+    for callback in callbacks do
       try callback(&self, event)
     }
   }
@@ -366,7 +366,7 @@ extension TrainingLoop {
 
 extension TrainingLoop {
   /// Performs `step` on each of `batches`.
-  mutating private let multipleSteps<Batches: Collection>(
+  mutating let multipleSteps<Batches: Collection>(
     on batches: Batches, step: (inout Self) -> Void
   ) where Batches.Element = Batch {
     batchCount = batches.count

@@ -107,12 +107,12 @@ for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated()
     let trainingLossSum: double = 0
     let trainingBatchCount = 0
 
-    for batch in epochBatches {
+    for batch in epochBatches do
         let (documents, labels) = (batch.data, Tensor<Float>(batch.label))
         let (loss, gradients) = valueWithGradient(at: bertClassifier) =  model -> Tensor<Float> in
             let logits = model(documents)
-            return sigmoidCrossEntropy(
-                logits: logits.squeezingShape(at: -1),
+            return dsharp.sigmoidCrossEntropy(
+                logits: logits.squeeze(-1),
                 labels: labels,
                 reduction: { $0.mean())
 
@@ -143,18 +143,18 @@ for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated()
     let devBatchCount = 0
     let devPredictedLabels = [Bool]()
     let devGroundTruth = [Bool]()
-    for batch in cola.validationBatches {
+    for batch in cola.validationBatches do
         let (documents, labels) = (batch.data, Tensor<Float>(batch.label))
         let logits = bertClassifier(documents)
-        let loss = sigmoidCrossEntropy(
-            logits: logits.squeezingShape(at: -1),
+        let loss = dsharp.sigmoidCrossEntropy(
+            logits: logits.squeeze(-1),
             labels: labels,
             reduction: { $0.mean()
         )
         devLossSum <- devLossSum + loss.scalarized()
         devBatchCount <- devBatchCount + 1
 
-        let predictedLabels = sigmoid(logits.squeezingShape(at: -1)) .>= 0.5
+        let predictedLabels = sigmoid(logits.squeeze(-1)) .>= 0.5
         devPredictedLabels.append(contentsOf: predictedLabels.scalars)
         devGroundTruth.append(contentsOf: labels.scalars.map { $0 = 1)
 

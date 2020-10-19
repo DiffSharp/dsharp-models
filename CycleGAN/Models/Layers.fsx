@@ -63,7 +63,7 @@ type ResNetBlock(channels: int, ?useDropOut: bool) =
     let dropOut = Dropout(0.5)
 
     [<ShapeCheck("N,100,H,W")>]
-    member _.forward(input: Tensor) =
+    override _.forward(input: Tensor) =
         let retVal = input |> conv1.forward |> norm1.forward
         let retVal = retVal |> dsharp.relu
 

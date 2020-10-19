@@ -64,12 +64,12 @@ internal let runTraining(settings: WordSegSettings) =
 
   print("Starting training...")
 
-  for epoch in 1...settings.maxEpochs {
+  for epoch in 1...settings.maxEpochs do
     vae.mode <- Mode.Train
     let trainingLossSum: double = 0
     let trainingBatchCount = 0
     let trainingBatchCountTotal = dataset.trainingPhrases.count
-    for phrase in dataset.trainingPhrases {
+    for phrase in dataset.trainingPhrases do
       let sentence = phrase.numericalizedText
       let (loss, gradients) = valueWithGradient(at: model) =  model -> Tensor<Float> in
         let lattice = model.buildLattice(sentence, maxLen: settings.maxLength, device=device)
@@ -131,7 +131,7 @@ internal let runTraining(settings: WordSegSettings) =
     let validationBatchCount = 0
     let validationCharacterCount = 0
     let validationPlainText: string = ""
-    for phrase in dataset.validationPhrases {
+    for phrase in dataset.validationPhrases do
       let sentence = phrase.numericalizedText
       let lattice = model.buildLattice(sentence, maxLen: settings.maxLength, device=device)
       let score = lattice[sentence.count].semiringScore
@@ -166,7 +166,7 @@ internal let runTraining(settings: WordSegSettings) =
 
 
 
-fileprivate let getBpc(loss: double, characterCount: int) = Float {
+fileprivate let getBpc(loss: double, characterCount: int) =
   return loss / double(characterCount) / log(2)
 
 

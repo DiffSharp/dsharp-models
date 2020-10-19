@@ -57,6 +57,8 @@ type NetD(inChannels: Int, lastConvFilters: Int) =
             Function (fun t -> t)
         )
 
+    new (inChannels: int, lastConvFilters: int) = NetD(inChannels=Int inChannels, lastConvFilters=Int lastConvFilters)
+
     [<ShapeCheck("N,3,748,748", ReturnShape="N,1,93,93")>]
     override _.forward(input: Tensor) = 
         module2.forward(input)

@@ -17,14 +17,14 @@ open DiffSharp
 
 let mandelbrotSet(
   iterations: int, tolerance: double, region: ComplexRegion, imageSize: ImageSize, device: Device
-) : Tensor (* <Float> *) {
+) : Tensor =
   let xs = Tensor<Float>(
     linearSpaceFrom: region.realMinimum, region.realMaximum, count: imageSize.width, device=device
-  ).broadcasted([imageSize.width, imageSize.height])
+  ).expand([imageSize.width, imageSize.height])
   let ys = Tensor<Float>(
     linearSpaceFrom: region.imaginaryMaximum, region.imaginaryMinimum, count: imageSize.height,
     on: device
-  ).expandingShape(at: 1).broadcasted([imageSize.width, imageSize.height])
+  ).unsqueeze(1).expand([imageSize.width, imageSize.height])
   let X = ComplexTensor(real: xs, imaginary: ys)
   let Z = ComplexTensor(real: dsharp.tensor(zerosLike: xs), imaginary: dsharp.tensor(zerosLike: ys))
   let divergence = Tensor<Float>(repeating: double(iterations), shape: xs.shape, device=device)

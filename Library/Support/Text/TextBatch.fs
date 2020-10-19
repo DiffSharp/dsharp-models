@@ -54,13 +54,13 @@ type TextBatch(tokenIds: Tensor (*<int32>*), tokenTypeIds: Tensor (*<int32>*), m
 //    let paddedTexts = self.map { text -> TextBatch in
 //      let paddingSize = maxLength - text.tokenIds.shape.[1]
 //      return TextBatch(
-//        tokenIds: dsharp.tensor(copying: text.tokenIds.padded(forSizes: [
+//        tokenIds: dsharp.tensor(copying: text.tokenIds.pad(forSizes: [
 //          (before: 0, after: 0),
 //          (before: 0, after: paddingSize)]), device),
-//        tokenTypeIds: dsharp.tensor(copying: text.tokenTypeIds.padded(forSizes: [
+//        tokenTypeIds: dsharp.tensor(copying: text.tokenTypeIds.pad(forSizes: [
 //          (before: 0, after: 0),
 //          (before: 0, after: paddingSize)]), device),
-//        mask: dsharp.tensor(copying: text.mask.padded(forSizes: [
+//        mask: dsharp.tensor(copying: text.mask.pad(forSizes: [
 //          (before: 0, after: 0),
 //          (before: 0, after: paddingSize)]), device))
 //

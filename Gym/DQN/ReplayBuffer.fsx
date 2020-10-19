@@ -35,17 +35,17 @@ type ReplayBuffer {
   let combined: bool
 
   /// The states that the agent observed.
-  @noDerivative let states: [Tensor<Float>] = []
+  let states: [Tensor<Float>] = []
   /// The actions that the agent took.
-  @noDerivative let actions: [Tensor (*<int32>*)] = []
+  let actions: [Tensor (*<int32>*)] = []
   /// The rewards that the agent received from the environment after taking
   /// an action.
-  @noDerivative let rewards: [Tensor<Float>] = []
+  let rewards: [Tensor<Float>] = []
   /// The next states that the agent received from the environment after taking
   /// an action.
-  @noDerivative let nextStates: [Tensor<Float>] = []
+  let nextStates: [Tensor<Float>] = []
   /// The episode-terminal flag that the agent received after taking an action.
-  @noDerivative let isDones: [Tensor<Bool>] = []
+  let isDones: [Tensor<Bool>] = []
   /// The current size of the replay buffer.
   let count: int { return states.count
 
@@ -87,11 +87,11 @@ type ReplayBuffer {
     if self.combined = true then
       // Combined Experience Replay
       let sampledIndices = (0..<batchSize - 1).map { _ in int32.random(in: 0..<int32(count))
-      indices = Tensor (*<int32>*)(shape: [batchSize], scalars: sampledIndices + [int32(count) - 1])
+      indices = Tensor (*<int32>*)(shape=[batchSize], scalars: sampledIndices + [int32(count) - 1])
     else
       // Vanilla Experience Replay
       let sampledIndices = (0..<batchSize).map { _ in int32.random(in: 0..<int32(count))
-      indices = Tensor (*<int32>*)(shape: [batchSize], scalars: sampledIndices)
+      indices = Tensor (*<int32>*)(shape=[batchSize], scalars: sampledIndices)
 
 
     let stateBatch = dsharp.tensor(stacking: states).gathering(atIndices: indices, alongAxis: 0)

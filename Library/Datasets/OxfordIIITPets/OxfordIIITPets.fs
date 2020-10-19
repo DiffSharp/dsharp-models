@@ -98,14 +98,14 @@ type OxfordIIITPets {
 extension OxfordIIITPets: ImageSegmentationData where Entropy = SystemRandomNumberGenerator {
   /// Creates an instance with `batchSize`, using the SystemRandomNumberGenerator.
   public init(batchSize: int, on device: Device = Device.default) = 
-    self.init(batchSize= batchSize, entropy=SystemRandomNumberGenerator(), device=device)
+    self.init(batchSize= batchSize, device=device)
 
 
   /// Creates an instance with `batchSize`, `inputSize`, and `outputSize`, using the
   /// SystemRandomNumberGenerator.
   public init(batchSize: int, imageSize: int, on device: Device = Device.default) = 
     self.init(
-      batchSize= batchSize, entropy=SystemRandomNumberGenerator(), device=device,
+      batchSize= batchSize, device=device,
       imageSize: imageSize)
 
 

@@ -43,8 +43,8 @@ type Fire: Layer {
             activation= relu)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let squeezed = squeeze(input)
         let expanded1 = expand1(squeezed)
         let expanded3 = expand3(squeezed)
@@ -103,18 +103,18 @@ type SqueezeNetV1_0: Layer {
         expand3FilterCount: 256)
     let conv10: Conv2D<Float>
     let avgPool10 = AvgPool2D<Float>(poolSize: (13, 13), stride=1)
-    let dropout = Dropout<Float>(probability: 0.5)
+    let dropout = Dropout2d(p=0.5)
 
     public init(classCount: int) = 
         conv10 = Conv2d(filterShape=(1, 1, 512, classCount), stride=1, activation= relu)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let convolved1 = input.sequenced(through: conv1, maxPool1)
-        let fired1 = convolved1.sequenced(through: fire2, fire3, fire4, maxPool4, fire5, fire6)
-        let fired2 = fired1.sequenced(through: fire7, fire8, maxPool8, fire9)
-        let convolved2 = fired2.sequenced(through: dropout, conv10, avgPool10)
+    
+    override _.forward(input) =
+        let convolved1 = input |> conv1, maxPool1)
+        let fired1 = convolved1 |> fire2, fire3, fire4, maxPool4, fire5, fire6)
+        let fired2 = fired1 |> fire7, fire8, maxPool8, fire9)
+        let convolved2 = fired2 |> dropout, conv10, avgPool10)
             .reshape([input.shape.[0], conv10.filter.shape.[3]])
         return convolved2
 
@@ -171,18 +171,18 @@ type SqueezeNetV1_1: Layer {
         expand3FilterCount: 256)
     let conv10: Conv2D<Float>
     let avgPool10 = AvgPool2D<Float>(poolSize: (13, 13), stride=1)
-    let dropout = Dropout<Float>(probability: 0.5)
+    let dropout = Dropout2d(p=0.5)
 
     public init(classCount: int) = 
         conv10 = Conv2d(filterShape=(1, 1, 512, classCount), stride=1, activation= relu)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let convolved1 = input.sequenced(through: conv1, maxPool1)
-        let fired1 = convolved1.sequenced(through: fire2, fire3, maxPool3, fire4, fire5)
-        let fired2 = fired1.sequenced(through: maxPool5, fire6, fire7, fire8, fire9)
-        let convolved2 = fired2.sequenced(through: dropout, conv10, avgPool10)
+    
+    override _.forward(input) =
+        let convolved1 = input |> conv1, maxPool1)
+        let fired1 = convolved1 |> fire2, fire3, maxPool3, fire4, fire5)
+        let fired2 = fired1 |> maxPool5, fire6, fire7, fire8, fire9)
+        let convolved2 = fired2 |> dropout, conv10, avgPool10)
             .reshape([input.shape.[0], conv10.filter.shape.[3]])
         return convolved2
 

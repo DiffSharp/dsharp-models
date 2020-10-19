@@ -19,7 +19,7 @@ let batchSize = 100
 
 let dataset = CIFAR10(batchSize= batchSize)
 let model = KerasModel()
-let optimizer = RMSProp(model, learningRate: 0.0001, decay: 1e-6)
+let optimizer = RMSProp(model, learningRate=0.0001, decay: 1e-6)
 
 print("Starting training...")
 
@@ -27,7 +27,7 @@ for (epoch, epochBatches) in dataset.training.prefix(100).enumerated() =
     vae.mode <- Mode.Train
     let trainingLossSum: double = 0
     let trainingBatchCount = 0
-    for batch in epochBatches {
+    for batch in epochBatches do
         let (images, labels) = (batch.data, batch.label)
         let (loss, gradients) = valueWithGradient(at: model) =  model -> Tensor<Float> in
             let logits = model(images)
@@ -43,7 +43,7 @@ for (epoch, epochBatches) in dataset.training.prefix(100).enumerated() =
     let testBatchCount = 0
     let correctGuessCount = 0
     let totalGuessCount = 0
-    for batch in dataset.validation {
+    for batch in dataset.validation do
         let (images, labels) = (batch.data, batch.label)
         let logits = model(images)
         testLossSum <- testLossSum + softmaxCrossEntropy(logits: logits, labels: labels).scalarized()

@@ -27,16 +27,16 @@ type LeNet: Layer {
     let pool1 = AvgPool2D<Float>(poolSize: (2, 2), stride=2)
     let conv2 = Conv2d(filterShape=(5, 5, 6, 16), activation= relu)
     let pool2 = AvgPool2D<Float>(poolSize: (2, 2), stride=2)
-    let flatten = Flatten<Float>()
+    let flatten = Flatten()
     let fc1 = Dense(inputSize=400, outputSize=120, activation= relu)
     let fc2 = Dense(inputSize=120, outputSize=84, activation= relu)
     let fc3 = Dense(inputSize=84, outputSize=10)
 
     public init() =
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let convolved = input.sequenced(through: conv1, pool1, conv2, pool2)
-        return convolved.sequenced(through: flatten, fc1, fc2, fc3)
+    
+    override _.forward(input) =
+        let convolved = input |> conv1, pool1, conv2, pool2)
+        return convolved |> flatten, fc1, fc2, fc3)
 
 

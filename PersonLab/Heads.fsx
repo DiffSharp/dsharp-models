@@ -27,7 +27,7 @@ type PersonlabHeadsResults: Differentiable {
 
 
 type PersonlabHeads: Layer {
-  @noDerivative let ckpt: CheckpointReader
+  let ckpt: CheckpointReader
 
   let heatmap: Conv2D<Float>
   let offsets: Conv2D<Float>
@@ -59,8 +59,8 @@ type PersonlabHeads: Layer {
     )
 
 
-  @differentiable
-  member _.forward(input: Tensor) = PersonlabHeadsResults {
+  
+  override _.forward(input: Tensor) = PersonlabHeadsResults {
     return PersonlabHeadsResults(
       heatmap: sigmoid(self.heatmap(input)),
       offsets: self.offsets(input),

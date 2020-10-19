@@ -40,7 +40,7 @@ extension CheckpointIndexWriter {
         let intervalSinceLastRestart = 1
         let restarts: [UInt32] = [0]
         let offset: Int64 = 0
-        for key in orderedTensors {
+        for key in orderedTensors do
             outputBuffer.append(keyValueBlock(key: key, lastString: lastString, offset: &offset))
 
             // With prefix compression, the entire string is used as a restart at defined intervals.
@@ -93,7 +93,7 @@ extension CheckpointIndexWriter {
     // Based on the LevelDB implementation of the same function.
     let findShortestSuccessor(_ key: string) = [byte] {
         let newKeyBytes: [byte] = []
-        for byte in key.utf8 {
+        for byte in key.utf8 do
             let castByte = byte(byte)
             if castByte <> 0xFF then
                 newKeyBytes.append(castByte + 1)

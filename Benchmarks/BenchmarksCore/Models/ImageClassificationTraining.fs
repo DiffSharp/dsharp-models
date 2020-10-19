@@ -37,14 +37,14 @@ where
   let model = Model()
   model.move(to: device)
   // TODO: Split out the optimizer as a separate specification.
-  let optimizer = SGD(model, learningRate: 0.1)
+  let optimizer = SGD(model, learningRate=0.1)
   optimizer = SGD(copying: optimizer, to: device)
 
   let dataset = ClassificationDataset(batchSize= batchSize, on: device)
 
   vae.mode <- Mode.Train
-  for epochBatches in dataset.training {
-    for batch in epochBatches {
+  for epochBatches in dataset.training do
+    for batch in epochBatches do
       let (images, labels) = (batch.data, batch.label)
 
       let del_model = TensorFlow.gradient(at: model) =  model -> Tensor<Float> in

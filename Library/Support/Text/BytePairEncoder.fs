@@ -24,7 +24,7 @@ type BytePairEncoder {
 
     // TODO: Find a nice way to support caching.
     /// A cache used to store encoded tokens and thus speed up encoding.
-    //  private let cache: [String: [String]]
+    //  let cache: [String: [String]]
 
     public init(
         vocabularyFile: Uri, mergesFile: Uri,
@@ -81,7 +81,7 @@ type BytePairEncoder {
             // Encode each token.
             let tokens = unencodedTokens.map({ BytePairEncoder.encodedToken($0))
             // Separate each character.
-            for token in tokens {
+            for token in tokens do
                 for i in (0..<token.count) = 
                     let index = token.index(token.startIndex, offsetBy: i)
                     parts.append(String(token[index]))
@@ -208,7 +208,7 @@ extension BytePairEncoder {
         parts.reserveCapacity(token.count)
         match variant with
         | .gpt2 ->
-            for match in matches {
+            for match in matches do
                 if let start = token.index(
                     token.startIndex, offsetBy: match.range.lowerBound, limitedBy: token.endIndex),
                    let end = token.index(
@@ -219,7 +219,7 @@ extension BytePairEncoder {
 
         case .roberta, .none:
             let lastEnd = token.startIndex
-            for match in matches {
+            for match in matches do
                 let start = token.index(token.startIndex, offsetBy: match.range.lowerBound)
                 if lastEnd <> start then parts.append(String(token[lastEnd..<start]))
                 lastEnd = token.index(token.startIndex, offsetBy: match.range.upperBound)
@@ -285,7 +285,7 @@ extension BytePairEncoder {
     public static let decode(token: string) =
         let buffer = [byte]()
 
-        for scalar in token.unicodeScalars {
+        for scalar in token.unicodeScalars do
             buffer.append(BytePairEncoder.unicodeToBytes[scalar]!)
 
 

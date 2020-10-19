@@ -34,7 +34,7 @@ type DatasetUtilities() =
         localFileName
 
 (*
-    let currentWorkingDirectoryURL = Uri(fileURLWithPath= File.currentDirectoryPath)
+    let currentWorkingDirectoryURL = Uri(fileURLWithPath= __SOURCE_DIRECTORY__)
         
     public static let defaultDirectory = try! File.url(
             .cachesDirectory, in: .userDomainMask, appropriatenil, create: true)

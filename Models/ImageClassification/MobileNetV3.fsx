@@ -52,7 +52,7 @@ type SqueezeExcitationBlock: Layer {
     let averagePool = GlobalAvgPool2D<Float>()
     let reduceConv: Conv2D<Float>
     let expandConv: Conv2D<Float>
-    @noDerivative let inputOutputSize: int
+    let inputOutputSize: int
 
     public init(inputOutputSize: int, reducedSize: int) = 
         self.inputOutputSize = inputOutputSize
@@ -66,8 +66,8 @@ type SqueezeExcitationBlock: Layer {
             padding="same")
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let avgPoolReshaped = averagePool(input).reshape([
             input.shape.[0], 1, 1, self.inputOutputSize,
         ])
@@ -77,9 +77,9 @@ type SqueezeExcitationBlock: Layer {
 
 
 type InitialInvertedResidualBlock: Layer {
-    @noDerivative let addResLayer: bool
-    @noDerivative let useSELayer: bool = false
-    @noDerivative let activation= ActivationType = .relu
+    let addResLayer: bool
+    let useSELayer: bool = false
+    let activation= ActivationType = .relu
 
     let dConv: DepthwiseConv2D<Float>
     let batchNormDConv: BatchNorm<Float>
@@ -117,8 +117,8 @@ type InitialInvertedResidualBlock: Layer {
         batchNormConv2 = BatchNorm(featureCount=filterMult.1)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let depthwise = batchNormDConv(dConv(input))
         match self.activation {
         | .hardSwish -> depthwise = hardSwish(depthwise)
@@ -143,11 +143,11 @@ type InitialInvertedResidualBlock: Layer {
 
 
 type InvertedResidualBlock: Layer {
-    @noDerivative let strides = [Int, Int)
-    @noDerivative let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
-    @noDerivative let addResLayer: bool
-    @noDerivative let activation= ActivationType = .relu
-    @noDerivative let useSELayer: bool
+    let strides = [Int, Int)
+    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let addResLayer: bool
+    let activation= ActivationType = .relu
+    let useSELayer: bool
 
     let conv1: Conv2D<Float>
     let batchNormConv1: BatchNorm<Float>
@@ -194,8 +194,8 @@ type InvertedResidualBlock: Layer {
         batchNormConv2 = BatchNorm(featureCount=filterMult.1)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let piecewise = batchNormConv1(conv1(input))
         match self.activation {
         | .hardSwish -> piecewise = hardSwish(piecewise)
@@ -229,7 +229,7 @@ type InvertedResidualBlock: Layer {
 
 
 type MobileNetV3Large: Layer {
-    @noDerivative let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>
 
@@ -256,9 +256,9 @@ type MobileNetV3Large: Layer {
     let finalConv: Conv2D<Float>
     let dropoutLayer: Dropout<Float>
     let classiferConv: Conv2D<Float>
-    let flatten = Flatten<Float>()
+    let flatten = Flatten()
 
-    @noDerivative let lastConvChannel: int
+    let lastConvChannel: int
 
     public init(classCount: int = 1000, widthMultiplier: double = 1.0, dropout: Double = 0.2) = 
         inputConv = Conv2d(
@@ -330,17 +330,17 @@ type MobileNetV3Large: Layer {
             filterShape=(1, 1, lastConvChannel, lastPointChannel),
             stride=1,
             padding="same")
-        dropoutLayer = Dropout<Float>(probability: dropout)
+        dropoutLayer = Dropout(probability: dropout)
         classiferConv = Conv2d(
             filterShape=(1, 1, lastPointChannel, classCount),
             stride=1,
             padding="same")
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let initialConv = hardSwish(
-            input.sequenced(through: zeroPad, inputConv, inputConvBatchNorm))
+            input |> zeroPad, inputConv, inputConvBatchNorm))
         let backbone1 = initialConv.sequenced(
             through: invertedResidualBlock1,
             invertedResidualBlock2, invertedResidualBlock3, invertedResidualBlock4,
@@ -362,7 +362,7 @@ type MobileNetV3Large: Layer {
 
 
 type MobileNetV3Small: Layer {
-    @noDerivative let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>
 
@@ -385,9 +385,9 @@ type MobileNetV3Small: Layer {
     let finalConv: Conv2D<Float>
     let dropoutLayer: Dropout<Float>
     let classiferConv: Conv2D<Float>
-    let flatten = Flatten<Float>()
+    let flatten = Flatten()
 
-    @noDerivative let lastConvChannel: int
+    let lastConvChannel: int
 
     public init(classCount: int = 1000, widthMultiplier: double = 1.0, dropout: Double = 0.2) = 
         inputConv = Conv2d(
@@ -449,17 +449,17 @@ type MobileNetV3Small: Layer {
             filterShape=(1, 1, lastConvChannel, lastPointChannel),
             stride=1,
             padding="same")
-        dropoutLayer = Dropout<Float>(probability: dropout)
+        dropoutLayer = Dropout(probability: dropout)
         classiferConv = Conv2d(
             filterShape=(1, 1, lastPointChannel, classCount),
             stride=1,
             padding="same")
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let initialConv = hardSwish(
-            input.sequenced(through: zeroPad, inputConv, inputConvBatchNorm))
+            input |> zeroPad, inputConv, inputConvBatchNorm))
         let backbone1 = initialConv.sequenced(
             through: invertedResidualBlock1,
             invertedResidualBlock2, invertedResidualBlock3, invertedResidualBlock4,

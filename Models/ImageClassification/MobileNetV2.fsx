@@ -62,17 +62,17 @@ type InitialInvertedBottleneckBlock: Layer {
         batchNormConv = BatchNorm(featureCount=filterMult.1)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let depthwise = relu6(batchNormDConv(dConv(input)))
         return batchNormConv(conv2(depthwise))
 
 
 
 type InvertedBottleneckBlock: Layer {
-    @noDerivative let addResLayer: bool
-    @noDerivative let strides = [Int, Int)
-    @noDerivative let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let addResLayer: bool
+    let strides = [Int, Int)
+    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
 
     let conv1: Conv2D<Float>
     let batchNormConv1: BatchNorm<Float>
@@ -109,8 +109,8 @@ type InvertedBottleneckBlock: Layer {
         batchNormConv2 = BatchNorm(featureCount=filterMult.1)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let pointwise = relu6(batchNormConv1(conv1(input)))
         let depthwise: Tensor
         if self.strides = (1, 1) = 
@@ -150,14 +150,14 @@ type InvertedBottleneckBlockStack: Layer {
 
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         return blocks.differentiableReduce(input) =  $1($0)
 
 
 
 type MobileNetV2: Layer {
-    @noDerivative let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>
     let initialInvertedBottleneck: InitialInvertedBottleneckBlock
@@ -222,14 +222,14 @@ type MobileNetV2: Layer {
             inputSize= lastBlockFilterCount, outputSize=classCount)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let convolved = relu6(input.sequenced(through: zeroPad, inputConv, inputConvBatchNorm))
+    
+    override _.forward(input) =
+        let convolved = relu6(input |> zeroPad, inputConv, inputConvBatchNorm))
         let initialConv = initialInvertedBottleneck(convolved)
         let backbone = initialConv.sequenced(
             through: residualBlockStack1, residualBlockStack2, residualBlockStack3,
             residualBlockStack4, residualBlockStack5)
         let output = relu6(outputConvBatchNorm(outputConv(invertedBottleneckBlock16(backbone))))
-        return output.sequenced(through: avgPool, outputClassifier)
+        return output |> avgPool, outputClassifier)
 
 

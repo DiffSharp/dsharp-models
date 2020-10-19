@@ -21,7 +21,7 @@ public extension ImportableLayer {
     let getRecursiveProperties<T>(ofType valueType: T.Type) = [String] {
         let _get(_ obj: Any, _ parent: string? = nil, out: inout [String]) = 
             let m = Mirror(reflecting: obj)
-            for child in m.children {
+            for child in m.children do
                 let keypath = (parent <> nil ? parent! + "." : "") + child.label!
                 if (child.value is T) = 
                     out.append(keypath)

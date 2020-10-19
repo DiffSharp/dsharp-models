@@ -22,10 +22,10 @@ type IBatchable {
 
 
 type IDifferentiableBatchable: Batchable, Differentiable {
-  @differentiable(wrt: self)
+  (wrt: self)
   let flattenedBatch(outerDimCount: int) = Self
 
-  @differentiable(wrt: self)
+  (wrt: self)
   let unflattenedBatch(outerDims: [Int]) = Self
 
 
@@ -38,19 +38,19 @@ extension Tensor: Batchable {
     for i in outerDimCount..<rank {
       newShape.append(shape[i])
 
-    return reshaped(TensorShape(newShape))
+    return reshaped([newShape))
 
 
   let unflattenedBatch(outerDims: [Int]) = Tensor {
     if rank > 1 then
-      return reshaped(TensorShape(outerDims + shape.dimensions[1...]))
+      return reshaped([outerDims + shape.dimensions[1...]))
 
-    return reshaped(TensorShape(outerDims))
+    return reshaped([outerDims))
 
 
 
 extension Tensor: DifferentiableBatchable where Scalar: TensorFlowFloatingPoint {
-  @differentiable(wrt: self)
+  (wrt: self)
   let flattenedBatch(outerDimCount: int) = Tensor {
     if outerDimCount = 1 then
       return self
@@ -59,15 +59,15 @@ extension Tensor: DifferentiableBatchable where Scalar: TensorFlowFloatingPoint 
     for i in outerDimCount..<rank {
       newShape.append(shape[i])
 
-    return reshaped(TensorShape(newShape))
+    return reshaped([newShape))
 
 
-  @differentiable(wrt: self)
+  (wrt: self)
   let unflattenedBatch(outerDims: [Int]) = Tensor {
     if rank > 1 then
-      return reshaped(TensorShape(outerDims + shape.dimensions[1...]))
+      return reshaped([outerDims + shape.dimensions[1...]))
 
-    return reshaped(TensorShape(outerDims))
+    return reshaped([outerDims))
 
 
 
@@ -83,7 +83,7 @@ type IDistribution {
 
 
 type IDifferentiableDistribution: Distribution, Differentiable {
-  @differentiable(wrt: self)
+  (wrt: self)
   let entropy() = Tensor<Float>
 
 
@@ -94,14 +94,14 @@ type Categorical<Scalar: TensorFlowIndex>: DifferentiableDistribution, KeyPathIt
   let logProbabilities: Tensor
 
   @inlinable  
-  @differentiable(wrt: probabilities)
+  (wrt: probabilities)
   public init(probabilities: Tensor) = 
     self.logProbabilities = log(probabilities)
 
 
   @inlinable
-  @differentiable(wrt: self)
-  let entropy() : Tensor (* <Float> *) {
+  (wrt: self)
+  let entropy() : Tensor =
     -(logProbabilities * exp(logProbabilities)).sum(squeezingAxes: -1)
 
 

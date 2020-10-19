@@ -42,12 +42,12 @@ type PersonLab {
     self.personlabHeads = PersonlabHeads(checkpoint: ckpt)
 
 
-  member _.forward(_ inputImage: Image) = [Pose] {
+  override _.forward(_ inputImage: Image) = [Pose] {
     let startTime = Date()
 
     let resizedImage = inputImage.resized(config.inputImageSize)
     let normalizedImageTensor = resizedImage.tensor * (2.0 / 255.0) - 1.0
-    let batchedNormalizedImagesTensor = normalizedImageTensor.expandingShape(at: 0)
+    let batchedNormalizedImagesTensor = normalizedImageTensor.unsqueeze(0)
     let preprocessingTime = Date()
 
     let convnetResults = personlabHeads(backbone(batchedNormalizedImagesTensor))

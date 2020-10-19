@@ -21,14 +21,14 @@ open DiffSharp
 type ChannelShuffle: ParameterlessLayer {
     type TangentVector = EmptyTangentVector
 
-    @noDerivative let groups: int
+    let groups: int
     
     public init(groups: int = 2) = 
         self.groups = groups
 
     
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let batchSize = input.shape.[0], height = input.shape.[1], width = input.shape.[2],
         channels = input.shape.[3]
         let channelsPerGroup: int = channels / groups
@@ -41,8 +41,8 @@ type ChannelShuffle: ParameterlessLayer {
 
 
 type InvertedResidual: Layer {
-    @noDerivative let includeBranch: bool = true
-    @noDerivative let zeropad: ZeroPadding2D = ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
+    let includeBranch: bool = true
+    let zeropad: ZeroPadding2D = ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
     
     let branch: Sequential<ZeroPadding2D<Float>, Sequential<DepthwiseConv2D<Float>,
     Sequential<BatchNorm<Float>, Sequential<Conv2D<Float>, BatchNorm<Float>>>>>
@@ -89,20 +89,20 @@ type InvertedResidual: Layer {
         batchNorm3 = BatchNorm(featureCount=branchChannels)
 
     
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         if !includeBranch then
             let splitInput = input.split(count: 2, alongAxis: 3)
             let input1 = splitInput[0]
             let input2 = splitInput[1]
-            let output2 = relu(input2.sequenced(through: conv1, batchNorm1))
-            output2 = relu(output2.sequenced(through: zeropad, depthwiseConv, batchNorm2, conv2,
+            let output2 = relu(input2 |> conv1, batchNorm1))
+            output2 = relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
                                              batchNorm3))
             return ChannelShuffle()(input1.concatenated(output2, alongAxis: 3))
         else
             let output1 = branch(input)
-            let output2 = relu(input.sequenced(through: conv1, batchNorm1))
-            output2 = relu(output2.sequenced(through: zeropad, depthwiseConv, batchNorm2, conv2,
+            let output2 = relu(input |> conv1, batchNorm1))
+            output2 = relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
                                              batchNorm3))
             return ChannelShuffle()(output1.concatenated(output2, alongAxis: 3))
 
@@ -112,7 +112,7 @@ type InvertedResidual: Layer {
 
 
 type ShuffleNetV2: Layer {
-    @noDerivative let zeroPad: ZeroPadding2D<Float> = ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
+    let zeroPad: ZeroPadding2D<Float> = ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
     
     let conv1: Conv2D<Float>
     let batchNorm1: BatchNorm<Float>
@@ -142,7 +142,7 @@ type ShuffleNetV2: Layer {
         outputChannels = stagesOutputChannels.1
         invertedResidualBlocksStage1 = [InvertedResidual(filters: (inputChannels, outputChannels),
                                                          stride: 2)]
-        for _ in 1...stagesRepeat.0 {
+        for _ in 1...stagesRepeat.0 do
             invertedResidualBlocksStage1.append(InvertedResidual(
                 filters: (outputChannels, outputChannels), stride=1)
             )
@@ -151,7 +151,7 @@ type ShuffleNetV2: Layer {
         outputChannels = stagesOutputChannels.2
         invertedResidualBlocksStage2 = [InvertedResidual(filters: (inputChannels, outputChannels),
                                                          stride: 2)]
-        for _ in 1...stagesRepeat.1 {
+        for _ in 1...stagesRepeat.1 do
             invertedResidualBlocksStage2.append(InvertedResidual(
                 filters: (outputChannels, outputChannels), stride=1)
             )
@@ -161,21 +161,21 @@ type ShuffleNetV2: Layer {
         outputChannels = stagesOutputChannels.3
         invertedResidualBlocksStage3 = [InvertedResidual(filters: (inputChannels, outputChannels),
                                                          stride: 2)]
-        for _ in 1...stagesRepeat.2 {
+        for _ in 1...stagesRepeat.2 do
             invertedResidualBlocksStage3.append(InvertedResidual(
                 filters: (outputChannels, outputChannels), stride=1)
             )
 
 
     
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let output = relu(input.sequenced(through: zeroPad, conv1, batchNorm1, zeroPad, maxPool))
+    
+    override _.forward(input) =
+        let output = relu(input |> zeroPad, conv1, batchNorm1, zeroPad, maxPool))
         output = invertedResidualBlocksStage1.differentiableReduce(output) = $1($0)
         output = invertedResidualBlocksStage2.differentiableReduce(output) = $1($0)
         output = invertedResidualBlocksStage3.differentiableReduce(output) = $1($0)
         output = relu(conv2(output))
-        return output.sequenced(through: globalPool, dense)
+        return output |> globalPool, dense)
 
 
 

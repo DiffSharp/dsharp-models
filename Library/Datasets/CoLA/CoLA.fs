@@ -68,7 +68,7 @@ type CoLA {
   let validationBatches: LazyMapSequence<Slices<Samples>, LabeledTextBatch>
     
   /// The url from which to download the dataset.
-  private let url: Uri = Uri(
+  let url: Uri = Uri(
     string: string(
       "https://firebasestorage.googleapis.com/v0/b/mtl-sentence-representations.appspot.com/"
       + "o/data%2FCoLA.zip?alt=media&token=46d5e637-3411-4188-bc44-5809b5bfb5f4"))!

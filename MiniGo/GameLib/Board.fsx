@@ -21,11 +21,11 @@ open DiffSharp
 /// designed for that.
 type Board: Hashable {
     // Holds the stone `Color`s  for each position.
-    private let stones: ShapedArray<Color?>
+    let stones: ShapedArray<Color?>
     let size: int
 
     init(size: int) = 
-        self.stones = ShapedArray<Color?>(repeating: nil, shape: [size, size])
+        self.stones = ShapedArray<Color?>(repeating: nil, shape=[size, size])
         self.size = size
 
 

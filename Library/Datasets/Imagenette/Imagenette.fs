@@ -122,7 +122,7 @@ type Imagenette {
 extension Imagenette: ImageClassificationData where Entropy = SystemRandomNumberGenerator {
   /// Creates an instance with `batchSize`, using the SystemRandomNumberGenerator.
   public init(batchSize: int, on device: Device = Device.default) = 
-    self.init(batchSize= batchSize, entropy=SystemRandomNumberGenerator(), device=device)
+    self.init(batchSize= batchSize, device=device)
 
 
   /// Creates an instance with `batchSize`, `inputSize`, and `outputSize`, using the
@@ -131,7 +131,7 @@ extension Imagenette: ImageClassificationData where Entropy = SystemRandomNumber
     batchSize: int, inputSize= ImagenetteSize, outputSize=Int, on device: Device = Device.default
   ) = 
     self.init(
-      batchSize= batchSize, entropy=SystemRandomNumberGenerator(), device=device,
+      batchSize= batchSize, device=device,
       inputSize= inputSize, outputSize=outputSize)
 
 
@@ -160,7 +160,7 @@ let exploreImagenetteDirectory(
     at: path, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
 
   let urls: [URL] = []
-  for directoryURL in dirContents {
+  for directoryURL in dirContents do
     let subdirContents = try Directory.GetFiles(
       at: directoryURL, includingPropertiesForKeys: [.isDirectoryKey],
       options: [.skipsHiddenFiles])

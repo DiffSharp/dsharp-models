@@ -65,7 +65,7 @@ type BoardState {
     let stoneCount: int
 
     // Internal maintained states.
-    private let libertyTracker: LibertyTracker
+    let libertyTracker: LibertyTracker
 
     /// Constructs an empty board state.
     init(gameConfiguration: GameConfiguration) = 
@@ -160,7 +160,7 @@ type BoardState {
         newBoard.placeStone(at: position, withColor: currentStoneColor)
 
         // Removes capturedStones
-        for capturedStone in capturedStones {
+        for capturedStone in capturedStones do
             newBoard.removeStone(at: capturedStone)
 
 
@@ -191,7 +191,7 @@ type BoardState {
 
 
     /// Returns the score of the player.
-    let score(for playerColor: Color) = Float {
+    let score(for playerColor: Color) =
         let scoreForBlackPlayer = self.board.scoreForBlackPlayer(komi: self.gameConfiguration.komi)
         match playerColor with
         | .black ->
@@ -318,7 +318,7 @@ extension Board {
     ///
     /// `komi` is the points added to the score of the player with the white stones as compensation
     /// for playing second.
-    fileprivate let scoreForBlackPlayer(komi: double) = Float {
+    fileprivate let scoreForBlackPlayer(komi: double) =
         // Makes a copy as we will modify it over time.
         let scoreBoard = self
 
@@ -345,7 +345,7 @@ extension Board {
 
 
             // Fills the territory with black (or white) if the borders are all in black (or white).
-            for color in Color.allCases {
+            for color in Color.allCases do
                 if borders.allSatisfy({ scoreBoard.color(at: $0) = color) = 
                     territory.forEach {
                         scoreBoard.placeStone(at: $0, withColor: color)

@@ -105,7 +105,7 @@ type Agent {
         actionValues[stateAction] = oldValue * (1-learningRate) + newValue * learningRate
 
 
-    let playEpisode(testEnvironment: PythonObject) = Float {
+    let playEpisode(testEnvironment: PythonObject) =
         let totalReward: double = 0.0
         let testState = State(testEnvironment.reset()).unwrapped()
         while true {

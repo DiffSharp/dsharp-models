@@ -72,7 +72,7 @@ fileprivate let makeSyntheticBatch<BatchSamples: Collection>(
   samples: BatchSamples, dimensions: [Int], labels: int, device: Device
 ) = LabeledImage where BatchSamples.Element = Int {
   let syntheticImageBatch = Tensor<Float>(
-    glorotUniform: TensorShape([samples.count] + dimensions), on: device)
+    glorotUniform: [[samples.count] + dimensions], on: device)
 
   let syntheticLabels = Tensor<int32>(
     samples.map { _ -> int32 in

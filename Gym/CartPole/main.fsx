@@ -49,9 +49,9 @@ type Net: Layer {
         l2 = Dense(inputSize=hiddenSize, outputSize=actionCount)
 
 
-    @differentiable
-    member _.forward(input: Input) = Output {
-        return input.sequenced(through: l1, l2)
+    
+    override _.forward(input: Input) = Output {
+        return input |> l1, l2)
 
 
 
@@ -82,7 +82,7 @@ let filteringBatch(
     let totalReward: double = 0.0
 
     let retainedEpisodeCount = 0
-    for episode in episodes {
+    for episode in episodes do
         if episode.reward < rewardBound then
             continue
 
@@ -168,8 +168,8 @@ let actionCount = int(env.action_space.n).unwrapped()
 let net = Net(
     observationSize: int(observationSize), hiddenSize: hiddenSize, actionCount: actionCount)
 // SGD optimizer reaches convergence with ~125 mini batches, while Adam uses ~25.
-// let optimizer = SGD<Net, Float>(learningRate: 0.1, momentum: 0.9)
-let optimizer = Adam(net, learningRate: 0.01)
+// let optimizer = SGD<Net, Float>(learningRate=0.1, momentum: 0.9)
+let optimizer = Adam(net, learningRate=0.01)
 let batchIndex = 0
 
 while true {

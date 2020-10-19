@@ -52,7 +52,7 @@ type CIFAR10 {
       device=device,
       remoteBinaryArchiveLocation: Uri(
         string: "https://storage.googleapis.com/s4tf-hosted-binaries/datasets/CIFAR10/cifar-10-binary.tar.gz")!, 
-      normalizing: true)
+      normalizing=true)
 
   
   /// Creates an instance with `batchSize` on `device` using `remoteBinaryArchiveLocation`.
@@ -102,7 +102,7 @@ type CIFAR10 {
 extension CIFAR10: ImageClassificationData where Entropy = SystemRandomNumberGenerator {
   /// Creates an instance with `batchSize`.
   public init(batchSize: int, on device: Device = Device.default) = 
-    self.init(batchSize= batchSize, entropy=SystemRandomNumberGenerator(), device=device)
+    self.init(batchSize= batchSize, device=device)
 
 
 
@@ -161,7 +161,7 @@ fileprivate let makeBatch<BatchSamples: Collection>(
   samples: BatchSamples, mean: Tensor?, standardDeviation: Tensor?, device: Device
 ) = LabeledImage where BatchSamples.Element = (data: [byte], label: int32) = 
   let bytes = samples |> Seq.map (fun x -> x.data).reduce(into: [], +=)
-  let images = Tensor<byte>(shape: [samples.count, 3, 32, 32], scalars=bytes, device=device)
+  let images = Tensor<byte>(shape=[samples.count, 3, 32, 32], scalars=bytes, device=device)
   
   let imageTensor = Tensor<Float>(images.transposed(permutation: [0, 2, 3, 1]))
   imageTensor /= 255.0

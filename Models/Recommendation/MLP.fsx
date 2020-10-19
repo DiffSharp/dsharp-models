@@ -34,8 +34,8 @@ type MLP: Layer {
 
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let blocksReduced = blocks.differentiableReduce(input) =  last, layer in
             layer(last)
 

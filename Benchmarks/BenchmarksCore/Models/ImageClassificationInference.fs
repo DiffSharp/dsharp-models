@@ -41,8 +41,8 @@ where
   let model = Model()
   model.move(to: device)
 
-  for epochBatches in dataset.training {
-    for batch in epochBatches {
+  for epochBatches in dataset.training do
+    for batch in epochBatches do
       let images = batch.data
 
       try

@@ -54,9 +54,9 @@ with
 
 
 // Apply the model to image.
-let out = style(imageTensor.expandingShape(at: 0))
+let out = style(imageTensor.unsqueeze(0))
 
-let outputImage = Image(tensor: out.squeezingShape(at: 0))
-outputImage.save(Uri(fileURLWithPath= output), format: .rgb)
+let outputImage = Image(tensor: out.squeeze(0))
+outputImage.save(Uri(fileURLWithPath= output), format="rgb")
 
 print("Writing output to \(output).")

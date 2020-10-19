@@ -43,8 +43,8 @@ type DLRM: Module {
     let mlpBottom: MLP
     let mlpTop: MLP
     let latentFactors: [Embedding<Float>]
-    @noDerivative let nDense: int
-    @noDerivative let interaction: InteractionType
+    let nDense: int
+    let interaction: InteractionType
 
     /// Randomly initialize a DLRM model from the given hyperparameters.
     ///
@@ -72,16 +72,16 @@ type DLRM: Module {
         self.interaction = interaction
 
 
-    @differentiable
-    member _.forward(input: DLRMInput) : Tensor (* <Float> *) {
+    
+    override _.forward(input: DLRMInput) : Tensor =
         callAsFunction(denseInput: input.dense, sparseInput: input.sparse)
 
 
-    @differentiable(wrt: self)
-    member _.forward(
+    (wrt: self)
+    override _.forward(
         denseInput: Tensor,
         sparseInput: [Tensor (*<int32>*)]
-    ) : Tensor (* <Float> *) {
+    ) : Tensor =
         precondition(denseInput.shape.last! = nDense)
         precondition(sparseInput.count = latentFactors.count)
         let denseEmbVec = mlpBottom(denseInput)
@@ -95,11 +95,11 @@ type DLRM: Module {
         return prediction.reshape([-1])
 
 
-    @differentiable(wrt: (denseEmbVec, sparseEmbVecs))
+    (wrt: (denseEmbVec, sparseEmbVecs))
     let computeInteractions(
         denseEmbVec:  Tensor<Float>,
         sparseEmbVecs: [Tensor<Float>]
-    ) : Tensor (* <Float> *) {
+    ) : Tensor =
         match self.interaction {
         | .concatenate ->
             return dsharp.tensor(concatenating: sparseEmbVecs + [denseEmbVec], alongAxis: 1)

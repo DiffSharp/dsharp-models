@@ -5,7 +5,7 @@ type ReflectionPad2D<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
     type TangentVector = EmptyTangentVector
 
     /// The padding values along the spatial dimensions.
-    @noDerivative let padding: ((Int, Int), (Int, Int))
+    let padding: ((Int, Int), (Int, Int))
 
     /// Creates a reflect-padding 2D Layer.
     ///
@@ -27,10 +27,10 @@ type ReflectionPad2D<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
     ///
     /// - Parameter input: The input to the layer. Expected layout is BxHxWxC.
     /// - Returns: The output.
-    @differentiable
-    member _.forward(input: Tensor<Scalar>) : Tensor =
+    
+    override _.forward(input: Tensor<Scalar>) : Tensor =
         // Padding applied to height and width dimensions only.
-        return input.padded(forSizes: [
+        return input.pad(forSizes: [
             (0, 0),
             padding.0,
             padding.1,
@@ -47,8 +47,8 @@ type ReLU<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
     ///
     /// - Parameter input: The input to the layer.
     /// - Returns: The output.
-    @differentiable
-    member _.forward(input: Tensor<Scalar>) : Tensor =
+    
+    override _.forward(input: Tensor<Scalar>) : Tensor =
         return relu(input)
 
 

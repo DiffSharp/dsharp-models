@@ -17,25 +17,33 @@
 #r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
 #r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
 
+#load @"Data\Dataset.fsx"
+#load @"Models\Layers.fsx"
+#load @"Models\Generator.fsx"
+#load @"Models\Discriminator.fsx"
+
+open System.IO
 open DiffSharp
+open DiffSharp.Optim
 open Datasets
+open Dataset
+open Layers
+open Generator
+open Discriminator
 
-let options = Options.parseOrExit()
+//let options = Options.parseOrExit()
 
-let dataset = try! CycleGANDataset(
-    from: options.datasetPath,
-    trainbatchSize= 1,
-    testbatchSize= 1)
+let dataset = CycleGANDataset(trainBatchSize= 1, testBatchSize= 1)
 
-let generatorG = ResNetGenerator(inputChannels: 3, outputChannels: 3, blocks: 9, ngf: 64, normalization: InstanceNorm2D.self)
-let generatorF = ResNetGenerator(inputChannels: 3, outputChannels: 3, blocks: 9, ngf: 64, normalization: InstanceNorm2D.self)
-let discriminatorX = NetD(inChannels=3, lastConvFilters: 64)
-let discriminatorY = NetD(inChannels=3, lastConvFilters: 64)
+let generatorG = ResNetGenerator(inputChannels=3, outputChannels=3, blocks=9, ngf=64)
+let generatorF = ResNetGenerator(inputChannels=3, outputChannels=3, blocks=9, ngf=64)
+let discriminatorX = NetD(inChannels=3, lastConvFilters=64)
+let discriminatorY = NetD(inChannels=3, lastConvFilters=64)
 
-let optimizerGF = Adam(generatorF, learningRate: 0.0002, beta1: 0.5)
-let optimizerGG = Adam(generatorG, learningRate: 0.0002, beta1: 0.5)
-let optimizerDX = Adam(discriminatorX, learningRate: 0.0002, beta1: 0.5)
-let optimizerDY = Adam(discriminatorY, learningRate: 0.0002, beta1: 0.5)
+let optimizerGF = Adam(generatorF, learningRate=dsharp.scalar(0.0002), beta1=dsharp.scalar(0.5))
+let optimizerGG = Adam(generatorG, learningRate=dsharp.scalar(0.0002), beta1=dsharp.scalar(0.5))
+let optimizerDX = Adam(discriminatorX, learningRate=dsharp.scalar(0.0002), beta1=dsharp.scalar(0.5))
+let optimizerDY = Adam(discriminatorY, learningRate=dsharp.scalar(0.0002), beta1=dsharp.scalar(0.5))
 
 let epochCount = options.epochs
 let lambdaL1 = Tensorf(10)
@@ -44,8 +52,8 @@ let _ones = Tensorf.one
 
 let step = 0
 
-let validationImage = dataset.trainSamples[0].domainA.expandingShape(at: 0)
-let validationImageURL = Uri(File.currentDirectoryPath)! </> ("sample.jpg")
+let validationImage = (fst dataset.TrainingSamples.[0]).unsqueeze(0)
+let validationImageURL = __SOURCE_DIRECTORY__ </> ("sample.jpg")
 
 // MARK: Train
 
@@ -53,7 +61,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     print("Epoch \(epoch) started at: \(Date())")
     vae.mode <- Mode.Train
     
-    for batch in epochBatches {
+    for batch in epochBatches do
         vae.mode <- Mode.Train
         
         let inputX = batch.domainA
@@ -62,20 +70,17 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         // we do it outside of GPU scope so that dataset shuffling happens on CPU side
         let concatanatedImages = inputX.concatenated(inputY)
 
-        let scaledImages = resize(images: concatanatedImages,
-                                  size: (286, 286),
-                                  method: .nearest)
+        let scaledImages = resize(images: concatanatedImages, size: (286, 286), method: .nearest)
         let croppedImages = scaledImages.slice(lowerBounds: Tensor (*<int32>*)([0, int32(random() % 30), int32(random() % 30), 0]),
                                                sizes: [2, 256, 256, 3])
         if Bool.random() = 
             croppedImages = croppedImages.reversed(inAxes: 2)
 
+        let realX = croppedImages[0].unsqueeze(0)
+        let realY = croppedImages[1].unsqueeze(0)
 
-        let realX = croppedImages[0].expandingShape(at: 0)
-        let realY = croppedImages[1].expandingShape(at: 0)
-
-        let onesd = _ones.broadcasted([1, 30, 30, 1])
-        let zerosd = _zeros.broadcasted([1, 30, 30, 1])
+        let onesd = _ones.expand([1, 30, 30, 1])
+        let zerosd = _zeros.expand([1, 30, 30, 1])
 
         let _fakeX = Tensorf.zero
         let _fakeY = Tensorf.zero
@@ -90,7 +95,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
                 abs(realY - cycledY).mean()) * lambdaL1
 
             let discFakeY = discriminatorY(fakeY)
-            let generatorLoss = sigmoidCrossEntropy(logits: discFakeY, labels: onesd)
+            let generatorLoss = dsharp.sigmoidCrossEntropy(logits=discFakeY, labels: onesd)
 
             let sameY = g(realY)
             let identityLoss = abs(sameY - realY).mean() * lambdaL1 * 0.5
@@ -99,7 +104,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
 
             _fakeX = fakeX
 
-            return totalLoss
+            totalLoss
 
 
         let (fLoss, del_generatorF) = valueWithGradient(at: generatorF) =  g -> Tensorf in
@@ -112,7 +117,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
                 + abs(realX - cycledX).mean()) * lambdaL1
 
             let discFakeX = discriminatorX(fakeX)
-            let generatorLoss = sigmoidCrossEntropy(logits: discFakeX, labels: onesd)
+            let generatorLoss = dsharp.sigmoidCrossEntropy(logits=discFakeX, labels: onesd)
 
             let sameX = g(realX)
             let identityLoss = abs(sameX - realX).mean() * lambdaL1 * 0.5
@@ -120,27 +125,27 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
 
             _fakeY = fakeY
-            return totalLoss
+            totalLoss
 
 
         let (xLoss, del_discriminatorX) = valueWithGradient(at: discriminatorX) =  d -> Tensorf in
             let discFakeX = d(_fakeX)
             let discRealX = d(realX)
 
-            let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeX, labels: zerosd)
-                + sigmoidCrossEntropy(logits: discRealX, labels: onesd))
+            let totalLoss = 0.5 * (sigmoidCrossEntropy(logits=discFakeX, labels: zerosd)
+                + dsharp.sigmoidCrossEntropy(logits=discRealX, labels: onesd))
 
-            return totalLoss
+            totalLoss
 
 
         let (yLoss, del_discriminatorY) = valueWithGradient(at: discriminatorY) =  d -> Tensorf in
             let discFakeY = d(_fakeY)
             let discRealY = d(realY)
 
-            let totalLoss = 0.5 * (sigmoidCrossEntropy(logits: discFakeY, labels: zerosd)
-                + sigmoidCrossEntropy(logits: discRealY, labels: onesd))
+            let totalLoss = 0.5 * (sigmoidCrossEntropy(logits=discFakeY, labels: zerosd)
+                + dsharp.sigmoidCrossEntropy(logits=discRealY, labels: onesd))
 
-            return totalLoss
+            totalLoss
 
 
         optimizerGG.update(&generatorG, along: del_generatorG)
@@ -156,7 +161,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             let fakeSample = generatorG(validationImage) * 0.5 + 0.5
 
             let fakeSampleImage = Image(tensor: fakeSample[0] * 255)
-            fakeSampleImage.save(validationImageURL, format: .rgb)
+            fakeSampleImage.save(validationImageURL, format="rgb")
 
             print("GeneratorG loss: \(gLoss.scalars[0])")
             print("GeneratorF loss: \(fLoss.scalars[0])")
@@ -166,17 +171,13 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
 
         step <- step + 1
 
-
-
 // MARK: Final test
 
-let aResultsFolder = try createDirectoryIfNeeded(path: File
-                                                                  .currentDirectoryPath + "/testA_results")
-let bResultsFolder = try createDirectoryIfNeeded(path: File
-                                                                  .currentDirectoryPath + "/testB_results")
+let aResultsFolder = Directory.Create(__SOURCE_DIRECTORY__ + "/testA_results")
+let bResultsFolder = Directory.Create(__SOURCE_DIRECTORY__ + "/testB_results")
 
 let testStep = 0
-for testBatch in dataset.testing {
+for testBatch in dataset.testing do
     let realX = testBatch.domainA
     let realY = testBatch.domainB
 
@@ -190,9 +191,9 @@ for testBatch in dataset.testing {
     let imageY = Image(tensor: resultY[0] * 255)
 
     imageX.save(aResultsFolder </> ("\(String(testStep)).jpg", isDirectory: false),
-                format: .rgb)
+                format="rgb")
     imageY.save(bResultsFolder </> ("\(String(testStep)).jpg", isDirectory: false),
-                format: .rgb)
+                format="rgb")
 
     testStep <- testStep + 1
 

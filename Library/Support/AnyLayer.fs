@@ -189,7 +189,7 @@ type AnyLayer<Input: Differentiable, Output: Differentiable, Scalar: FloatingPoi
 
 
   /// Creates a type-erased derivative from the given layer.
-  @differentiable
+  
   public init<Underlying: Layer>(_ layer: Underlying)
   where Underlying.Input = Input, Underlying.Output = Output, Underlying.TangentVector.VectorSpaceScalar = Scalar {
     self.box = ConcreteLayerBox<Underlying>(layer)
@@ -250,8 +250,8 @@ extension AnyLayer: Layer {
     return box._vjpCallAsFunction(input)
 
 
-  @differentiable
-  member _.forward(input: Input) = Output {
+  
+  override _.forward(input: Input) = Output {
     return _callAsFunction(input)
 
 

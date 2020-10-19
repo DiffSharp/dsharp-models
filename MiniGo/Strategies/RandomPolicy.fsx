@@ -41,7 +41,7 @@ public class RandomPolicy: Policy {
         return .place(position: randomMove)
 
 
-    private let chooseMoveWithoutLoweringScore(for boardState: BoardState) = Move {
+    let chooseMoveWithoutLoweringScore(for boardState: BoardState) = Move {
         let legalMoves = boardState.legalMoves
         precondition(!legalMoves.isEmpty)
 

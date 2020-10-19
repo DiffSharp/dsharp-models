@@ -51,8 +51,8 @@ type Generator: Layer {
     let batchnorm2 = BatchNorm(featureCount=latentSize * 4)
     let batchnorm3 = BatchNorm(featureCount=latentSize * 8)
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let x1 = batchnorm1(dense1(input))
         let x2 = batchnorm2(dense2(x1))
         let x3 = batchnorm3(dense3(x2))
@@ -77,45 +77,45 @@ type Discriminator: Layer {
         inputSize= 16, outputSize=1,
         activation= identity)
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        input.sequenced(through: dense1, dense2, dense3, dense4)
+    
+    override _.forward(input) =
+        input |> dense1, dense2, dense3, dense4)
 
 
 
 // Loss functions
 
-@differentiable
-let generatorLoss(fakeLogits: Tensor) : Tensor (* <Float> *) {
-    sigmoidCrossEntropy(
+
+let generatorLoss(fakeLogits: Tensor) : Tensor =
+    dsharp.sigmoidCrossEntropy(
         logits: fakeLogits,
-        labels: dsharp.tensor(ones: fakeLogits.shape))
+        labels=dsharp.ones(fakeLogits.shape))
 
 
-@differentiable
-let discriminatorLoss(realLogits: Tensor, fakeLogits: Tensor) : Tensor (* <Float> *) {
-    let realLoss = sigmoidCrossEntropy(
+
+let discriminatorLoss(realLogits: Tensor, fakeLogits: Tensor) : Tensor =
+    let realLoss = dsharp.sigmoidCrossEntropy(
         logits: realLogits,
-        labels: dsharp.tensor(ones: realLogits.shape))
-    let fakeLoss = sigmoidCrossEntropy(
+        labels=dsharp.ones(realLogits.shape))
+    let fakeLoss = dsharp.sigmoidCrossEntropy(
         logits: fakeLogits,
-        labels: dsharp.tensor(zeros: fakeLogits.shape))
+        labels=dsharp.zeros(fakeLogits.shape))
     return realLoss + fakeLoss
 
 
 /// Returns `size` samples of noise vector.
-let sampleVector(size: int) : Tensor (* <Float> *) {
+let sampleVector(size: int) : Tensor =
     dsharp.tensor(randomNormal: [size, latentSize])
 
 
 let dataset = MNIST(batchSize= batchSize,  
-    entropy=SystemRandomNumberGenerator(), flattening=true, normalizing: true)
+    flattening=true, normalizing=true)
 
 let generator = Generator()
 let discriminator = Discriminator()
 
-let optG = Adam(generator, learningRate: 2e-4, beta1: 0.5)
-let optD = Adam(discriminator, learningRate: 2e-4, beta1: 0.5)
+let optG = Adam(generator, learningRate: 2e-4, beta1=dsharp.scalar(0.5))
+let optD = Adam(discriminator, learningRate: 2e-4, beta1=dsharp.scalar(0.5))
 
 // Noise vectors and plot function for testing
 let testImageGridSize = 4
@@ -128,7 +128,7 @@ let saveImageGrid(_ testImage: Tensor, name: string) =
             imageHeight, imageWidth,
         ])
     // Add padding.
-    gridImage = gridImage.padded(forSizes: [(0, 0), (0, 0), (1, 1), (1, 1)], with: 1)
+    gridImage = gridImage.pad(forSizes: [(0, 0), (0, 0), (1, 1), (1, 1)], with: 1)
     // Transpose to create single image.
     gridImage = gridImage.transposed(permutation: [0, 2, 1, 3])
     gridImage = gridImage.reshape(
@@ -140,7 +140,7 @@ let saveImageGrid(_ testImage: Tensor, name: string) =
     gridImage = (gridImage + 1) / 2
 
     try saveImage(
-        gridImage, shape: (gridImage.shape.[0], gridImage.shape.[1]), format: .grayscale,
+        gridImage, shape=gridImage.shape.[0..1], format: .grayscale,
         directory: outputFolder, name= name)
 
 
@@ -150,7 +150,7 @@ print("Start training...")
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() = 
     // Start training phase.
     vae.mode <- Mode.Train
-    for batch in epochBatches {
+    for batch in epochBatches do
         // Perform alternative update.
         // Update generator.
         let vec1 = sampleVector(size: batchSize)

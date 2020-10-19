@@ -32,7 +32,7 @@ let *(lhs: ComplexTensor, rhs: ComplexTensor) = ComplexTensor {
   return ComplexTensor(real: real, imaginary: imaginary)
 
 
-let abs(_ value: ComplexTensor) : Tensor (* <Float> *) {
+let abs(_ value: ComplexTensor) : Tensor =
   return value.real .* value.real + value.imaginary .* value.imaginary
 
 

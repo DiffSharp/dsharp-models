@@ -16,7 +16,7 @@ open Checkpoints
 open DiffSharp
 
 public class MiniGoCheckpointReader: CheckpointReader {
-    private let layerCounts: Map<string, int> = [:]
+    let layerCounts: Map<string, int> = [:]
 
     let readTensor(layerName: string, weightName: string) = Tensor<Float>? {
         let countSuffix = layerCounts[layerName] = nil ? "" : "_\(layerCounts[layerName]!)"
@@ -33,7 +33,7 @@ public class MiniGoCheckpointReader: CheckpointReader {
 
 
 
-private let checkShapes(_ tensor1: Tensor, _ tensor2: Tensor) = 
+let checkShapes(_ tensor1: Tensor, _ tensor2: Tensor) = 
     guard tensor1.shape = tensor2.shape else {
         print("Shape mismatch: \(tensor1.shape) <> \(tensor2.shape)")
         fatalError()

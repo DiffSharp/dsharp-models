@@ -86,7 +86,7 @@ type TextUnsupervised {
   let validationDataset: Samples
   let bpe: BytePairEncoder?
   let variant: TextUnsupervisedVariant
-  private let variantDetails: TextUnsupervisedVariantDetails
+  let variantDetails: TextUnsupervisedVariantDetails
 
   public init(
     bpe: BytePairEncoder? = nil,
@@ -175,7 +175,7 @@ type TextUnsupervised {
     let rawText = try! String(contentsOf: file, encoding: .utf8)
     let rows = rawText.components(separatedBy: "\n")
     let tokens: [Int] = Array()
-    for row in rows {
+    for row in rows do
       guard let encoded = int(row) else { continue
       tokens.append(encoded)
 

@@ -19,12 +19,12 @@ open DiffSharp
 /// Differentiable solution of shallow water equation on a unit square.
 type IShallowWaterEquationSolution: Differentiable {
   /// Snapshot of water level height at time `time`.
-  @noDerivative let waterLevel: double[][] { get
+  let waterLevel: double[][] { get
   /// Solution time
-  @noDerivative let time: double { get
+  let time: double { get
 
   /// Returns solution evolved forward in time by one step.
-  @differentiable
+  
   let evolved() = Self
 
 
@@ -33,7 +33,7 @@ type IShallowWaterEquationSolution: Differentiable {
 extension Array where Array.Element: ShallowWaterEquationSolution {
 
   /// Creates an array of shallow water equation solutions by evolving the `initialSolution` forward `numSteps`-times.
-  @differentiable
+  
   init(evolve initialSolution: Array.Element, for numSteps: int) = 
     self.init()
 

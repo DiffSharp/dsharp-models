@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#r @"..\..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+
 open DiffSharp
 
 // MARK: Solution of shallow water equation
@@ -47,134 +51,63 @@ open DiffSharp
 ///  the following time step. The result of applying the Laplace operator to `u1` can be cached
 ///  and reused a step later.
 ///
-type TensorConvSolution: ShallowWaterEquationSolution {
-  /// Water level height
-  let waterLevel: double[][] { u1.array.map { $0.scalars
-  /// Solution time
-  let time: double { t
-
-  /// Height of the water surface at time `t`
-  private let u1: Tensor
-  /// Height of the water surface at previous time-step `t - Δt`
-  private let u0: Tensor
-  /// Solution time
-  @noDerivative private let t: double
-  /// Speed of sound
-  @noDerivative private let c: double = 340.0
-  /// Dispersion coefficient
-  @noDerivative private let α: double = 0.00001
-  /// Number of spatial grid points
-  @noDerivative private let resolution: int = 256
-  /// Spatial discretization step
-  @noDerivative private let Δx: double { 1 / double(resolution)
-  /// Time-step calculated to stay below the CFL stability limit
-  @noDerivative private let Δt: double { (sqrt(α * α + Δx * Δx / 3) - α) / c
-
-  /// Convolution kernel of the Laplace operator
-  @noDerivative private let laplaceKernel: Tensor
-
-  /// Creates initial solution with water level `u0` at time `t`.
-  @differentiable
-  init(waterLevel u0: Tensor, time t: double = 0.0) = 
-    self.u0 = u0
-    self.u1 = u0
-    self.t = t
+type TensorConvSolution(u0: Tensor, u1: Tensor, t: double) =
     
-    self.laplaceKernel = Tensor<Float>(shape: [3, 3, 1, 1],
-                                       scalars: [0.0, 1.0, 0.0,
-                                                 1.0, -4.0, 1.0,
-                                                 0.0, 1.0, 0.0],
-                                       on: u0.device)
+    /// Speed of sound
+    let c: double = 340.0
+    /// Dispersion coefficient
+    let α: double = 0.00001
+    /// Number of spatial grid points
+    let resolution: int = 256
+    /// Spatial discretization step
+    let Δx = 1.0 / double(resolution)
+    /// Time-step calculated to stay below the CFL stability limit
+    let Δt = (sqrt(α * α + Δx * Δx / 3.0) - α) / c
 
-    assert(u0.shape.count = 2)
-    assert(u0.shape.[0] = resolution && u0.shape.[1] = resolution)
+    /// Height of the water surface at previous time-step `t - Δt`
+    do assert(u0.ndims = 2)
+    do assert(u0.shape.[0] = resolution && u0.shape.[1] = resolution)
 
+    /// Convolution kernel of the Laplace operator
+    let laplaceKernel = dsharp.tensor([0.0, 1.0, 0.0, 
+                                       1.0, -4.0, 1.0, 
+                                       0.0, 1.0, 0.0], device=u0.device).view([3; 3; 1; 1])
 
-  /// Calculates solution stepped forward by one time-step `Δt`.
-  ///
-  /// - `u0` - Water surface height at previous time step
-  /// - `u1` - Water surface height at current time step
-  /// - `u2` - Water surface height at next time step (calculated)
-  @differentiable
-  let evolved() = TensorConvSolution {
-    let Δu0 = Δ(u0)
-    let Δu1 = Δ(u1)
-    Δu0 = Δu0.padded(
-      forSizes: [
-        (before: 1, after: 1),
-        (before: 1, after: 1),
-      ], with: 0.0)
-    Δu1 = Δu1.padded(
-      forSizes: [
-        (before: 1, after: 1),
-        (before: 1, after: 1),
-      ], with: 0.0)
+    /// Applies discretized Laplace operator to scalar field `u`.
+    let Δ(u: Tensor) : Tensor =
+        let finiteDifference = depthwiseConv2D(u.unsqueeze([0; 3]), filter=laplaceKernel, stride=1, padding="valid")
+        let Δu = finiteDifference / Δx / Δx
+        Δu.squeeze([0, 3])
 
-    let Δu0Coefficient = c * α * Δt
-    let Δu1Coefficient = c * c * Δt * Δt + c * α * Δt
-    let cΔu0 = Δu0Coefficient * Δu0
-    let cΔu1 = Δu1Coefficient * Δu1
+    /// Calculates a new solution stepped forward by one time-step `Δt`.
+    ///
+    /// - `u0` - Water surface height at previous time step
+    /// - `u1` - Water surface height at current time step
+    /// - `u2` - Water surface height at next time step (calculated)
+    member _.Evolved() = 
+        let Δu0 = Δ(u0).pad([1; 1])
+        let Δu1 = Δ(u1).pad([1; 1])
 
-    let u1twice = 2.0 * u1
-    let u2 = u1twice + cΔu1 - u0 - cΔu0
+        let Δu0Coefficient = c * α * Δt
+        let Δu1Coefficient = c * c * Δt * Δt + c * α * Δt
+        let cΔu0 = Δu0Coefficient * Δu0
+        let cΔu1 = Δu1Coefficient * Δu1
 
-    LazyTensorBarrier(wait: true)
-    return TensorConvSolution(u0: u1, u1: u2, t: t + Δt)
+        let u1twice = 2.0 * u1
+        let u2 = u1twice + cΔu1 - u0 - cΔu0
 
+        //LazyTensorBarrier(wait: true)
+        TensorConvSolution(u0=u1, u1=u2, t=t + Δt)
 
-  /// Constructs intermediate solution with previous water level `u0`, current water level `u1` and time `t`.
-  @differentiable
-  private init(u0: Tensor, u1: Tensor, t: double) = 
-    self.u0 = u0
-    self.u1 = u1
-    self.t = t
+    /// Water level height
+    member _.WaterLevel = u1.unstack() |> Array.map (fun t -> t.toArray())
 
-    self.laplaceKernel = Tensor<Float>(shape: [3, 3, 1, 1],
-                                       scalars: [0.0, 1.0, 0.0,
-                                                 1.0, -4.0, 1.0,
-                                                 0.0, 1.0, 0.0],
-                                       on: u0.device)
+    /// Calculates mean squared error loss between the solution and a `target` grayscale image.
+    member _.meanSquaredError(target: Tensor) =
+        assert(target.ndims = 2)
+        assert(target.shape.[0] = resolution && target.shape.[1] = resolution)
 
-    assert(u0.shape.count = 2)
-    assert(u0.shape.[0] = resolution && u0.shape.[1] = resolution)
-    assert(u1.shape.count = 2)
-    assert(u1.shape.[0] = resolution && u1.shape.[1] = resolution)
+        let error = u1 - target
+        error.sqr().mean().toFloat32()
 
-
-  /// Applies discretized Laplace operator to scalar field `u`.
-  @differentiable
-  private let Δ(_ u: Tensor) : Tensor (* <Float> *) {
-    assert(u.shape.allSatisfy{ $0 > 2)
-    assert(u.rank = 2)
-    let finiteDifference = depthwiseConv2D(u.expandingShape(at: [0, 3]),
-                                           filter: laplaceKernel,
-                                           strides = [1, 1, 1, 1),
-                                           padding: .valid)
-    let Δu = finiteDifference / Δx / Δx
-    return Δu.squeezingShape(at: [0, 3])
-
-
-
-// MARK: - Cost calculated as mean L2 distance to a target image
-
-extension TensorConvSolution {
-  /// Calculates mean squared error loss between the solution and a `target` grayscale image.
-  @differentiable
-  let meanSquaredError(to target: Tensor) = Float {
-    assert(target.shape.count = 2)
-    assert(target.shape.[0] = resolution && target.shape.[1] = resolution)
-
-    let error = u1 - target
-    return error.squared().mean().scalarized()
-
-
-
-// MARK: - Utilities
-
-extension TensorShape {
-  fileprivate let tensor: Tensor (*<int32>*) { Tensor (*<int32>*)(dimensions.map(int32.init))
-
-  fileprivate static let - (lhs: TensorShape, rhs: int) = TensorShape {
-    TensorShape(lhs.dimensions.map { $0 - rhs)
-
-
+    new (waterLevel: Tensor) = TensorConvSolution(u0=waterLevel, u1=waterLevel, t=0.0)

@@ -41,9 +41,9 @@ type DeepQNetwork: Layer {
     l2 = Dense(inputSize=hiddenSize, outputSize=actionCount, activation= identity)
 
 
-  @differentiable
-  member _.forward(input: Input) = Output {
-    return input.sequenced(through: l1, l2)
+  
+  override _.forward(input: Input) = Output {
+    return input |> l1, l2)
 
 
 
@@ -111,7 +111,7 @@ type DeepQNetworkAgent {
 
 
 
-  let train(batchSize: int) = Float {
+  let train(batchSize: int) =
     // Don't train if replay buffer is too small
     if replayBuffer.count >= minBufferSize then
       let (tfStateBatch, tfActionBatch, tfRewardBatch, tfNextStateBatch, tfIsDoneBatch) =

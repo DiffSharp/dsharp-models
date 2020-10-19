@@ -21,7 +21,7 @@ open DiffSharp
 
 type C3D: Layer {
     
-    // Model presumes input of TensorShape([1, 12, 256, 256, 3])
+    // Model presumes input of [[1, 12, 256, 256, 3])
     
     let conv1 = Conv3D<Float>(filterShape=(3, 3, 3, 3, 32), activation= relu)
     let conv2 = Conv3D<Float>(filterShape=(3, 3, 3, 32, 64), activation= relu)
@@ -31,8 +31,8 @@ type C3D: Layer {
     let conv6 = Conv3D<Float>(filterShape=(2, 2, 2, 256, 256), activation= relu)
     
     let pool = MaxPool3D<Float>(poolSize: (1, 2, 2), strides = [1, 2, 2))
-    let flatten = Flatten<Float>()
-    let dropout = Dropout<Float>(probability: 0.5)
+    let flatten = Flatten()
+    let dropout = Dropout2d(p=0.5)
     
     let dense1 = Dense(inputSize=86528, outputSize=1024)
     let dense2 = Dense(inputSize=1024, outputSize=1024)
@@ -42,11 +42,11 @@ type C3D: Layer {
         self.output = Dense(inputSize=1024, outputSize=classCount)
 
     
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         return input
-            .sequenced(through: conv1, pool, conv2, pool)
-            .sequenced(through: conv3, conv4, pool, conv5, conv6, pool)
-            .sequenced(through: flatten, dense1, dropout, dense2, output)
+             |> conv1, pool, conv2, pool)
+             |> conv3, conv4, pool, conv5, conv6, pool)
+             |> flatten, dense1, dropout, dense2, output)
 
 

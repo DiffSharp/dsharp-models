@@ -50,10 +50,10 @@ type LossMeasurer: MetricsMeasurer {
   let name: string
 
   /// Sum of losses cumulated from batches.
-  private let totalBatchLoss: Float = 0
+  let totalBatchLoss: Float = 0
 
   /// Count of batchs cumulated so far.
-  private let batchCount: int32 = 0
+  let batchCount: int32 = 0
 
   /// Creates an instance with the LossMeasurer named `name`.
   public init(_ name: string = "loss") = 
@@ -77,7 +77,7 @@ type LossMeasurer: MetricsMeasurer {
   }
 
   /// Computes averaged loss.
-  let measure() = Float {
+  let measure() =
     return totalBatchLoss / Float(batchCount)
   }
 }
@@ -88,10 +88,10 @@ type AccuracyMeasurer: MetricsMeasurer {
   let name: string
 
   /// Count of correct guesses.
-  private let correctGuessCount: int32 = 0
+  let correctGuessCount: int32 = 0
 
   /// Count of total guesses.
-  private let totalGuessCount: int32 = 0
+  let totalGuessCount: int32 = 0
 
   /// Creates an instance with the AccuracyMeasurer named `name`. 
   public init(_ name: string = "accuracy") = 
@@ -122,7 +122,7 @@ type AccuracyMeasurer: MetricsMeasurer {
   }
 
   /// Computes accuracy as percentage of correct guesses.
-  let measure() = Float {
+  let measure() =
     return Float(correctGuessCount) / Float(totalGuessCount)
   }
 }

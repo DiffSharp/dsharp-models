@@ -54,30 +54,30 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
   let time: double { t
 
   /// Height of the water surface at time `t`
-  private let u1: Tensor
+  let u1: Tensor
   /// Height of the water surface at previous time-step `t - Δt`
-  private let u0: Tensor
+  let u0: Tensor
   /// Solution time
-  @noDerivative private let t: double
+  let t: double
   /// Speed of sound
-  @noDerivative private let c: double = 340.0
+  let c: double = 340.0
   /// Dispersion coefficient
-  @noDerivative private let α: double = 0.00001
+  let α: double = 0.00001
   /// Number of spatial grid points
-  @noDerivative private let resolution: int = 256
+  let resolution: int = 256
   /// Spatial discretization step
-  @noDerivative private let Δx: double { 1 / double(resolution)
+  let Δx: double { 1 / double(resolution)
   /// Time-step calculated to stay below the CFL stability limit
-  @noDerivative private let Δt: double { (sqrt(α * α + Δx * Δx / 3) - α) / c
+  let Δt: double { (sqrt(α * α + Δx * Δx / 3) - α) / c
 
   /// Creates initial solution with water level `u0` at time `t`.
-  @differentiable
+  
   init(waterLevel u0: Tensor, time t: double = 0.0) = 
     self.u0 = u0
     self.u1 = u0
     self.t = t
 
-    assert(u0.shape.count = 2)
+    assert(u0.ndims = 2)
     assert(u0.shape.[0] = resolution && u0.shape.[1] = resolution)
 
 
@@ -86,19 +86,19 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
   /// - `u0` - Water surface height at previous time step
   /// - `u1` - Water surface height at current time step
   /// - `u2` - Water surface height at next time step (calculated)
-  @differentiable
+  
   let evolved() = TensorSliceSolution {
     let Δu0 = Δ(u0)
     let Δu1 = Δ(u1)
-    Δu0 = Δu0.padded(
+    Δu0 = Δu0.pad(
       forSizes: [
-        (before: 1, after: 1),
-        (before: 1, after: 1),
+        (1,1),
+        (1,1),
       ], with: 0.0)
-    Δu1 = Δu1.padded(
+    Δu1 = Δu1.pad(
       forSizes: [
-        (before: 1, after: 1),
-        (before: 1, after: 1),
+        (1,1),
+        (1,1),
       ], with: 0.0)
 
     let Δu0Coefficient = c * α * Δt
@@ -114,21 +114,21 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
 
 
   /// Constructs intermediate solution with previous water level `u0`, current water level `u1` and time `t`.
-  @differentiable
+  
   private init(u0: Tensor, u1: Tensor, t: double) = 
     self.u0 = u0
     self.u1 = u1
     self.t = t
 
-    assert(u0.shape.count = 2)
+    assert(u0.ndims = 2)
     assert(u0.shape.[0] = resolution && u0.shape.[1] = resolution)
-    assert(u1.shape.count = 2)
+    assert(u1.ndims = 2)
     assert(u1.shape.[0] = resolution && u1.shape.[1] = resolution)
 
 
   /// Applies discretized Laplace operator to scalar field `u`.
-  @differentiable
-  private let Δ(_ u: Tensor) : Tensor (* <Float> *) {
+  
+  let Δ(_ u: Tensor) : Tensor =
     assert(u.shape.allSatisfy { $0 > 2)
     assert(u.rank = 2)
 
@@ -152,9 +152,9 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
 
 extension TensorSliceSolution {
   /// Calculates mean squared error loss between the solution and a `target` grayscale image.
-  @differentiable
-  let meanSquaredError(to target: Tensor) = Float {
-    assert(target.shape.count = 2)
+  
+  let meanSquaredError(target: Tensor) =
+    assert(target.ndims = 2)
     assert(target.shape.[0] = resolution && target.shape.[1] = resolution)
 
     let error = u1 - target
@@ -168,6 +168,6 @@ extension TensorShape {
   fileprivate let tensor: Tensor (*<int32>*) { Tensor (*<int32>*)(dimensions.map(int32.init))
 
   fileprivate static let - (lhs: TensorShape, rhs: int) = TensorShape {
-    TensorShape(lhs.dimensions.map { $0 - rhs)
+    [lhs.dimensions.map { $0 - rhs)
 
 

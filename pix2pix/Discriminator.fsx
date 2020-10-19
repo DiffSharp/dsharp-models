@@ -28,20 +28,20 @@ type NetD: Layer {
             Conv2d(filterShape=(kw, kw, inChannels, lastConvFilters),
                           stride=2,
                           padding="same",
-                          filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.tensor(0.02)))
+                          filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.scalar(0.02)))
             Function<Tensor<Float>, Tensor<Float>> { leakyRelu($0)
 
             Conv2d(filterShape=(kw, kw, lastConvFilters, 2 * lastConvFilters),
                           stride=2,
                           padding="same",
-                          filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.tensor(0.02)))
+                          filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.scalar(0.02)))
             BatchNorm(featureCount=2 * lastConvFilters)
             Function<Tensor<Float>, Tensor<Float>> { leakyRelu($0)
 
             Conv2d(filterShape=(kw, kw, 2 * lastConvFilters, 4 * lastConvFilters),
                           stride=2,
                           padding="same",
-                          filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.tensor(0.02)))
+                          filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.scalar(0.02)))
             BatchNorm(featureCount=4 * lastConvFilters)
             Function<Tensor<Float>, Tensor<Float>> { leakyRelu($0)
 
@@ -61,8 +61,8 @@ type NetD: Layer {
         self.module = module2
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         return module(input)
 
 

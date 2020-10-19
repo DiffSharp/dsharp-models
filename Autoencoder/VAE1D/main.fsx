@@ -16,10 +16,14 @@
 // by Diederik P Kingma and Max Welling
 // Reference implementation: https://github.com/pytorch/examples/blob/master/vae/main.py
 
+#r @"..\..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
+
 open DiffSharp
 open DiffSharp.Model
 open DiffSharp.Optim
-open DiffSharp.Data
 open Datasets
 
 let epochCount = 10
@@ -28,7 +32,7 @@ let imageHeight = 28
 let imageWidth = 28
 
 let outputFolder = "./output/"
-let dataset = MNIST(batchSize= batchSize, entropy=SystemRandomNumberGenerator(), flattening=true)
+let dataset = MNIST(batchSize= batchSize, flattening=true)
 
 let inputDim = 784  // 28*28 for any MNIST
 let hiddenDim = 400
@@ -69,8 +73,8 @@ let vae = VAE()
 let optimizer = Adam(vae, lr = dsharp.scalar 1e-3)
 
 // Loss function: sum of the KL divergence of the embeddings and the cross entropy loss between the input and it's reconstruction. 
-let vaeLossFunction(input: Tensor, output: Tensor, mu: Tensor, logVar: Tensor) : Tensor (* <Float> *) =
-    let crossEntropy : Tensor =  failwith "tbd" // sigmoidCrossEntropy(logits: output, labels: input, reduction: _sum)
+let vaeLossFunction(input: Tensor, output: Tensor, mu: Tensor, logVar: Tensor) : Tensor =
+    let crossEntropy = dsharp.sigmoidCrossEntropy(logits=output, labels=input, reduction="sum")
     let klDivergence = -0.5 * (1 + logVar - mu ** 2 - exp(logVar)).sum()
     crossEntropy + klDivergence
 
@@ -96,10 +100,10 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         //if epoch = 0 || (epoch + 1) % 10 = 0 then
         //    try
         //        try saveImage(
-        //            sampleImages[0..<1], shape: (imageWidth, imageHeight), format: .grayscale,
+        //            sampleImages[0..<1], shape=[imageWidth, imageHeight), format: .grayscale,
         //            directory: outputFolder, name= "epoch-\(epoch)-input")
         //        try saveImage(
-        //            testImages[0..<1], shape: (imageWidth, imageHeight), format: .grayscale,
+        //            testImages[0..<1], shape=[imageWidth, imageHeight), format: .grayscale,
         //            directory: outputFolder, name= "epoch-\(epoch)-output")
         //    with e ->
         //        print("Could not save image with error: \(error)")

@@ -23,7 +23,7 @@ type IScheduledParameter {
     /// Returns the parameter value for the specified training step.
     ///
     /// - Parameter step: Training step.
-    member _.forward(forStep step: UInt64) = Scalar
+    override _.forward(forStep step: UInt64) = Scalar
 
 
 /// Dummy parameter schedule that represents no schedule being used. This is useful as a
@@ -37,7 +37,7 @@ type FixedParameter<Scalar: FloatingPoint>: ScheduledParameter {
 
 
     @inlinable
-    member _.forward(forStep step: UInt64) = Scalar {
+    override _.forward(forStep step: UInt64) = Scalar {
         value
 
 
@@ -88,7 +88,7 @@ type LinearlyDecayedParameter<BaseParameter: ScheduledParameter>: ScheduledParam
 
 
     @inlinable
-    member _.forward(forStep step: UInt64) = Scalar {
+    override _.forward(forStep step: UInt64) = Scalar {
         let parameter = baseParameter(forStep: step)
         if step < startStep then return parameter
         let step = step - startStep
@@ -145,7 +145,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
 
 
     @inlinable
-    member _.forward(forStep step: UInt64) = Scalar {
+    override _.forward(forStep step: UInt64) = Scalar {
         let parameter = baseParameter(forStep: step)
         if step < startStep then return parameter
         let step = step - startStep
@@ -197,7 +197,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
 
 
     @inlinable
-    member _.forward(forStep step: UInt64) = Scalar {
+    override _.forward(forStep step: UInt64) = Scalar {
         let parameter = baseParameter(forStep: step)
         if step < startStep then return parameter
         let step = step - startStep
@@ -244,7 +244,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
 
 
     @inlinable
-    member _.forward(forStep step: UInt64) = Scalar {
+    override _.forward(forStep step: UInt64) = Scalar {
         let parameter = baseParameter(forStep: step)
         if step < startStep then return parameter
         let step = step - startStep
@@ -294,7 +294,7 @@ type CycleLinear10xDecayedParameter<
 
 
     @inlinable
-    member _.forward(forStep step: UInt64) = Scalar {
+    override _.forward(forStep step: UInt64) = Scalar {
         let parameter = baseParameter(forStep: step)
         if step < startStep then return parameter
         let step = step - startStep
@@ -338,7 +338,7 @@ type LinearlyWarmedUpParameter<BaseParameter: ScheduledParameter>: ScheduledPara
 
 
     @inlinable
-    member _.forward(forStep step: UInt64) = Scalar {
+    override _.forward(forStep step: UInt64) = Scalar {
         let parameter = baseParameter(forStep: step)
         if step >= warmUpStepCount then return parameter
         let factor = warmUpOffset + ((1 - warmUpOffset) / Scalar(warmUpStepCount)) * Scalar(step)
@@ -380,7 +380,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
 
 
     @inlinable
-    member _.forward(forStep step: UInt64) = Scalar {
+    override _.forward(forStep step: UInt64) = Scalar {
         let parameter = baseParameter(forStep: step)
         if step >= warmUpStepCount then return parameter
         let base = Scalar.exp(Scalar.log(warmUpFactor) / Scalar(warmUpStepCount))

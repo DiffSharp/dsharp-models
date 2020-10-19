@@ -476,7 +476,7 @@ type AnyLayerTangentVector<F: FloatingPoint & ElementaryFunctions>: KeyPathItera
 
 
   /// Creates a type-erased wrapper from the given tangent vector.
-  @differentiable
+  
   public init<Underlying: TangentVectorConformances>(_ underlying: Underlying)
   where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar = F {
     self.box = ConcreteAnyLayerTangentVectorBox<Underlying>(underlying)

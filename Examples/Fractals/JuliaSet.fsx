@@ -24,14 +24,14 @@ type ComplexConstant {
 let juliaSet(
   iterations: int, constant: ComplexConstant, tolerance: double, region: ComplexRegion,
   imageSize: ImageSize, device: Device
-) : Tensor (* <Float> *) {
+) : Tensor =
   let xs = Tensor<Float>(
     linearSpaceFrom: region.realMinimum, region.realMaximum, count: imageSize.width, device=device
-  ).broadcasted([imageSize.width, imageSize.height])
+  ).expand([imageSize.width, imageSize.height])
   let ys = Tensor<Float>(
     linearSpaceFrom: region.imaginaryMaximum, region.imaginaryMinimum, count: imageSize.height,
     on: device
-  ).expandingShape(at: 1).broadcasted([imageSize.width, imageSize.height])
+  ).unsqueeze(1).expand([imageSize.width, imageSize.height])
   let Z = ComplexTensor(real: xs, imaginary: ys)
   let C = ComplexTensor(
     real: dsharp.tensor(repeating: constant.real, shape: xs.shape, device=device),

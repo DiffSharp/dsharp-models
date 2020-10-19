@@ -60,7 +60,7 @@ type ShallowWaterPDE: ParsableCommand {
     let target = targetImage.tensor - double(byte.max) / 2
     target = target.mean(squeezingAxes: 2) / double(byte.max)
 
-    for opt in 1...200 {
+    for opt in 1...200 do
 
       let (loss, del_initialWaterLevel) = valueWithGradient(at: initialWaterLevel) = 
         (initialWaterLevel) = Float in
@@ -85,7 +85,7 @@ type ShallowWaterPDE: ParsableCommand {
 
 
 
-  private let runSplashArrayLoopBenchmark() = 
+  let runSplashArrayLoopBenchmark() = 
     let initialWaterLevel = double[][](repeating: double[](repeating: 0.0, count: n), count: n)
     initialWaterLevel[n / 2][n / 2] = 100
 
@@ -93,7 +93,7 @@ type ShallowWaterPDE: ParsableCommand {
     _ = [ArrayLoopSolution](evolve: initialSolution, duration)
 
 
-  private let runSplashTensorLoopBenchmark(on device: Device) = 
+  let runSplashTensorLoopBenchmark(on device: Device) = 
     let initialWaterLevel = Tensor<Float>(zeros: [n, n], device=device)
     initialWaterLevel[n / 2][n / 2] = Tensor<Float>(100, device=device)
 
@@ -101,7 +101,7 @@ type ShallowWaterPDE: ParsableCommand {
     _ = [TensorLoopSolution](evolve: initialSolution, duration)
 
 
-  private let runSplashTensorSliceBenchmark(on device: Device) = 
+  let runSplashTensorSliceBenchmark(on device: Device) = 
     let initialWaterLevel = Tensor<Float>(zeros: [n, n], device=device)
     initialWaterLevel[n / 2][n / 2] = Tensor<Float>(100, device=device)
 
@@ -109,7 +109,7 @@ type ShallowWaterPDE: ParsableCommand {
     _ = [TensorSliceSolution](evolve: initialSolution, duration)
 
 
-  private let runSplashTensorConvBenchmark(on device: Device) = 
+  let runSplashTensorConvBenchmark(on device: Device) = 
     let initialWaterLevel = Tensor<Float>(zeros: [n, n], device=device)
     initialWaterLevel[n / 2][n / 2] = Tensor<Float>(100, device=device)
 
@@ -152,7 +152,7 @@ type ShallowWaterPDE: ParsableCommand {
 
 
   mutating let run() =
-    for task in tasks {
+    for task in tasks do
       match task with
       | .splash ->
         runSplash()

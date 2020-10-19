@@ -35,9 +35,9 @@ type AttentionInput<Scalar: TensorFlowFloatingPoint>: Differentiable {
 
     /// The batch size of this input. This is optional because it is only needed if the input
     /// sequences have been reshaped to matrices.
-    @noDerivative let batchSize: int?
+    let batchSize: int?
 
-    @differentiable
+    
     public init(
         source: Tensor<Scalar>,
         target: Tensor<Scalar>,
@@ -77,14 +77,14 @@ type MultiHeadAttention: Layer, Regularizable {
     // TODO: Convert to a generic constraint once TF-427 is resolved.
     type Scalar = Float
 
-    @noDerivative let sourceSize: int
-    @noDerivative let targetSize: int
-    @noDerivative let headCount: int
-    @noDerivative let headSize: int
-    @noDerivative let queryactivation= Activation<Scalar>
-    @noDerivative let keyactivation= Activation<Scalar>
-    @noDerivative let valueactivation= Activation<Scalar>
-    @noDerivative let matrixResult: bool
+    let sourceSize: int
+    let targetSize: int
+    let headCount: int
+    let headSize: int
+    let queryactivation= Activation<Scalar>
+    let keyactivation= Activation<Scalar>
+    let valueactivation= Activation<Scalar>
+    let matrixResult: bool
 
     let queryWeight: Tensor<Scalar>
     let queryBias: Tensor<Scalar>
@@ -92,7 +92,7 @@ type MultiHeadAttention: Layer, Regularizable {
     let keyBias: Tensor<Scalar>
     let valueWeight: Tensor<Scalar>
     let valueBias: Tensor<Scalar>
-    @noDerivative let attentionDropout: Dropout<Scalar>
+    let attentionDropout: Dropout<Scalar>
 
     let regularizationValue: TangentVector {
         TangentVector(
@@ -159,8 +159,8 @@ type MultiHeadAttention: Layer, Regularizable {
         self.attentionDropout = Dropout(probability: Double(attentionDropoutProbability))
 
 
-    @differentiable
-    member _.forward(input: AttentionInput<Scalar>) : Tensor =
+    
+    override _.forward(input: AttentionInput<Scalar>) : Tensor =
         precondition(
             input.source.rank = 3 || input.batchSize <> nil,
             "Whenever the input is provided in matrix form, the batch size must also be provided.")
@@ -196,7 +196,7 @@ type MultiHeadAttention: Layer, Regularizable {
         // masked positions, we create a tensor which is 0.0 for positions we want to attend to and 
         // -10000.0 for masked positions. Since we are adding this tensor to the raw scores before 
         // the softmax, this is effectively the same as removing the masked entries entirely.
-        let attentionMask = input.mask.expandingShape(at: 1)  // [B, 1, F, T]
+        let attentionMask = input.mask.unsqueeze(1)  // [B, 1, F, T]
         attentionScores = attentionScores - 10000 * (1 - attentionMask)
 
         // Normalize the attention scores to convert them to probabilities. We are also dropping

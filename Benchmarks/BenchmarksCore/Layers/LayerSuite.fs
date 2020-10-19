@@ -27,7 +27,7 @@ let makeRandomTensor(
   let allDimensions = [batchSize]
   allDimensions.append(contentsOf: dimensions)
   let tensor = Tensor<Float>(
-    randomNormal: TensorShape(allDimensions), mean: Tensor<Float>(0.5, on: device),
+    randomNormal=[allDimensions], mean: Tensor<Float>(0.5, on: device),
     standardDeviation: Tensor<Float>(0.1, on: device), seed: (0xffeffe, 0xfffe),
     on: device)
   return tensor
@@ -161,8 +161,8 @@ where
     name= "\(name)_\(inputString)_\(outputString)",
     settings: WarmupIterations(10)
   ) =  suite in
-    for batchSize in batchSizes {
-      for backend in backends {
+    for batchSize in batchSizes do
+      for backend in backends do
         suite.benchmark(
           "forward_b\(batchSize)_\(backend)",
           settings: Backend(backend), BatchSize(batchSize),

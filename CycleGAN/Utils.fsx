@@ -18,9 +18,6 @@
 
 open DiffSharp
 
-(*
-*)
-type Tensorf = Tensor<Float>
 
 type IFeatureChannelInitializable: Layer {
     init(featureCount=int)
@@ -37,11 +34,3 @@ extension InstanceNorm2D: FeatureChannelInitializable {
         self.init(featureCount=featureCount, epsilon: dsharp.tensor(1e-5))
 
 
-
-let createDirectoryIfNeeded(path: string) : Uri =
-    try Directory.Create(path,
-                                            withIntermediateDirectories: true,
-                                            attributes: nil)
-    return Uri(path)!
-
-*)

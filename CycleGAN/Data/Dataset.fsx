@@ -45,17 +45,22 @@ type CycleGANDataset(trainBatchSize, testBatchSize, ?rootDirPath, ?variant) =
             (CycleGANDataset.loadSamples(rootDirPath </> ("testA"))) 
             (CycleGANDataset.loadSamples(rootDirPath </> ("testB")))
 
-    member val training =
+    let training =
         trainSamples
         |> Seq.chunkBySize trainBatchSize
             //entropy: entropy
         |> Seq.map (fun batch -> (dsharp.tensor(Array.map fst batch), dsharp.tensor(Array.map snd batch)))
 
-    member val testing = 
+    let testing = 
         testSamples
         |> Seq.chunkBySize testBatchSize
         |> Seq.map (fun batch -> (dsharp.tensor(Array.map fst batch), dsharp.tensor(Array.map snd batch)))
 
+    member _.TrainingSamples = trainSamples
+    member _.TestSamples = testSamples
+    member _.TrainingData = training
+    member _.TestingData = testing
+    
     static member downloadIfNotPresent(variant: CycleGANDatasetVariant, directory: FilePath) =
         let value = variant.ToString().ToLower()
         let rootDirPath = directory </> value

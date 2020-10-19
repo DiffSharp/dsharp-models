@@ -21,8 +21,8 @@ open DiffSharp
 type Identity: ParameterlessLayer {
     type TangentVector = EmptyTangentVector
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         input
 
 
@@ -36,7 +36,7 @@ type InstanceNorm2D<Scalar: TensorFlowFloatingPoint>: Layer {
     /// Learnable parameter offset for affine transformation.
     let offset: Tensor<Scalar>
     /// Small value added in denominator for numerical stability.
-    @noDerivative let epsilon: Tensor<Scalar>
+    let epsilon: Tensor<Scalar>
 
     /// Creates a instance normalization 2D Layer.
     ///
@@ -53,8 +53,8 @@ type InstanceNorm2D<Scalar: TensorFlowFloatingPoint>: Layer {
     ///
     /// - Parameter input: The input to the layer. Expected input layout is BxHxWxC.
     /// - Returns: The output.
-    @differentiable
-    member _.forward(input: Tensor<Scalar>) : Tensor =
+    
+    override _.forward(input: Tensor<Scalar>) : Tensor =
         // Calculate mean & variance along H,W axes.
         let mean = input.mean(dim=[1; 2])
         let variance = input.variance(dim=[1; 2])
@@ -85,22 +85,22 @@ type ConvLayer: Layer {
     
         conv2d = Conv2d(filterShape=(kernelSize, kernelSize, inChannels, outChannels),
                         strides = [stride, stride),
-                        filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.tensor(0.02)))
+                        filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.scalar(0.02)))
 
 
     /// Returns the output obtained from applying the layer to the given input.
     ///
     /// - Parameter input: The input to the layer.
     /// - Returns: The output.
-    @differentiable
-    member _.forward(input: Input) = Output {
-        return input.sequenced(through: pad, conv2d)
+    
+    override _.forward(input: Input) = Output {
+        return input |> pad, conv2d)
 
 
 
 type UNetSkipConnectionInnermost: Layer {
     let downConv: Conv2D<Float>
-    let upConv: ConvTranspose2d<Float>
+    let upConv: ConvTranspose2d
     let upNorm: BatchNorm<Float>
     
     public init(inChannels=int,
@@ -110,35 +110,35 @@ type UNetSkipConnectionInnermost: Layer {
                                stride=2,
                                padding="same",
                                filterInitializer: { dsharp.randn($0,
-                                                            standardDeviation: dsharp.tensor(0.02)))
+                                                            standardDeviation: dsharp.scalar(0.02)))
         self.upNorm = BatchNorm(featureCount=outChannels)
         
         self.upConv = ConvTranspose2d(filterShape=(4, 4, innerChannels, outChannels),
                                        stride=2,
                                        padding="same",
                                        filterInitializer: { dsharp.randn($0,
-                                                                    standardDeviation: dsharp.tensor(0.02)))
+                                                                    standardDeviation: dsharp.scalar(0.02)))
 
     
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let x = leakyRelu(input)
         x = self.downConv(x)
         x = relu(x)
-        x = x.sequenced(through: self.upConv, self.upNorm)
+        x = x |> self.upConv, self.upNorm)
 
         return input.concatenated(x, alongAxis: 3)
 
 
 
 
-type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor<Float>, Sublayer.Output =: Tensor (* <Float> *) {
+type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor<Float>, Sublayer.Output =: Tensor =
     let downConv: Conv2D<Float>
     let downNorm: BatchNorm<Float>
-    let upConv: ConvTranspose2d<Float>
+    let upConv: ConvTranspose2d
     let upNorm: BatchNorm<Float>
-    let dropOut = Dropout<Float>(probability: 0.5)
-    @noDerivative let useDropOut: bool
+    let dropOut = Dropout2d(p=0.5)
+    let useDropOut: bool
     
     let submodule: Sublayer
     
@@ -150,7 +150,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
         self.downConv = Conv2d(filterShape=(4, 4, inChannels, innerChannels),
                                stride=2,
                                padding="same",
-                               filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.tensor(0.02)))
+                               filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.scalar(0.02)))
         self.downNorm = BatchNorm(featureCount=innerChannels)
         self.upNorm = BatchNorm(featureCount=outChannels)
         
@@ -158,19 +158,19 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
                                        stride=2,
                                        padding="same",
                                        filterInitializer: { dsharp.randn($0,
-                                                                    standardDeviation: dsharp.tensor(0.02)))
+                                                                    standardDeviation: dsharp.scalar(0.02)))
     
         self.submodule = submodule
         
         self.useDropOut = useDropOut
 
     
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         let x = leakyRelu(input)
-        x = x.sequenced(through: self.downConv, self.downNorm, self.submodule)
+        x = x |> self.downConv, self.downNorm, self.submodule)
         x = relu(x)
-        x = x.sequenced(through: self.upConv, self.upNorm)
+        x = x |> self.upConv, self.upNorm)
         
         if self.useDropOut then
             x = self.dropOut(x)
@@ -180,9 +180,9 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
 
 
 
-type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor<Float>, Sublayer.Output =: Tensor (* <Float> *) {
+type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor<Float>, Sublayer.Output =: Tensor =
     let downConv: Conv2D<Float>
-    let upConv: ConvTranspose2d<Float>
+    let upConv: ConvTranspose2d
     
     let submodule: Sublayer
     
@@ -194,20 +194,20 @@ type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentV
                                stride=2,
                                padding="same",
                                filterInitializer: { dsharp.randn($0,
-                                                            standardDeviation: dsharp.tensor(0.02)))
+                                                            standardDeviation: dsharp.scalar(0.02)))
         self.upConv = ConvTranspose2d(filterShape=(4, 4, outChannels, innerChannels * 2),
                                        stride=2,
                                        padding="same",
                                        activation= tanh,
                                        filterInitializer: { dsharp.randn($0,
-                                                                    standardDeviation: dsharp.tensor(0.02)))
+                                                                    standardDeviation: dsharp.scalar(0.02)))
     
         self.submodule = submodule
 
     
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let x = input.sequenced(through: self.downConv, self.submodule)
+    
+    override _.forward(input) =
+        let x = input |> self.downConv, self.submodule)
         x = relu(x)
         x = self.upConv(x)
 

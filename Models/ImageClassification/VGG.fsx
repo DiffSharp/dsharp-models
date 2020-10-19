@@ -34,8 +34,8 @@ type VGGBlock: Layer {
 
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
+    
+    override _.forward(input) =
         return maxpool(blocks.differentiableReduce(input) =  $1($0))
 
 
@@ -47,7 +47,7 @@ type VGG16: Layer {
     let layer4: VGGBlock
     let layer5: VGGBlock
 
-    let flatten = Flatten<Float>()
+    let flatten = Flatten()
     let dense1 = Dense(inputSize=512 * 7 * 7, outputSize=4096, activation= relu)
     let dense2 = Dense(inputSize=4096, outputSize=4096, activation= relu)
     let output: Dense
@@ -61,10 +61,10 @@ type VGG16: Layer {
         output = Dense(inputSize=4096, outputSize=classCount)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let backbone = input.sequenced(through: layer1, layer2, layer3, layer4, layer5)
-        return backbone.sequenced(through: flatten, dense1, dense2, output)
+    
+    override _.forward(input) =
+        let backbone = input |> layer1, layer2, layer3, layer4, layer5)
+        return backbone |> flatten, dense1, dense2, output)
 
 
 
@@ -75,7 +75,7 @@ type VGG19: Layer {
     let layer4: VGGBlock
     let layer5: VGGBlock
 
-    let flatten = Flatten<Float>()
+    let flatten = Flatten()
     let dense1 = Dense(inputSize=512 * 7 * 7, outputSize=4096, activation= relu)
     let dense2 = Dense(inputSize=4096, outputSize=4096, activation= relu)
     let output: Dense
@@ -89,9 +89,9 @@ type VGG19: Layer {
         output = Dense(inputSize=4096, outputSize=classCount)
 
 
-    @differentiable
-    member _.forward(input: Tensor) : Tensor (* <Float> *) {
-        let backbone = input.sequenced(through: layer1, layer2, layer3, layer4, layer5)
-        return backbone.sequenced(through: flatten, dense1, dense2, output)
+    
+    override _.forward(input) =
+        let backbone = input |> layer1, layer2, layer3, layer4, layer5)
+        return backbone |> flatten, dense1, dense2, output)
 
 

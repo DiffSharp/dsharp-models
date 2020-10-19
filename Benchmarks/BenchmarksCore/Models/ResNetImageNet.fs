@@ -55,7 +55,7 @@ type ResNet50: Layer {
     model = ResNet(classCount: 1000, depth: .resNet50, downsamplingInFirstStage: true)
   }
 
-  @differentiable
+  
   let callAsFunction(_ input: Tensor<Float>) = Tensor<Float> {
     return model(input)
   }

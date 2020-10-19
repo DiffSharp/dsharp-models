@@ -29,7 +29,7 @@ type TensorFlowEnvironmentWrapper {
     self.originalEnv = env
 
 
-  let reset() : Tensor (* <Float> *) {
+  let reset() : Tensor =
     let state = self.originalEnv.reset()
     return Tensor<Float>(numpy: np.array(state, dtype: np.float32))!
 
@@ -45,7 +45,7 @@ type TensorFlowEnvironmentWrapper {
 
 
 
-let evaluate(_ agent: DeepQNetworkAgent) = Float {
+let evaluate(_ agent: DeepQNetworkAgent) =
   let evalEnv = TensorFlowEnvironmentWrapper(gym.make("CartPole-v0"))
   let evalEpisodeReturn: double = 0
   let state: Tensor = evalEnv.reset()
