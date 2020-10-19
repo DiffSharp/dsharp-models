@@ -235,7 +235,7 @@ type EfficientNet: Layer {
         inputConv = Conv2d(
             filterShape=(3, 3, 3, makeDivisible(filter: 32, width: width)),
             stride=2,
-            padding: .valid)
+            padding="valid")
         inputConvBatchNorm = BatchNorm(featureCount=makeDivisible(filter: 32, width: width))
 
         initialMBConv = InitialMBConvBlock(filters: (32, 16), width: width)

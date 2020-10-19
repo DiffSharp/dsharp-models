@@ -57,9 +57,9 @@ type CatchAgent(learningRate, initialReward) =
         let (ŷ, backprop) = model.appliedForBackpropagation(x)
         let maxIndex = ŷ.argmax().scalarized()
 
-        let del_loss = -log(dsharp.tensor(ŷ.max(), dtype=Dtype.Float32)).expand(like: ŷ) * previousReward
-        let (del_model, _) = backprop(del_loss)
-        optimizer.update(&model, along: del_model)
+        let δloss = -log(dsharp.tensor(ŷ.max(), dtype=Dtype.Float32)).expand(like: ŷ) * previousReward
+        let (δmodel, _) = backprop(δloss)
+        optimizer.update(&model, along: δmodel)
 
         enum<CatchAction>(int(maxIndex))
 

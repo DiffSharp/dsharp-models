@@ -1,4 +1,4 @@
-// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
+﻿// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,12 +66,12 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     for batch in epochBatches do
         let x = batch.data
 
-        let del_model = TensorFlow.gradient(at: model) =  model -> Tensor<Float> in
+        let δmodel = TensorFlow.gradient(at: model) =  model -> Tensor<Float> in
             let image = model(x)
             return meanSquaredError(predicted: image, expected: x)
 
 
-        optimizer.update(&model, along: del_model)
+        optimizer.update(&model, along: δmodel)
 
 
     vae.mode <- Mode.Eval

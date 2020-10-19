@@ -54,7 +54,7 @@ type InvertedResidual: Layer {
     let batchNorm3: BatchNorm<Float>
     
     public init(filters: (Int, Int), stride: int) = 
-        if stride = 1 then
+        if stride=1 then
             includeBranch = false
 
         
@@ -63,26 +63,26 @@ type InvertedResidual: Layer {
             ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
             DepthwiseConv2D<Float>(
                 filterShape=(3, 3, filters.0, 1), strides = [stride, stride),
-                padding: .valid
+                padding="valid"
             )
             BatchNorm(featureCount=filters.0)
             Conv2d(
-                filterShape=(1, 1, filters.0, branchChannels), stride=1, padding: .valid,
+                filterShape=(1, 1, filters.0, branchChannels), stride=1 (* , padding="valid" *),
                 useBias: false
             )
             BatchNorm(featureCount=branchChannels)
 
         let inputChannels = includeBranch ? filters.0: branchChannels
         conv1 = Conv2d(
-            filterShape=(1, 1, inputChannels, branchChannels), stride=1, padding: .valid,
+            filterShape=(1, 1, inputChannels, branchChannels), stride=1 (* , padding="valid" *),
             useBias: false
         )
         conv2 = Conv2d(
-            filterShape=(1, 1, branchChannels, branchChannels), stride=1, padding: .valid,
+            filterShape=(1, 1, branchChannels, branchChannels), stride=1 (* , padding="valid" *),
             useBias: false
         )
         depthwiseConv = DepthwiseConv2D<Float>(
-            filterShape=(3, 3, branchChannels, 1), strides = [stride, stride), padding: .valid
+            filterShape=(3, 3, branchChannels, 1), strides = [stride, stride) (* , padding="valid" *)
         )
         batchNorm1 = BatchNorm(featureCount=branchChannels)
         batchNorm2 = BatchNorm(featureCount=branchChannels)

@@ -75,9 +75,9 @@ type TensorConvSolution(u0: Tensor, u1: Tensor, t: double) =
 
     /// Applies discretized Laplace operator to scalar field `u`.
     let Δ(u: Tensor) : Tensor =
-        let finiteDifference = depthwiseConv2D(u.unsqueeze([0; 3]), filter=laplaceKernel, stride=1, padding="valid")
+        let finiteDifference = dsharp.depthwiseConv2d(u.unsqueeze([0; 3]), filters=laplaceKernel, stride=1 (* , padding="valid" *))
         let Δu = finiteDifference / Δx / Δx
-        Δu.squeeze([0, 3])
+        Δu.squeeze([0; 3])
 
     /// Calculates a new solution stepped forward by one time-step `Δt`.
     ///
@@ -102,6 +102,9 @@ type TensorConvSolution(u0: Tensor, u1: Tensor, t: double) =
     /// Water level height
     member _.WaterLevel = u1.unstack() |> Array.map (fun t -> t.toArray())
 
+    /// Solution time
+    member _.Time = t
+
     /// Calculates mean squared error loss between the solution and a `target` grayscale image.
     member _.meanSquaredError(target: Tensor) =
         assert(target.ndims = 2)
@@ -110,4 +113,5 @@ type TensorConvSolution(u0: Tensor, u1: Tensor, t: double) =
         let error = u1 - target
         error.sqr().mean().toFloat32()
 
+    /// Creates initial solution with water level `u0` at time `t`.
     new (waterLevel: Tensor) = TensorConvSolution(u0=waterLevel, u1=waterLevel, t=0.0)

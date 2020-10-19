@@ -1,4 +1,4 @@
-// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
+﻿// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -155,26 +155,26 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         // Update generator.
         let vec1 = sampleVector(size: batchSize)
 
-        let del_generator = TensorFlow.gradient(at: generator) =  generator -> Tensor<Float> in
+        let δgenerator = TensorFlow.gradient(at: generator) =  generator -> Tensor<Float> in
             let fakeImages = generator(vec1)
             let fakeLogits = discriminator(fakeImages)
             let loss = generatorLoss(fakeLogits: fakeLogits)
             return loss
 
-        optG.update(&generator, along: del_generator)
+        optG.update(&generator, along: δgenerator)
 
         // Update discriminator.
         let realImages = batch.data
         let vec2 = sampleVector(size: batchSize)
         let fakeImages = generator(vec2)
 
-        let del_discriminator = TensorFlow.gradient(at: discriminator) =  discriminator -> Tensor<Float> in
+        let δdiscriminator = TensorFlow.gradient(at: discriminator) =  discriminator -> Tensor<Float> in
             let realLogits = discriminator(realImages)
             let fakeLogits = discriminator(fakeImages)
             let loss = discriminatorLoss(realLogits: realLogits, fakeLogits: fakeLogits)
             return loss
 
-        optD.update(&discriminator, along: del_discriminator)
+        optD.update(&discriminator, along: δdiscriminator)
 
 
     // Start inference phase.

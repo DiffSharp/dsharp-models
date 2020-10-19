@@ -1,4 +1,4 @@
-// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
+﻿// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         let _fakeX = Tensorf.zero
         let _fakeY = Tensorf.zero
 
-        let (gLoss, del_generatorG) = valueWithGradient(at: generatorG) =  g -> Tensorf in
+        let (gLoss, δgeneratorG) = valueWithGradient(at: generatorG) =  g -> Tensorf in
             let fakeY = g(realX)
             let cycledX = generatorF(fakeY)
             let fakeX = generatorF(realY)
@@ -107,7 +107,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             totalLoss
 
 
-        let (fLoss, del_generatorF) = valueWithGradient(at: generatorF) =  g -> Tensorf in
+        let (fLoss, δgeneratorF) = valueWithGradient(at: generatorF) =  g -> Tensorf in
             let fakeX = g(realY)
             let cycledY = generatorG(fakeX)
             let fakeY = generatorG(realX)
@@ -128,7 +128,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             totalLoss
 
 
-        let (xLoss, del_discriminatorX) = valueWithGradient(at: discriminatorX) =  d -> Tensorf in
+        let (xLoss, δdiscriminatorX) = valueWithGradient(at: discriminatorX) =  d -> Tensorf in
             let discFakeX = d(_fakeX)
             let discRealX = d(realX)
 
@@ -138,7 +138,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             totalLoss
 
 
-        let (yLoss, del_discriminatorY) = valueWithGradient(at: discriminatorY) =  d -> Tensorf in
+        let (yLoss, δdiscriminatorY) = valueWithGradient(at: discriminatorY) =  d -> Tensorf in
             let discFakeY = d(_fakeY)
             let discRealY = d(realY)
 
@@ -148,10 +148,10 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             totalLoss
 
 
-        optimizerGG.update(&generatorG, along: del_generatorG)
-        optimizerGF.update(&generatorF, along: del_generatorF)
-        optimizerDX.update(&discriminatorX, along: del_discriminatorX)
-        optimizerDY.update(&discriminatorY, along: del_discriminatorY)
+        optimizerGG.update(&generatorG, along: δgeneratorG)
+        optimizerGF.update(&generatorF, along: δgeneratorF)
+        optimizerDX.update(&discriminatorX, along: δdiscriminatorX)
+        optimizerDY.update(&discriminatorY, along: δdiscriminatorY)
 
         // MARK: Inference
 

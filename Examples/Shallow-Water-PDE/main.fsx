@@ -62,18 +62,18 @@ type ShallowWaterPDE: ParsableCommand {
 
     for opt in 1...200 do
 
-      let (loss, del_initialWaterLevel) = valueWithGradient(at: initialWaterLevel) = 
+      let (loss, δinitialWaterLevel) = valueWithGradient(at: initialWaterLevel) = 
         (initialWaterLevel) = Float in
         let initialSolution = TensorSliceSolution(waterLevel: initialWaterLevel)
         let evolution = [TensorSliceSolution](evolve: initialSolution, duration)
 
         let last = withoutDerivative(at: evolution.count - 1)
         let loss = evolution[last].meanSquaredError(target)
-        return loss
+        loss
 
 
       print("\(opt): \(loss)")
-      initialWaterLevel.move(along: del_initialWaterLevel.scaled(by: -α))
+      initialWaterLevel.move(along: δinitialWaterLevel.scaled(by: -α))
 
 
     let initialSolution = TensorSliceSolution(waterLevel: initialWaterLevel)

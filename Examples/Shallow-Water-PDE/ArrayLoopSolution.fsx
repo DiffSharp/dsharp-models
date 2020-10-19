@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-open DiffSharp
-
 // MARK: Solution of shallow water equation
 
 /// Differentiable solution of shallow water equation on a unit square.
@@ -41,133 +39,45 @@ open DiffSharp
 /// This is a very naive but natural implementation that serves as a performance baseline
 /// on the CPU.
 ///
-type ArrayLoopSolution: ShallowWaterEquationSolution {
-  /// Water level height
-  let waterLevel: double[][] { u1
-  /// Solution time
-  let time: double { t
+type ArrayLoopSolution(u0: double[,], u1: double[,], t: double) =
+    /// Speed of sound
+    let c: double = 340.0
+    /// Dispersion coefficient
+    let α: double = 0.00001
+    /// Number of spatial grid points
+    let resolution: int = 256
+    /// Spatial discretization step
+    let Δx = 1.0 / double(resolution)
+    /// Time-step calculated to stay below the CFL stability limit
+    let Δt = (sqrt(α * α + Δx * Δx / 3.0) - α) / c
 
-  /// Height of the water surface at time `t`
-  let u1: double[][]
-  /// Height of the water surface at previous time-step `t - Δt`
-  let u0: double[][]
-  /// Solution time
-  let t: double
-  /// Speed of sound
-  let c: double = 340.0
-  /// Dispersion coefficient
-  let α: double = 0.00001
-  /// Number of spatial grid points
-  let resolution: int = 256
-  /// Spatial discretization step
-  let Δx: double { 1 / double(resolution)
-  /// Time-step calculated to stay below the CFL stability limit
-  let Δt: double { (sqrt(α * α + Δx * Δx / 3) - α) / c
-
-  /// Creates initial solution with water level `u0` at time `t`.
+    /// Applies discretized Laplace operator to scalar field `u` at grid points `x` and `y`.
   
-  init(waterLevel u0: double[][], time t: double = 0.0) = 
-    self.u0 = u0
-    self.u1 = u0
-    self.t = t
+    let Δ(u: double[,], x: int, y: int) =
+        (u.[x,y + 1]
+          + u.[x - 1,y] - (4.0 * u.[x,y]) + u.[x + 1,y] + u.[x,y - 1]) / Δx / Δx
 
-    precondition(u0.count = resolution)
-    precondition(u0.allSatisfy { $0.count = resolution)
+    /// Calculates solution stepped forward by one time-step `Δt`.
+    ///
+    /// - `u0` - Water surface height at previous time step
+    /// - `u1` - Water surface height at current time step
+    /// - `u2` - Water surface height at next time step (calculated)
+    member _.Evolved() = 
+        let u2 = Array2D.copy u1  // TODO avoid this copy
 
+        for x in 1..resolution - 1 do
+            for y in 1..resolution - 1 do
+                u2.[x,y] <- 
+                    2.0 * u1.[x,y] + (c * c * Δt * Δt + c * α * Δt) * Δ(u1, x, y) - u0.[x,y] - c * α * Δt
+                    * Δ(u0, x, y)
 
-  /// Calculates solution stepped forward by one time-step `Δt`.
-  ///
-  /// - `u0` - Water surface height at previous time step
-  /// - `u1` - Water surface height at current time step
-  /// - `u2` - Water surface height at next time step (calculated)
-  
-  let evolved() = ArrayLoopSolution {
-    let u2 = u1
+        ArrayLoopSolution(u0=u1, u1=u2, t=t + Δt)
 
-    for x in 1..<resolution - 1 {
-      for y in 1..<resolution - 1 {
-        // FIXME: Should be u2[x][y] = ...
-        u2.update(
-          x, y,
-          to:
-            2 * u1[x][y] + (c * c * Δt * Δt + c * α * Δt) * Δ(u1, x, y) - u0[x][y] - c * α * Δt
-            * Δ(u0, x, y)
-        )
+    /// Water level height
+    member _.WaterLevel = u1
 
+    /// Solution time
+    member _.Time = t
 
-
-    return ArrayLoopSolution(u0: u1, u1: u2, t: t + Δt)
-
-
-  /// Constructs intermediate solution with previous water level `u0`, current water level `u1` and time `t`.
-  
-  private init(u0: double[][], u1: double[][], t: double) = 
-    self.u0 = u0
-    self.u1 = u1
-    self.t = t
-
-    precondition(u0.count = self.resolution)
-    precondition(u0.allSatisfy { $0.count = self.resolution)
-    precondition(u1.count = self.resolution)
-    precondition(u1.allSatisfy { $0.count = self.resolution)
-
-
-  /// Applies discretized Laplace operator to scalar field `u` at grid points `x` and `y`.
-  
-  let Δ(_ u: double[][], _ x: int, _ y: int) =
-    (u[x][y + 1]
-      + u[x - 1][y] - (4 * u[x][y]) + u[x + 1][y] + u[x][y - 1]) / Δx / Δx
-
-
-
-// MARK: - Cost calculated as mean L2 distance to a target image
-
-extension ArrayLoopSolution {
-
-  /// Calculates mean squared error loss between the solution and a `target` grayscale image.
-  
-  let meanSquaredError(target: Tensor) =
-    assert(target.ndims = 2)
-    precondition(target.shape.[0] = resolution && target.shape.[1] = resolution)
-
-    let mse: double = 0.0
-    for x in 0..<resolution {
-      for y in 0..<resolution {
-        let error = target[x][y].scalarized() - u1[x][y]
-        mse <- mse + error * error
-
-
-    return mse / double(resolution) / double(resolution)
-
-
-
-
-// MARK: - Workaround for non-differentiable coroutines
-// https://bugs.swift.org/browse/TF-1078
-// https://bugs.swift.org/browse/TF-1080
-
-extension Array where Element = double[] {
-
-  (wrt: (self, value))
-  fileprivate mutating let update(_ x: int, _ y: int, to value: double) = 
-    let _ = withoutDerivative(at: (value)) =  value -> Int? in
-      self[x][y] = value
-      return nil
-
-
-
-  @derivative(of: update, wrt: (self, value))
-  fileprivate mutating let vjpUpdate(_ x: int, _ y: int, to value: double) = (
-    value: (), pullback: (inout Array<double[]>.TangentVector) = Float
-  ) = 
-
-    self.update(x, y, value)
-
-    let pullback(`self`: inout Array<double[]>.TangentVector) =
-      let `value` = `self`[x][y]
-      `self`[x][y] = double(0)
-      return `value`
-
-    return ((), pullback)
-
-
+    /// Creates initial solution with water level `u0` at time `t`.
+    new (waterLevel: double[,]) = ArrayLoopSolution(u0=waterLevel, u1=waterLevel, t=0.0)

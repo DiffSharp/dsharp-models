@@ -179,7 +179,7 @@ type MobileNetV2: Layer {
         inputConv = Conv2d(
             filterShape=(3, 3, 3, makeDivisible(filter: 32, widthMultiplier: widthMultiplier)),
             stride=2,
-            padding: .valid)
+            padding="valid")
         inputConvBatchNorm = BatchNorm(
             featureCount: makeDivisible(filter: 32, widthMultiplier: widthMultiplier))
 

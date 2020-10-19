@@ -51,7 +51,7 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
   /// Water level height
   let waterLevel: double[][] { u1.array.map { $0.scalars
   /// Solution time
-  let time: double { t
+  let time = t
 
   /// Height of the water surface at time `t`
   let u1: Tensor
@@ -66,9 +66,9 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
   /// Number of spatial grid points
   let resolution: int = 256
   /// Spatial discretization step
-  let Δx: double { 1 / double(resolution)
+  let Δx = 1 / double(resolution)
   /// Time-step calculated to stay below the CFL stability limit
-  let Δt: double { (sqrt(α * α + Δx * Δx / 3) - α) / c
+  let Δt = (sqrt(α * α + Δx * Δx / 3) - α) / c
 
   /// Creates initial solution with water level `u0` at time `t`.
   

@@ -1,4 +1,4 @@
-// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
+﻿// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,11 +47,11 @@ where
     for batch in epochBatches do
       let (images, labels) = (batch.data, batch.label)
 
-      let del_model = TensorFlow.gradient(at: model) =  model -> Tensor<Float> in
+      let δmodel = TensorFlow.gradient(at: model) =  model -> Tensor<Float> in
         let logits = model(images)
         return softmaxCrossEntropy(logits: logits, labels: labels)
       }
-      optimizer.update(&model, along: del_model)
+      optimizer.update(&model, along: δmodel)
       LazyTensorBarrier()
       try
         try state.end()

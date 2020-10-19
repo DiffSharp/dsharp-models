@@ -1,4 +1,4 @@
-// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
+﻿// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,25 +94,25 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
 
         // Train generator.
         let noiseG = dsharp.randn([batchSize; zDim])
-        let del_generator = TensorFlow.gradient(at: generator) =  generator -> Tensor<Float> in
+        let δgenerator = TensorFlow.gradient(at: generator) =  generator -> Tensor<Float> in
             let fakeImages = generator(noiseG)
             let fakeLabels = discriminator(fakeImages)
             let loss = generatorLoss(fakeLabels: fakeLabels)
             return loss
 
-        optG.update(&generator, along: del_generator)
+        optG.update(&generator, along: δgenerator)
 
         // Train discriminator.
         let noiseD = dsharp.randn([batchSize; zDim])
         let fakeImages = generator(noiseD)
 
-        let del_discriminator = TensorFlow.gradient(at: discriminator) =  discriminator -> Tensor<Float> in
+        let δdiscriminator = TensorFlow.gradient(at: discriminator) =  discriminator -> Tensor<Float> in
             let realLabels = discriminator(realImages)
             let fakeLabels = discriminator(fakeImages)
             let loss = discriminatorLoss(realLabels: realLabels, fakeLabels: fakeLabels)
             return loss
 
-        optD.update(&discriminator, along: del_discriminator)
+        optD.update(&discriminator, along: δdiscriminator)
 
     // Test the networks.
     vae.mode <- Mode.Eval

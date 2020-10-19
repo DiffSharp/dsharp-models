@@ -34,7 +34,7 @@ type ConvBlock: Layer {
         conv = Conv2d(
             filterShape=(3, 3, 3, scaledFilterCount),
             strides: strides,
-            padding: .valid)
+            padding="valid")
         batchNorm = BatchNorm(featureCount=scaledFilterCount)
 
 

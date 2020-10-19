@@ -1,4 +1,4 @@
-// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
+﻿// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         let output, mu, logVar = vae(x)
         vaeLossFunction(x, output, mu, logVar)
 
-        optimizer.update(&vae, along: del_model)
+        optimizer.update(&vae, along: δmodel)
 
 
     vae.mode <- Mode.Eval

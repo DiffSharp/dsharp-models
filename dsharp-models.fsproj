@@ -64,12 +64,12 @@
     <None Include="Examples\Regression-BostonHousing\main.fsx" />
     <None Include="Examples\ResNet-CIFAR10\main.fsx" />
     <None Include="Examples\Shallow-Water-PDE\ArrayLoopSolution.fsx" />
-    <None Include="Examples\Shallow-Water-PDE\main.fsx" />
     <None Include="Examples\Shallow-Water-PDE\Solution.fsx" />
     <None Include="Examples\Shallow-Water-PDE\TensorConvSolution.fsx" />
     <None Include="Examples\Shallow-Water-PDE\TensorLoopSolution.fsx" />
     <None Include="Examples\Shallow-Water-PDE\TensorSliceSolution.fsx" />
     <None Include="Examples\Shallow-Water-PDE\Visualization.fsx" />
+    <None Include="Examples\Shallow-Water-PDE\main.fsx" />
     <None Include="Examples\VGG-Imagewoof\main.fsx" />
     <None Include="Examples\WordSeg\main.fsx" />
     <None Include="Examples\WordSeg\WordSegCommand.fsx" />
