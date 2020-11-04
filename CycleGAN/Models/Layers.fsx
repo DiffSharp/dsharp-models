@@ -32,15 +32,19 @@ open DiffSharp.ShapeChecking
 [<ShapeCheck(100)>]
 type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
     inherit Model()
+    
     /// Small value added in denominator for numerical stability.
-    let epsilon = defaultArg epsilon (dsharp.scalar(1e-5))
+    let epsilon = defaultArg epsilon (dsharp.scalar 1e-5)
+    
     /// Learnable parameter scale for affine transformation.
-    let scale = dsharp.ones([featureCount])
+    let scale = dsharp.ones [featureCount]  |> Parameter
+    
     /// Learnable parameter offset for affine transformation.
-    let offset = dsharp.zeros([featureCount])
+    let offset = dsharp.zeros [featureCount] |> Parameter
 
     [<ShapeCheck("N,100,H,W")>]
     override _.forward(input: Tensor) =
+    
         // Calculate mean & variance along H,W axes.
         let mean = input.mean(dims=[2; 3])
         let variance = input.variance(dims=[2; 3])
@@ -49,7 +53,6 @@ type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
         res
 
     override _.ToString() = sprintf "InstanceNorm2D(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon
-
 
 [<ShapeCheck(100)>]
 type ResNetBlock(channels: int, ?useDropOut: bool) =
