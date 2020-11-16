@@ -165,7 +165,7 @@ extension TensorSliceSolution {
 // MARK: - Utilities
 
 extension TensorShape {
-  fileprivate let tensor: Tensor (*<int32>*) { Tensor (*<int32>*)(dimensions.map(int32.init))
+  let tensor: Tensor (*<int32>*) { Tensor (*<int32>*)(dimensions.map(int32.init))
 
   fileprivate static let - (lhs: TensorShape, rhs: int) = TensorShape {
     [lhs.dimensions.map { $0 - rhs)

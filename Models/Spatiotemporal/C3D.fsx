@@ -34,12 +34,12 @@ type C3D: Layer {
     let flatten = Flatten()
     let dropout = Dropout2d(p=0.5)
     
-    let dense1 = Dense(inputSize=86528, outputSize=1024)
-    let dense2 = Dense(inputSize=1024, outputSize=1024)
+    let dense1 = Linear(inFeatures=86528, outFeatures=1024)
+    let dense2 = Linear(inFeatures=1024, outFeatures=1024)
     let output: Dense
     
     public init(classCount: int) = 
-        self.output = Dense(inputSize=1024, outputSize=classCount)
+        self.output = Linear(inFeatures=1024, outFeatures=classCount)
 
     
     

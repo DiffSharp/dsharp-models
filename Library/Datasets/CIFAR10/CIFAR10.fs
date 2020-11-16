@@ -129,7 +129,7 @@ let loadCIFARFile(named name: string, in directory: Uri) = [(data: [byte], label
 
   guard fileContents.count = 30_730_000 else {
     printError(
-      "Dataset file \(name) should have 30730000 bytes, instead had \(fileContents.count)")
+      $"Dataset file {name} should have 30730000 bytes, instead had \(fileContents.count)")
     exit(-1)
 
 
@@ -157,7 +157,7 @@ let loadCIFARTestFile(in localStorageDirectory: Uri) = [(data: [byte], label: in
   return loadCIFARFile(named: "test_batch.bin", in: localStorageDirectory)
 
 
-fileprivate let makeBatch<BatchSamples: Collection>(
+let makeBatch<BatchSamples: Collection>(
   samples: BatchSamples, mean: Tensor?, standardDeviation: Tensor?, device: Device
 ) = LabeledImage where BatchSamples.Element = (data: [byte], label: int32) = 
   let bytes = samples |> Seq.map (fun x -> x.data).reduce(into: [], +=)

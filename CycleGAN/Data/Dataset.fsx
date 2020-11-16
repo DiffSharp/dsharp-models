@@ -32,7 +32,7 @@ type CycleGANDataset(trainBatchSize, testBatchSize, ?rootDirPath, ?variant) =
     let variant = defaultArg variant Horse2zebra
     let rootDirPath = 
         match rootDirPath with 
-        | None -> CycleGANDataset.downloadIfNotPresent(variant, DatasetUtilities.defaultDirectory </> "CycleGAN")
+        | None -> CycleGANDataset.downloadIfNotPresent(variant.ToString().ToLower(), DatasetUtilities.defaultDirectory </> "CycleGAN")
         | Some p -> p
         
     let trainSamples = 
@@ -61,9 +61,8 @@ type CycleGANDataset(trainBatchSize, testBatchSize, ?rootDirPath, ?variant) =
     member _.TrainingData = training
     member _.TestingData = testing
     
-    static member downloadIfNotPresent(variant: CycleGANDatasetVariant, directory: FilePath) =
-        let value = variant.ToString().ToLower()
-        let rootDirPath = directory </> value
+    static member downloadIfNotPresent(fileroot: string, directory: FilePath) =
+        let rootDirPath = directory </> fileroot
 
         let directoryExists = File.Exists(rootDirPath)
         if not directoryExists || (Directory.GetFiles(rootDirPath).Length = 0) then 
@@ -75,16 +74,9 @@ type CycleGANDataset(trainBatchSize, testBatchSize, ?rootDirPath, ?variant) =
 
         rootDirPath
 
-
     static member loadSamples(directory: FilePath) : Tensor[] =
-        failwith "Tbd"
-        //File
-        //    .contentsOfDirectory(
-        //        at: directory,
-        //        includingPropertiesForKeys: [.isDirectoryKey],
-        //        options: [.skipsHiddenFiles])
-        //    .filter (fun x -> x..pathExtension = "jpg"
-        //    .map {
-        //        Image(jpeg: $0).tensor / 127.5 - 1.0
+        Directory.GetFiles(directory, "*.jpg")
+        |> Array.map dsharp.loadImage
+        |> Array.map (fun t -> t / 127.5 - 1.0)
 
 

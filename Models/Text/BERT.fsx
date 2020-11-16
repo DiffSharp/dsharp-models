@@ -411,7 +411,7 @@ extension BERT {
             | .roberta ->
                 return "roberta"
             case let .albert(embeddingSize, hiddenGroupCount):
-                return "albert-E-\(embeddingSize)-G-\(hiddenGroupCount)"
+                return $"albert-E-{embeddingSize}-G-{hiddenGroupCount}"
             | .electra ->
                 return "electra"
 

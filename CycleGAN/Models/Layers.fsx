@@ -15,7 +15,6 @@
 #r @"..\..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
 #r @"..\..\bin\Debug\netcoreapp3.0\publish\Library.dll"
 
-
 open DiffSharp
 open DiffSharp.Model
 open DiffSharp.ShapeChecking
@@ -29,23 +28,29 @@ open DiffSharp.ShapeChecking
 ///   - epsilon: Small scalar added for numerical stability.
 ///
 /// Reference: [Instance Normalization](https://arxiv.org/abs/1607.08022)
-[<ShapeCheck(100)>]
+//[<ShapeCheck(100)>]
 type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
     inherit Model()
-    /// Small value added in denominator for numerical stability.
-    let epsilon = defaultArg epsilon (dsharp.scalar(1e-5))
-    /// Learnable parameter scale for affine transformation.
-    let scale = dsharp.ones([featureCount])
-    /// Learnable parameter offset for affine transformation.
-    let offset = dsharp.zeros([featureCount])
 
-    [<ShapeCheck("N,100,H,W")>]
+    /// Small value added in denominator for numerical stability.
+    let epsilon = defaultArg epsilon (dsharp.scalar 1e-5)
+
+    /// Learnable parameter scale for affine transformation.
+    let scale = dsharp.ones [featureCount] |> Parameter
+
+    /// Learnable parameter offset for affine transformation.
+    let offset = dsharp.zeros [featureCount] |> Parameter
+
+    do base.add([scale; offset])
+
+    //[<ShapeCheck("N,100,H,W")>]
     override _.forward(input: Tensor) =
+
         // Calculate mean & variance along H,W axes.
         let mean = input.mean(dims=[2; 3])
         let variance = input.variance(dims=[2; 3])
         let norm = (input - mean) * dsharp.rsqrt(variance + epsilon)
-        let res = norm * scale.view([featureCount;1;1]) + offset.view([featureCount;1;1])
+        let res = norm * scale.value.view([featureCount;1;1]) + offset.value.view([featureCount;1;1])
         res
 
     override _.ToString() = sprintf "InstanceNorm2D(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon
@@ -53,6 +58,7 @@ type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
 
 [<ShapeCheck(100)>]
 type ResNetBlock(channels: int, ?useDropOut: bool) =
+    inherit Model()
     let useDropOut = defaultArg useDropOut false
     let conv1 = Conv2d(channels, channels, kernelSize=3, bias=true, padding=1 )
     let norm1 = InstanceNorm2D(featureCount=channels)
@@ -61,6 +67,7 @@ type ResNetBlock(channels: int, ?useDropOut: bool) =
     let norm2 = InstanceNorm2D(featureCount=channels)
 
     let dropOut = Dropout(0.5)
+    do base.add([conv1; norm1; conv2; norm2])
 
     [<ShapeCheck("N,100,H,W")>]
     override _.forward(input: Tensor) =

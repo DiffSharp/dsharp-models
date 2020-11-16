@@ -4,7 +4,7 @@ namespace Datasets
 (*
 open DiffSharp
 
-fileprivate let mustOverride(function: StaticString = #function, file: StaticString = #file, line: UInt = #line) = Never {
+let mustOverride(function: StaticString = #function, file: StaticString = #file, line: UInt = #line) = Never {
   fatalError("Function AnyLayerTangentVectorBox.\(function) (defined at: \(file):\(line)) must be overridden.")
 
 
@@ -307,7 +307,7 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
 
 
     guard let xBase = x.unboxed(as: Underlying.self) else {
-      derivativeTypeMismatch(got: type(of: x.typeErasedBase), expected: Underlying.self)
+      derivativeTypeMismatch(got: type(of: x.typeErasedBase), expected=Underlying.self)
 
     return ConcreteAnyLayerTangentVectorBox(underlying + xBase)
 
@@ -324,7 +324,7 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
 
 
     guard let xBase = x.unboxed(as: Underlying.self) else {
-      derivativeTypeMismatch(got: type(of: x.typeErasedBase), expected: Underlying.self)
+      derivativeTypeMismatch(got: type(of: x.typeErasedBase), expected=Underlying.self)
 
     return ConcreteAnyLayerTangentVectorBox(underlying - xBase)
 
@@ -434,7 +434,7 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
     else
       guard let directionBase =
         direction.unboxed(as: Underlying.TangentVector.self) else {
-        derivativeTypeMismatch(got: type(of: direction.base), expected: Underlying.self)
+        derivativeTypeMismatch(got: type(of: direction.base), expected=Underlying.self)
 
       underlying.move(along: directionBase)
 

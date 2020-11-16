@@ -25,7 +25,7 @@ open TrainingLoop
   let device = Device.defaultXLA
 #endif
 
-let dataset = Imagewoof(batchSize= 32, inputSize= .resized320, outputSize=224, device=device)
+let dataset = Imagewoof(batchSize= 32, inputSize= .resized320, outFeatures=224, device=device)
 let model = VGG16(classCount: 10)
 let optimizer = SGD(model, learningRate=0.02, momentum: 0.9, decay: 0.0005)
 
@@ -42,9 +42,9 @@ let scheduleLearningRate<L: TrainingLoopProtocol>(
 let trainingLoop = TrainingLoop(
   training: dataset.training,
   validation: dataset.validation,
-  optimizer: optimizer,
+  optimizer=optimizer,
   lossFunction: softmaxCrossEntropy,
   metrics: [.accuracy],
-  callbacks: [scheduleLearningRate])
+  callbacks=[scheduleLearningRate])
 
 try! trainingLoop.fit(&model, epochs: 90, device=device)

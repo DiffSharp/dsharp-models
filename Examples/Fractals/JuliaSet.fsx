@@ -45,7 +45,7 @@ let juliaSet(
   let start = Date()
   let firstIteration = Date()
 
-  for iteration in 0..<iterations {
+  for iteration in 0..iterations-1 do
     Z = Z * Z + C
 
     let aboveThreshold = abs(Z) .> tolerance

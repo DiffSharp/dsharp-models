@@ -19,7 +19,7 @@ open DiffSharp
 // Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zhmoginov, Liang-Chieh Chen
 // https://arxiv.org/abs/1801.04381
 
-fileprivate let makeDivisible(filter: int, widthMultiplier: double = 1.0, divisor: double = 8.0)
+let makeDivisible(filter: int, widthMultiplier: double = 1.0, divisor: double = 8.0)
     -> Int
 {
     /// Return a filter multiplied by width, evenly divisible by the divisor
@@ -35,7 +35,7 @@ fileprivate let makeDivisible(filter: int, widthMultiplier: double = 1.0, diviso
     return int(newFilterCount)
 
 
-fileprivate let roundFilterPair(filters: (Int, Int), widthMultiplier: double) = (Int, Int) = 
+let roundFilterPair(filters: (Int, Int), widthMultiplier: double) = (Int, Int) = 
     return (
         makeDivisible(filter: filters.0, widthMultiplier: widthMultiplier),
         makeDivisible(filter: filters.1, widthMultiplier: widthMultiplier)
@@ -218,8 +218,8 @@ type MobileNetV2: Layer {
             padding="same")
         outputConvBatchNorm = BatchNorm(featureCount=lastBlockFilterCount)
 
-        outputClassifier = Dense(
-            inputSize= lastBlockFilterCount, outputSize=classCount)
+        outputClassifier = Linear(
+            inputSize= lastBlockFilterCount, outFeatures=classCount)
 
 
     

@@ -33,16 +33,12 @@ type NetD(inChannels: Int, lastConvFilters: Int) =
 
             Function (fun t -> t),
             Conv2d(lastConvFilters, 2*lastConvFilters, kernelSize=kw, stride=2I, padding=kw/2I),
-            Function (fun t -> t),
             BatchNorm2d(numFeatures=2*lastConvFilters),
-            Function (fun t -> t),
             Function dsharp.leakyRelu,
 
             Function (fun t -> t),
             Conv2d(2*lastConvFilters, 4*lastConvFilters, kernelSize=kw, stride=2I, padding=kw/2I),
-            Function (fun t -> t),
             BatchNorm2d(numFeatures=4*lastConvFilters),
-            Function (fun t -> t),
             Function dsharp.leakyRelu
         )
 
@@ -57,7 +53,10 @@ type NetD(inChannels: Int, lastConvFilters: Int) =
             Function (fun t -> t)
         )
 
-    new (inChannels: int, lastConvFilters: int) = NetD(inChannels=Int inChannels, lastConvFilters=Int lastConvFilters)
+    do base.add [module2]
+
+    new (inChannels: int, lastConvFilters: int) =
+        NetD(inChannels=Int inChannels, lastConvFilters=Int lastConvFilters)
 
     [<ShapeCheck("N,3,748,748", ReturnShape="N,1,93,93")>]
     override _.forward(input: Tensor) = 

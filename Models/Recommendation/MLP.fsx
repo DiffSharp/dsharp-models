@@ -27,9 +27,9 @@ type MLP: Layer {
     init(dims: [Int], sigmoidLastLayer: bool = false) = 
         for i in 0..<(dims.count-1) = 
             if sigmoidLastLayer && i = dims.count - 2 then
-                blocks.append(Dense(inputSize=dims[i], outputSize=dims[i+1], activation= sigmoid))
+                blocks.append(Linear(inFeatures=dims[i], outFeatures=dims[i+1], activation= sigmoid))
             else
-                blocks.append(Dense(inputSize=dims[i], outputSize=dims[i+1], activation= relu))
+                blocks.append(Linear(inFeatures=dims[i], outFeatures=dims[i+1], activation= relu))
 
 
 

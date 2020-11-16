@@ -16,96 +16,47 @@
 #r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
 #r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
 
-
-
+open System
 open Datasets
 open DiffSharp
 
-type Pix2PixDatasetVariant: string {
-    case facades
+type Pix2PixDatasetVariant =
+    | Facades
+    member t.url = Uri "https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/facades.zip"
 
-    let url: Uri {
-        match self with
-        | .facades ->
-            return Uri(
-                "https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/facades.zip")!
-
-
-
-
-type Pix2PixDataset {
-    type Samples = [(source: Tensor, target: Tensor)]
-    type Batches = Slices<Sampling<Samples, ArraySlice<Int>>>
-    type PairedImageBatch = (source: Tensor, target: Tensor)
-    type Training = LazyMapSequence<
-        TrainingEpochs<Samples, Entropy>, 
-        LazyMapSequence<Batches, PairedImageBatch>
-      >
-    type Testing = LazyMapSequence<
-        Slices<Samples>, 
-        PairedImageBatch
-    >
-
-    let trainSamples: Samples
-    let testSamples: Samples
-    let training: Training
-    let testing: Testing
-
-    public init(
-        from rootDirPath: string? = nil,
-        variant: Pix2PixDatasetVariant? = nil, 
-        trainbatchSize= Int = 1,
-        testbatchSize= Int = 1,
-        entropy: Entropy) =
+type Pix2PixDataset(?rootDirPath: string,
+        ?variant: Pix2PixDatasetVariant, 
+        ?trainBatchSize: int,
+        ?testBatchSize: int,
+        ?entropy: Entropy) =
+    let trainBatchSize = defaultArg trainBatchSize 1
+    let testBatchSize = defaultArg testBatchSize 1
+    let rootDirPath = rootDirPath ?? Pix2PixDataset.downloadIfNotPresent(
+        variant: variant ?? .facades,
+        Path.Combine(DatasetUtilities.defaultDirectory, "pix2pix"))
+    let rootDirURL = Uri(fileURLWithPath= rootDirPath)
         
-        let rootDirPath = rootDirPath ?? Pix2PixDataset.downloadIfNotPresent(
-            variant: variant ?? .facades,
-            Path.Combine(DatasetUtilities.defaultDirectory, "pix2pix"))
-        let rootDirURL = Uri(fileURLWithPath= rootDirPath)
+    let trainSamples = 
+        Array.zip
+            (Pix2PixDataset.loadSortedSamples(rootDirURL </> "trainA", fileIndexRetriever: "_"))
+            (Pix2PixDataset.loadSortedSamples(rootDirURL </> "trainB", fileIndexRetriever: "_"))
         
-        trainSamples = Array(zip(
-            try Pix2PixDataset.loadSortedSamples(
-                  from: rootDirURL </> ("trainA"),
-                  fileIndexRetriever: "_"
-                ), 
-            try Pix2PixDataset.loadSortedSamples(
-                  from: rootDirURL </> ("trainB"),
-                  fileIndexRetriever: "_"
-                )
-        ))
-        
-        testSamples = Array(zip(
-            try Pix2PixDataset.loadSortedSamples(
-                  from: rootDirURL </> ("testA"),
-                  fileIndexRetriever: "."
-                ), 
-            try Pix2PixDataset.loadSortedSamples(
-                  from: rootDirURL </> ("testB"),
-                  fileIndexRetriever: "."
-                )
-        ))
+    let testSamples = 
+        Array.zip
+           (Pix2PixDataset.loadSortedSamples(rootDirURL </> "testA", fileIndexRetriever: "."))
+           (Pix2PixDataset.loadSortedSamples(rootDirURL </> "testB", fileIndexRetriever: "."))
 
-        training = TrainingEpochs(
-            samples: trainSamples, 
-            batchSize= trainBatchSize, 
-            entropy: entropy
-        ) |> Seq.map (fun batches -> LazyMapSequence<Batches, PairedImageBatch> in
-            batches |> Seq.map {
-                (
-                    source: dsharp.tensor($0.map (fun x -> x.source)),
-                    target: dsharp.tensor($0.map (fun x -> x.target))
-                )
+    let training = 
+        trainSamples 
+        |> Seq.chunkBySize trainBatchSize 
+        |> Seq.map (fun batch -> dsharp.tensor(batch |> Array.map (fun x -> x.source)),
+                                 dsharp.tensor(batch |> Array.map (fun x -> x.target)))
 
-
-
-        testing = testSamples.inBatches(of: testBatchSize)
-             |> Seq.map {
-                (
-                    source: dsharp.tensor($0.map (fun x -> x.source)),
-                    target: dsharp.tensor($0.map (fun x -> x.target))
-                )
-
-
+    let testing = 
+        trainSamples 
+        |> Seq.chunkBySize testBatchSize 
+        |> Seq.map (fun batch -> dsharp.tensor(batch |> Array.map (fun x -> x.source)),
+                                 dsharp.tensor(batch |> Array.map (fun x -> x.target)))
 
     static member downloadIfNotPresent(
             variant: Pix2PixDatasetVariant,
@@ -147,19 +98,5 @@ type Pix2PixDataset {
 
 
 
-extension Pix2PixDataset where Entropy = SystemRandomNumberGenerator {
-    public init(
-        from rootDirPath: string? = nil,
-        variant: Pix2PixDatasetVariant? = nil, 
-        trainbatchSize= Int = 1,
-        testbatchSize= Int = 1
-    ) =
-        try self.init(
-            from: rootDirPath,
-            variant: variant,
-            trainbatchSize= trainBatchSize,
-            testbatchSize= testBatchSize,
-            entropy=SystemRandomNumberGenerator()
-        )
 
 

@@ -108,7 +108,7 @@ type Agent {
     let playEpisode(testEnvironment: PythonObject) =
         let totalReward: double = 0.0
         let testState = State(testEnvironment.reset()).unwrapped()
-        while true {
+        while true do
             let (_, action) = bestValueAndAction(state: testState)
             let (newState, reward, isDone, _) = testEnvironment.step(action).tuple4
             totalReward <- totalReward + double(reward).unwrapped()
@@ -126,9 +126,9 @@ let bestReward: double = 0.0
 let trainEnvironment = gym.make("FrozenLake-v0")
 let agent = Agent(trainEnvironment)
 let testEnvironment = gym.make("FrozenLake-v0")
-while true {
+while true do
     if iterationIndex % 100 = 0 then
-        print("Running iteration \(iterationIndex)")
+        print($"Running iteration {iterationIndex}")
 
     iterationIndex <- iterationIndex + 1
     let (state, action, reward, nextState) = agent.sampleEnvironment(trainEnvironment)
@@ -140,11 +140,11 @@ while true {
 
     testReward /= double(testEpisodeCount)
     if testReward > bestReward then
-        print("Best reward updated \(bestReward) = \(testReward)")
+        print($"Best reward updated {bestReward} = \(testReward)")
         bestReward = testReward
 
     if testReward > 0.80 then
-        print("Solved in \(iterationIndex) iterations!")
+        print($"Solved in {iterationIndex} iterations!")
         break
 
 

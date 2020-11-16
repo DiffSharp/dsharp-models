@@ -25,19 +25,19 @@ type ActorNetwork: Layer {
     let l1, l2, l3: Dense
 
     init(observationSize: int, hiddenSize: int, actionCount: int) = 
-        l1 = Dense(
+        l1 = Linear(
             inputSize= observationSize,
             outputSize=hiddenSize,
             activation= tanh,
             weightInitializer: heNormal()
         )
-        l2 = Dense(
+        l2 = Linear(
             inputSize= hiddenSize,
             outputSize=hiddenSize,
             activation= tanh,
             weightInitializer: heNormal()
         )
-        l3 = Dense(
+        l3 = Linear(
             inputSize= hiddenSize,
             outputSize=actionCount,
             activation= softmax,
@@ -63,19 +63,19 @@ type CriticNetwork: Layer {
     let l1, l2, l3: Dense
 
     init(observationSize: int, hiddenSize: int) = 
-        l1 = Dense(
+        l1 = Linear(
             inputSize= observationSize,
             outputSize=hiddenSize,
             activation= relu,
             weightInitializer: heNormal()
         )
-        l2 = Dense(
+        l2 = Linear(
             inputSize= hiddenSize,
             outputSize=hiddenSize,
             activation= relu,
             weightInitializer: heNormal()
         )
-        l3 = Dense(
+        l3 = Linear(
             inputSize= hiddenSize,
             outputSize=1,
             weightInitializer: heNormal()

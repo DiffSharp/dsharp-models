@@ -92,7 +92,7 @@ type DLRM: Module {
         let prediction = mlpTop(topInput)
 
         // TODO: loss threshold clipping
-        return prediction.reshape([-1])
+        return prediction.view([-1])
 
 
     (wrt: (denseEmbVec, sparseEmbVecs))
@@ -107,12 +107,12 @@ type DLRM: Module {
             let batchSize = denseEmbVec.shape.[0]
             let allEmbeddings = dsharp.tensor(
                 concatenating: sparseEmbVecs + [denseEmbVec],
-                alongAxis: 1).reshape([batchSize, -1, denseEmbVec.shape.[1]])
+                alongAxis: 1).view([batchSize, -1, denseEmbVec.shape.[1]])
             // Use matmul to efficiently compute all dot products
             let higherOrderInteractions = matmul(
                 allEmbeddings, allEmbeddings.transposed(permutation: 0, 2, 1))
             // Gather relevant indices
-            let flattenedHigherOrderInteractions = higherOrderInteractions.reshape(
+            let flattenedHigherOrderInteractions = higherOrderInteractions.view(
                 [batchSize, -1])
             let desiredIndices = makeIndices(
                 n: int32(higherOrderInteractions.shape.[1]),
@@ -140,7 +140,7 @@ type DLRMInput {
 
 
 // Work-around for lack of inout support
-fileprivate let computeEmbeddings(
+let computeEmbeddings(
     sparseInputs: [Tensor (*<int32>*)],
     latentFactors: [Embedding<Float>]
 ) : Tensor[] {
@@ -153,7 +153,7 @@ fileprivate let computeEmbeddings(
 
 // TODO: remove computeEmbeddingsVJP once inout differentiation is supported!
 @derivative(of: computeEmbeddings)
-fileprivate let computeEmbeddingsVJP(
+let computeEmbeddingsVJP(
     sparseInput: [Tensor (*<int32>*)],
     latentFactors: [Embedding<Float>]
 ) = (
@@ -180,7 +180,7 @@ fileprivate let computeEmbeddingsVJP(
 ///
 /// - Parameter n: Size of the square matrix.
 /// - Parameter selfInteraction: Include the diagonal iff selfInteraction is true.
-fileprivate let makeIndices(n: int32, selfInteraction: bool) = Tensor (*<int32>*) {
+let makeIndices(n: int32, selfInteraction: bool) = Tensor (*<int32>*) {
     let interactionOffset: int32
     if selfInteraction then
         interactionOffset = 0

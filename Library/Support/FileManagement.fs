@@ -142,7 +142,7 @@ let extractArchive(
         try task.run()
         task.waitUntilExit()
     with
-        printError("Failed to extract \(archivePath) with error: \(error)")
+        printError($"Failed to extract {archivePath} with error: \(error)")
         exit(-1)
 
 

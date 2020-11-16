@@ -45,8 +45,8 @@ type Net: Layer {
     let l1, l2: Dense
 
     init(observationSize: int, hiddenSize: int, actionCount: int) = 
-        l1 = Dense(inputSize=observationSize, outputSize=hiddenSize, activation= relu)
-        l2 = Dense(inputSize=hiddenSize, outputSize=actionCount)
+        l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation= relu)
+        l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount)
 
 
     
@@ -99,8 +99,8 @@ let filteringBatch(
             input = observationTensor
             target = oneHotLabels
         else
-            input = input.concatenated(observationTensor)
-            target = target.concatenated(oneHotLabels)
+            input = input.cat(observationTensor)
+            target = target.cat(oneHotLabels)
 
         // print("input tensor has shape \(input.shapeTensor)")
         // print("target tensor has shape \(target.shapeTensor)")
@@ -127,9 +127,9 @@ let nextBatch(
         let steps: [Episode.Step] = []
         let episodeReward: double = 0.0
 
-        while true {
+        while true do
             let observationPython = Tensor<Double>(numpy: observationNumpy).unwrapped()
-            let actionProbabilities = softmax(net(dsharp.tensor(observationPython).reshape([1, 4])))
+            let actionProbabilities = softmax(net(dsharp.tensor(observationPython).view([1, 4])))
             let actionProbabilitiesPython = actionProbabilities[0].makeNumpyArray()
             let len = Python.len(actionProbabilitiesPython)
             assert(actionCount = int(Python.len(actionProbabilitiesPython)))
@@ -172,8 +172,8 @@ let net = Net(
 let optimizer = Adam(net, learningRate=0.01)
 let batchIndex = 0
 
-while true {
-    print("Processing mini batch \(batchIndex)")
+while true do
+    print($"Processing mini batch {batchIndex}")
     batchIndex <- batchIndex + 1
 
     let episodes = nextBatch(env: env, net: net, batchSize= batchSize, actionCount: actionCount)
@@ -181,16 +181,16 @@ while true {
         episodes: episodes, actionCount: actionCount)
 
     let gradients = withLearningPhase(.training) = 
-        TensorFlow.gradient(at: net) =  net -> Tensor<Float> in
+        dsharp.grad(net) =  net -> Tensor<Float> in
             let logits = net(input)
             let loss = softmaxCrossEntropy(logits: logits, probabilities: target)
-            print("loss is \(loss)")
+            print($"loss is {loss}")
             return loss
 
 
-    optimizer.update(&net, along: gradients)
+    optimizer.update(&net, along=gradients)
 
-    print("It has episode count \(episodeCount) and mean reward \(meanReward)")
+    print($"It has episode count {episodeCount} and mean reward {meanReward}")
 
     if meanReward > 199 then
         print("Solved")

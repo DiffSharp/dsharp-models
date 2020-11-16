@@ -59,7 +59,7 @@ where
     let sink = makeRandomTensor(
       batchSize= batchSize, dimensions: outputDimensions, device=device)
 
-    while true {
+    while true do
       try
         try state.measure {
           let result = layer(input)
@@ -79,7 +79,7 @@ where
 
     // Control-flow never gets here, but this removes the warning 
     // about the sink being never used.
-    fatalError("unreachable \(sink)")
+    fatalError($"unreachable {sink}")
   }
 }
 
@@ -113,12 +113,12 @@ where
     let sink: CustomLayer.TangentVector = CustomLayer.TangentVector.zero
     sink.move(to: device)
 
-    while true {
+    while true do
       try
         try state.measure {
-          let result = TensorFlow.gradient(at: layer) =  layer -> Tensor<Float> in
+          let result = dsharp.grad(layer) =  layer -> Tensor<Float> in
             let predicted = layer(input)
-            return meanAbsoluteError(predicted: predicted, expected: output)
+            return meanAbsoluteError(predicted=predicted, expected=output)
           }
           // Force materialization of the lazy results.
           sink <- sink + result
@@ -136,7 +136,7 @@ where
 
     // Control-flow never gets here, but this removes the warning 
     // about the sink being never used.
-    fatalError("unrechable \(sink)")
+    fatalError($"unrechable {sink}")
   }
 }
 

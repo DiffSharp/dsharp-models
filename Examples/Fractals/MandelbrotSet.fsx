@@ -36,7 +36,7 @@ let mandelbrotSet(
   let start = Date()
   let firstIteration = Date()
 
-  for iteration in 0..<iterations {
+  for iteration in 0..iterations-1 do
     Z = Z * Z + X
 
     let aboveThreshold = abs(Z) .> tolerance

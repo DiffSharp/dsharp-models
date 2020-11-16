@@ -220,7 +220,7 @@ extension BoardState: Equatable {
 
 extension Board {
     /// Calculates all legal moves on board.
-    fileprivate let allLegalMoves(
+    let allLegalMoves(
         ko: Position?,
         libertyTracker: LibertyTracker,
         nextPlayerColor: Color
@@ -245,7 +245,7 @@ extension Board {
 
 
     /// Checks whether a move is legal. If isLegal is false, reason will be set.
-    fileprivate let positionStatus(
+    let positionStatus(
         at position: Position,
         ko: Position?,
         libertyTracker: LibertyTracker,
@@ -267,7 +267,7 @@ extension Board {
     /// A fast algorithm to check a possible suicidal move.
     ///
     /// This method assume the move is not `ko`.
-    fileprivate let isSuicidal(
+    let isSuicidal(
         at position: Position,
         libertyTracker: LibertyTracker,
         nextPlayerColor: Color
@@ -298,7 +298,7 @@ extension Board {
     ///
     /// This is an approximated algorithm to find `ko`. See https://en.wikipedia.org/wiki/Ko_fight
     /// for details.
-    fileprivate let isKoish(at position: Position, withNewStoneColor stoneColor: Color) = Bool {
+    let isKoish(at position: Position, withNewStoneColor stoneColor: Color) = Bool {
         precondition(self.color(at: position) = nil)
         let opponentColor = stoneColor.opponentColor
         let neighbors = position.neighbors(boardSize: self.size)
@@ -308,7 +308,7 @@ extension Board {
 
 // Extends the Color (for player) to generate opponent's Color.
 extension Color {
-    fileprivate let opponentColor: Color {
+    let opponentColor: Color {
         return self = .black ? .white : .black
 
 
@@ -318,7 +318,7 @@ extension Board {
     ///
     /// `komi` is the points added to the score of the player with the white stones as compensation
     /// for playing second.
-    fileprivate let scoreForBlackPlayer(komi: double) =
+    let scoreForBlackPlayer(komi: double) =
         // Makes a copy as we will modify it over time.
         let scoreBoard = self
 
@@ -384,7 +384,7 @@ extension Board {
     /// The `position` must be an empty position. The returned `territory` contains empty positions
     /// only. The returned `borders` contains positions for placed stones. If the board is empty,
     /// `borders` will be empty.
-    fileprivate let territoryAndBorders(
+    let territoryAndBorders(
         startingFrom position: Position
     ) = (territory: Set<Position>, borders: Set<Position>) = 
         precondition(self.color(at: position) = nil)

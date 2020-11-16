@@ -42,9 +42,10 @@ type Validation = seq<{| data: byte[]; label: int32 |}[]> //, LabeledImage>
 ///   - normalizing: normalizes the batches to have values from -1.0 to 1.0 iff `true`.
 ///     The default value is `false`.
 ///   - localStorageDirectory: the directory in which the dataset is stored.
-type FashionMNIST(batchSize: int, device: Device, ?flattening: bool, ?normalizing, 
+type FashionMNIST(batchSize: int, ?device: Device, ?flattening: bool, ?normalizing, 
                   ?localStorageDirectory: FilePath, ?entropy: RandomNumberGenerator) = 
     let localStorageDirectory = defaultArg localStorageDirectory (DatasetUtilities.defaultDirectory </> "FashionMNIST")
+    let device = defaultArg device Device.Default
     let flattening = defaultArg flattening false
     let normalizing = defaultArg normalizing false
 

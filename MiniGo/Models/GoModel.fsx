@@ -133,7 +133,7 @@ type GoModel: Layer {
             padding="same",
             bias: false,
             affine: false)
-        policyDense = Dense(
+        policyDense = Linear(
             inputSize= configuration.policyConvWidth * configuration.boardSize
                 * configuration.boardSize,
             outputSize=configuration.boardSize * configuration.boardSize + 1,
@@ -143,12 +143,12 @@ type GoModel: Layer {
             padding="same",
             bias: false,
             affine: false)
-        valueDense1 = Dense(
+        valueDense1 = Linear(
             inputSize= configuration.valueConvWidth * configuration.boardSize
                 * configuration.boardSize,
             outputSize=configuration.valueDenseWidth,
             activation= relu)
-        valueDense2 = Dense(
+        valueDense2 = Linear(
             inputSize= configuration.valueDenseWidth,
             outputSize=1,
             activation= tanh)
@@ -164,16 +164,16 @@ type GoModel: Layer {
 
 
         let policyConvOutput = relu(policyConv(output))
-        let logits = policyDense(policyConvOutput.reshape(to:
+        let logits = policyLinear(policyConvOutput.view(to:
             [batchSize,
              configuration.policyConvWidth * configuration.boardSize * configuration.boardSize]))
         let policyOutput = softmax(logits)
 
         let valueConvOutput = relu(valueConv(output))
-        let valueHidden = valueDense1(valueConvOutput.reshape(to:
+        let valueHidden = valueDense1(valueConvOutput.view(to:
             [batchSize,
              configuration.valueConvWidth * configuration.boardSize * configuration.boardSize]))
-        let valueOutput = valueDense2(valueHidden).reshape([batchSize])
+        let valueOutput = valueDense2(valueHidden).view([batchSize])
 
         return GoModelOutput(policy: policyOutput, value: valueOutput, logits: logits)
 

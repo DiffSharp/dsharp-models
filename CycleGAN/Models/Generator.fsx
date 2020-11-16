@@ -61,6 +61,8 @@ type ResNetGenerator(inputChannels:int,
 
     let lastConv = Conv2d(ngf, outputChannels, kernelSize = 7, bias=useBias, padding=3)
 
+    do base.add [ conv1; norm1; conv2; norm2; conv3; norm3; yield! Array.map box resblocks; upConv1; upNorm1; upConv2; upNorm2; lastConv ]
+
     [<ShapeCheck("N, 3, 748, 748")>]
     override _.forward(input: Tensor) = 
         let x = input.pad([0;0;3;3])

@@ -13,11 +13,14 @@
 // limitations under the License.
 
 /// Based on https://blog.keras.io/building-autoencoders-in-keras.html
+#r @"..\..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
 
 open Datasets
-
-
 open DiffSharp
+open DiffSharp.Model
 
 let epochCount = 10
 let batchSize = 100
@@ -25,35 +28,39 @@ let imageHeight = 28
 let imageWidth = 28
 
 let outputFolder = "./output/"
-let dataset = KuzushijiMNIST(batchSize= batchSize,  
-    flattening=true)
+let dataset = KuzushijiMNIST(batchSize= batchSize, flattening=true)
 
 // An autoencoder.
-type Autoencoder2D: Layer {
-    let encoder1 = Conv2d(filterShape=(3, 3, 1, 16), padding="same", activation= relu)
-    let encoder2 = MaxPool2D<Float>(poolSize: (2, 2), stride=2, padding="same")
-    let encoder3 = Conv2d(filterShape=(3, 3, 16, 8), padding="same", activation= relu)
-    let encoder4 = MaxPool2D<Float>(poolSize: (2, 2), stride=2, padding="same")
-    let encoder5 = Conv2d(filterShape=(3, 3, 8, 8), padding="same", activation= relu)
-    let encoder6 = MaxPool2D<Float>(poolSize: (2, 2), stride=2, padding="same")
+type Autoencoder2D() =
+    inherit Model()
+    let encoder1 = Conv2d(1, 16, kernelSize=3, padding=1)
+    let encoder2 = Function (fun t -> t.maxpool2d(kernelSize=2, stride=2, padding=1))
+    let encoder3 = Conv2d(16, 8, kernelSize=3, padding=1)
+    let encoder2 = Function (fun t -> t.maxpool2d(kernelSize=2, stride=2, padding=1))
+    let encoder5 = Conv2d(8, 8, kernelSize=3, padding=1)
+    let encoder6 = Function (fun t -> t.maxpool2d(kernelSize=2, stride=2, padding=1))
 
-    let decoder1 = Conv2d(filterShape=(3, 3, 8, 8), padding="same", activation= relu)
-    let decoder2 = UpSampling2D<Float>(size: 2)
-    let decoder3 = Conv2d(filterShape=(3, 3, 8, 8), padding="same", activation= relu)
-    let decoder4 = UpSampling2D<Float>(size: 2)
-    let decoder5 = Conv2d(filterShape=(3, 3, 8, 16), activation= relu)
-    let decoder6 = UpSampling2D<Float>(size: 2)
+    let decoder1 = Conv2d(8, 8, kernelSize=3, padding="same")
+    let decoder2 = UpSampling2D(size: 2)
+    let decoder3 = Conv2d(8, 8, kernelSize=3, padding="same")
+    let decoder4 = UpSampling2D(size: 2)
+    let decoder5 = Conv2d(8, 16, kernelSize=3)
+    let decoder6 = UpSampling2D(size: 2)
 
     let output = Conv2d(filterShape=(3, 3, 16, 1), padding="same", activation= sigmoid)
-
     
     override _.forward(input) =
-        let resize = input.reshape([batchSize, 28, 28, 1])
-        let encoder = resize |> encoder1,
-            encoder2, encoder3, encoder4, encoder5, encoder6)
-        let decoder = encoder |> decoder1,
-            decoder2, decoder3, decoder4, decoder5, decoder6)
-        return output(decoder).reshape([batchSize, imageHeight * imageWidth])
+        let resize = input.view([batchSize, 28, 28, 1])
+        let encoder =
+            resize 
+            |> encoder1.forward |> dsharp.relu
+            |> encoder2.forward 
+            |> encoder3.forward |> dsharp.relu
+            |> encoder4.forward 
+            |> encoder5.forward |> dsharp.relu
+            |> encoder6.forward 
+        let decoder = encoder |> decoder1.forward |> decoder2.forward |> decoder3.forward |> decoder4.forward |> decoder5.forward |> decoder6.forward
+        return output.forward(decoder).view([batchSize; imageHeight * imageWidth])
 
 
 
@@ -66,12 +73,11 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     for batch in epochBatches do
         let x = batch.data
 
-        let δmodel = TensorFlow.gradient(at: model) =  model -> Tensor<Float> in
-            let image = model(x)
-            return meanSquaredError(predicted: image, expected: x)
+        let δmodel = dsharp.grad(model) 
+        let image = model(x)
+        meanSquaredError(predicted=image, expected=x)
 
-
-        optimizer.update(&model, along: δmodel)
+        optimizer.update(&model, along=δmodel)
 
 
     vae.mode <- Mode.Eval
@@ -82,22 +88,20 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         let testImages = model(sampleImages)
 
         try
-            try saveImage(
-                sampleImages[0..<1], shape=[imageWidth; imageHeight], format: .grayscale,
-                directory: outputFolder, name= "epoch-\(epoch)-input")
-            try saveImage(
-                testImages[0..<1], shape=[imageWidth; imageHeight], format: .grayscale,
-                directory: outputFolder, name= "epoch-\(epoch)-output")
+            dsharp.saveImage(
+                sampleImages.[0..0], shape=[imageWidth; imageHeight], format="grayscale",
+                directory=outputFolder, name= $"epoch-{epoch}-input")
+            dsharp.saveImage(
+                testImages.[0..0], shape=[imageWidth; imageHeight], format="grayscale",
+                directory=outputFolder, name= $"epoch-{epoch}-output")
         with e ->
             print("Could not save image with error: \(error)")
 
-
-        testLossSum <- testLossSum + meanSquaredError(predicted: testImages, expected: sampleImages).scalarized()
+        testLossSum <- testLossSum + meanSquaredError(predicted=testImages, expected=sampleImages).scalarized()
         testBatchCount <- testBatchCount + 1
 
 
-    print(
-        """
+    print("""
         [Epoch \(epoch)] \
         Loss: \(testLossSum / double(testBatchCount))
         """

@@ -132,7 +132,7 @@ let replayBuffer = ReplayBuffer(
 let agent = DeepQNetworkAgent(
   qNet: qNet,
   targetQNet: targetQNet,
-  optimizer: optimizer,
+  optimizer=optimizer,
   replayBuffer: replayBuffer,
   discount: discount,
   minBufferSize: minBufferSize,
@@ -184,7 +184,7 @@ while episodeIndex < maxEpisode {
       bestReturn = evalEpisodeReturn
 
     if evalEpisodeReturn > 199 then
-      print("Solved in \(episodeIndex) episodes with \(stepIndex) steps!")
+      print($"Solved in {episodeIndex} episodes with {stepIndex} steps!")
       break
 
     episodeReturn = 0

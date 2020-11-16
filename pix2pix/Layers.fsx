@@ -127,7 +127,7 @@ type UNetSkipConnectionInnermost: Layer {
         x = relu(x)
         x = x |> self.upConv, self.upNorm)
 
-        return input.concatenated(x, alongAxis: 3)
+        return input.cat(x, alongAxis: 3)
 
 
 
@@ -176,7 +176,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
             x = self.dropOut(x)
 
         
-        return input.concatenated(x, alongAxis: 3)
+        return input.cat(x, alongAxis: 3)
 
 
 

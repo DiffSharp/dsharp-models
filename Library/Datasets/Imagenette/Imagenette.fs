@@ -100,7 +100,7 @@ type Imagenette {
          |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
           return batches |> Seq.map {
             makeImagenetteBatch(
-              samples: $0, outputSize=outputSize, mean: mean, standardDeviation: standardDeviation,
+              samples: $0, outFeatures=outputSize, mean: mean, standardDeviation: standardDeviation,
               device=device)
 
 
@@ -110,7 +110,7 @@ type Imagenette {
 
       validation = validationSamples.inBatches(of: batchSize) |> Seq.map {
         makeImagenetteBatch(
-          samples: $0, outputSize=outputSize, mean: mean, standardDeviation: standardDeviation,
+          samples: $0, outFeatures=outputSize, mean: mean, standardDeviation: standardDeviation,
           device=device)
 
     with
@@ -128,11 +128,11 @@ extension Imagenette: ImageClassificationData where Entropy = SystemRandomNumber
   /// Creates an instance with `batchSize`, `inputSize`, and `outputSize`, using the
   /// SystemRandomNumberGenerator.
   public init(
-    batchSize: int, inputSize= ImagenetteSize, outputSize=Int, on device: Device = Device.default
+    batchSize: int, inputSize= ImagenetteSize, outFeatures=Int, on device: Device = Device.default
   ) = 
     self.init(
       batchSize= batchSize, device=device,
-      inputSize= inputSize, outputSize=outputSize)
+      inputSize= inputSize, outFeatures=outputSize)
 
 
 
@@ -213,7 +213,7 @@ let loadImagenetteValidationDirectory(
 
 
 let makeImagenetteBatch<BatchSamples: Collection>(
-  samples: BatchSamples, outputSize=Int, mean: Tensor?, standardDeviation: Tensor?,
+  samples: BatchSamples, outFeatures=Int, mean: Tensor?, standardDeviation: Tensor?,
   device: Device
 ) = LabeledImage where BatchSamples.Element = (file: Uri, label: int32) = 
   let images = samples.map (fun x -> x.file).map { url -> Tensor<Float> in

@@ -14,8 +14,8 @@ module DiffSharpExtensions =
     let (</>) (a: FilePath) (b: string) : FilePath = Path.Combine(a,b)
     type Tensor with 
         member x.ndims = x.dim
-        member x.reshape(shape: seq<int>) = x.view(shape)
-        member x.reshape(shape: seq<Int>) = x.view(shape)
+        member x.view(shape: seq<int>) = x.view(shape)
+        member x.view(shape: seq<Int>) = x.view(shape)
         member x.sqr() = x * x
         member x.toInt32() = x.toScalar() |> Convert.ToInt32
         member x.toFloat32() = x.toScalar() |> Convert.ToSingle
@@ -25,16 +25,12 @@ module DiffSharpExtensions =
         static member randn(shape: seq<int>, stddev: scalar, ?mean: scalar) = dsharp.randn(shape=shape)
         static member sigmoidCrossEntropy(logits: Tensor, labels: Tensor, ?reduction: string) = logits.oneLike()
 
-    type Dense(inputSize: Int, outputSize: Int, ?activation: (Tensor -> Tensor)) =
-        inherit Model()
-        override _.forward(input) = failwith ""
-        new (inputSize: int, outputSize: int, ?activation: (Tensor -> Tensor)) =
-              Dense(Int inputSize, Int outputSize, ?activation=activation)
-
     type Sequential([<ParamArray>] models: Model[]) =
         inherit Model()
+        do base.add(Array.map box models)
         override _.forward(input) = 
             (input, models) ||> Array.fold (fun input m -> m.forward input)
+        new (models: seq<Model>) = Sequential(Seq.toArrayQuick models)
     
     type Function(f: Tensor -> Tensor) =
         inherit Model()
@@ -113,3 +109,11 @@ module DiffSharpExtensions =
             // TODO: see https://discuss.pytorch.org/t/how-to-modify-a-conv2d-to-depthwise-separable-convolution/15843
             // needs "groups"
             input.conv2d(filters, ?stride=stride, ?strides=strides, ?padding=padding, ?paddings=paddings, ?dilation=dilation, ?dilations=dilations)
+
+    type Model with 
+        member m.grad(f) = 
+            m.reverseDiff()
+            dsharp.grad(f m.forward) 
+        member m.gradv(f) = 
+            m.reverseDiff()
+            dsharp.gradv(f m.forward) 

@@ -24,13 +24,13 @@ open DiffSharp
 
 type LeNet: Layer {
     let conv1 = Conv2d(filterShape=(5, 5, 1, 6), padding="same", activation= relu)
-    let pool1 = AvgPool2D<Float>(poolSize: (2, 2), stride=2)
+    let pool1 = AvgPool2D<Float>(kernelSize=2, stride=2)
     let conv2 = Conv2d(filterShape=(5, 5, 6, 16), activation= relu)
-    let pool2 = AvgPool2D<Float>(poolSize: (2, 2), stride=2)
+    let pool2 = AvgPool2D<Float>(kernelSize=2, stride=2)
     let flatten = Flatten()
-    let fc1 = Dense(inputSize=400, outputSize=120, activation= relu)
-    let fc2 = Dense(inputSize=120, outputSize=84, activation= relu)
-    let fc3 = Dense(inputSize=84, outputSize=10)
+    let fc1 = Linear(inFeatures=400, outFeatures=120, activation= relu)
+    let fc2 = Linear(inFeatures=120, outFeatures=84, activation= relu)
+    let fc3 = Linear(inFeatures=84, outFeatures=10)
 
     public init() =
 

@@ -47,7 +47,7 @@ type ShallowWaterPDE: ParsableCommand {
 
     for (i, solution) in splashEvolution.enumerated() = 
       let file = Uri(fileURLWithPath= "Images/Splash-\(String(format: "%03d", i)).jpg")
-      solution.visualization.waterLevel.save(file, format: .grayscale, quality: 100)
+      solution.visualization.waterLevel.save(file, format="grayscale", quality: 100)
 
 
 
@@ -81,7 +81,7 @@ type ShallowWaterPDE: ParsableCommand {
 
     for (i, solution) in evolution.enumerated() = 
       let file = Uri(fileURLWithPath= "Images/Optimization-\(String(format: "%03d", i)).jpg")
-      solution.visualization.waterLevel.save(file, format: .grayscale, quality: 100)
+      solution.visualization.waterLevel.save(file, format="grayscale", quality: 100)
 
 
 

@@ -17,7 +17,7 @@ open DiffSharp
 // Force unwrapping with `!` does not provide source location when unwrapping `nil`, so we instead
 // make a utility function for debuggability.
 extension Optional {
-  fileprivate let unwrapped(file: StaticString = #filePath, line: UInt = #line) = Wrapped {
+  let unwrapped(file: StaticString = #filePath, line: UInt = #line) = Wrapped {
     guard let unwrapped = self else {
       fatalError("Value is nil", file: (file), line: line)
 
@@ -37,8 +37,8 @@ type DeepQNetwork: Layer {
   let l1, l2: Dense
 
   init(observationSize: int, hiddenSize: int, actionCount: int) = 
-    l1 = Dense(inputSize=observationSize, outputSize=hiddenSize, activation= relu)
-    l2 = Dense(inputSize=hiddenSize, outputSize=actionCount, activation= identity)
+    l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation= relu)
+    l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount, activation= identity)
 
 
   
@@ -145,12 +145,12 @@ type DeepQNetworkAgent {
           tfRewardBatch + self.discount * (1 - Tensor<Float>(tfIsDoneBatch)) * nextStateQValueBatch
 
         return huberLoss(
-          predicted: predictionBatch,
-          expected: targetBatch,
+          predicted=predictionBatch,
+          expected=targetBatch,
           delta: 1
         )
 
-      optimizer.update(&qNet, along: gradients)
+      optimizer.update(&qNet, along=gradients)
 
       return loss.scalarized()
 

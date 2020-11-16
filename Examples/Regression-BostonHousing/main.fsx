@@ -20,9 +20,9 @@ let dataset = BostonHousing()
 
 // Create Model
 type RegressionModel: Layer {
-    let layer1 = Dense(inputSize=13, outputSize=64, activation= relu)
-    let layer2 = Dense(inputSize=64, outputSize=32, activation= relu)
-    let layer3 = Dense(inputSize=32, outputSize=1)
+    let layer1 = Linear(inFeatures=13, outFeatures=64, activation= relu)
+    let layer2 = Linear(inFeatures=64, outFeatures=32, activation= relu)
+    let layer3 = Linear(inFeatures=32, outFeatures=1)
     
     
     override _.forward(input) =
@@ -52,25 +52,22 @@ for epoch in 1...epochCount do
     let epochMAE: double = 0
     let batchCount: int = 0
     let batchArray = Array(repeating: false, count: numberOfBatch)
-    for batch in 0..<numberOfBatch {
+    for batch in 0..numberOfBatch-1 do
         let r = batch
         if shuffle then
-            while true {
-                r = Int.random(in: 0..<numberOfBatch)
+            while true do
+                r = Int.random(0..numberOfBatch-1)
                 if !batchArray[r] then
                     batchArray[r] = true
                     break
 
-
-
-        
         let batchStart = r * batchSize
         let batchEnd = min(dataset.numTrainRecords, batchStart + batchSize)
         let (loss, grad) = valueWithGradient(at: model) =  (model: RegressionModel) = Tensor<Float> in
             let logits = model(dataset.xTrain[batchStart..<batchEnd])
-            return meanSquaredError(predicted: logits, expected: dataset.yTrain[batchStart..<batchEnd])
+            return meanSquaredError(predicted=logits, expected=dataset.yTrain[batchStart..<batchEnd])
 
-        optimizer.update(&model, along: grad)
+        optimizer.update(&model, along=grad)
         
         let logits = model(dataset.xTrain[batchStart..<batchEnd])
         epochMAE <- epochMAE + meanAbsoluteError(predictions: logits, truths: dataset.yTrain[batchStart..<batchEnd])
@@ -93,7 +90,7 @@ vae.mode <- Mode.Eval
 
 let prediction = model(dataset.xTest)
 
-let evalMse = meanSquaredError(predicted: prediction, expected: dataset.yTest).scalarized()/double(dataset.numTestRecords)
+let evalMse = meanSquaredError(predicted=prediction, expected=dataset.yTest).scalarized()/double(dataset.numTestRecords)
 let evalMae = meanAbsoluteError(predictions: prediction, truths: dataset.yTest)/double(dataset.numTestRecords)
 
 print("MSE: \(evalMse), MAE: \(evalMae)")

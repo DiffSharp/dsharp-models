@@ -75,7 +75,7 @@ type Shortcut: Layer {
     let needsPool: bool
     
     public init(inFilters: int, outFilters: int, stride: int) = 
-        avgPool = AvgPool2D<Float>(poolSize: (2, 2), strides = [stride, stride))
+        avgPool = AvgPool2D<Float>(kernelSize=2, strides = [stride, stride))
         needsPool = (stride <> 1)
         needsProjection = (inFilters <> outFilters)
         projection = ConvBNV2(
@@ -125,7 +125,7 @@ type ResidualBlockV2: Layer {
 /// An implementation of the ResNet v2 architectures, at various depths.
 type ResNetV2: Layer {
     let inputStem: [ConvBNV2]
-    let maxPool: MaxPool2D<Float>
+    let maxPool: MaxPool2d
     let residualBlocks: [ResidualBlockV2] = []
     let avgPool = GlobalAvgPool2D<Float>()
     let flatten = Flatten()
@@ -163,7 +163,7 @@ type ResNetV2: Layer {
                 ))
 
 
-        classifier = Dense(inputSize=512 * depth.expansion, outputSize=classCount)
+        classifier = Linear(inFeatures=512 * depth.expansion, outFeatures=classCount)
 
 
     

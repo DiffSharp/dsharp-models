@@ -35,7 +35,7 @@ extension ImageSize: ExpressibleByArgument {
 
 
 
-fileprivate let prismColor(_ value: double, iterations: int) = double[] {
+let prismColor(_ value: double, iterations: int) = double[] {
   guard value < double(iterations) else { return [0.0, 0.0, 0.0]
 
   let normalizedValue = value / double(iterations)

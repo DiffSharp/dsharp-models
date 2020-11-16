@@ -48,7 +48,7 @@ type Fire: Layer {
         let squeezed = squeeze(input)
         let expanded1 = expand1(squeezed)
         let expanded3 = expand3(squeezed)
-        return expanded1.concatenated(expanded3, alongAxis: -1)
+        return expanded1.cat(expanded3, alongAxis: -1)
 
 
 
@@ -58,7 +58,7 @@ type SqueezeNetV1_0: Layer {
         stride=2,
         padding="same",
         activation= relu)
-    let maxPool1 = MaxPool2D<Float>(poolSize: (3, 3), stride=2)
+    let maxPool1 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire2 = Fire(
         inputFilterCount: 96,
         squeezeFilterCount: 16,
@@ -74,7 +74,7 @@ type SqueezeNetV1_0: Layer {
         squeezeFilterCount: 32,
         expand1FilterCount: 128,
         expand3FilterCount: 128)
-    let maxPool4 = MaxPool2D<Float>(poolSize: (3, 3), stride=2)
+    let maxPool4 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire5 = Fire(
         inputFilterCount: 256,
         squeezeFilterCount: 32,
@@ -95,7 +95,7 @@ type SqueezeNetV1_0: Layer {
         squeezeFilterCount: 64,
         expand1FilterCount: 256,
         expand3FilterCount: 256)
-    let maxPool8 = MaxPool2D<Float>(poolSize: (3, 3), stride=2)
+    let maxPool8 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire9 = Fire(
         inputFilterCount: 512,
         squeezeFilterCount: 64,
@@ -115,7 +115,7 @@ type SqueezeNetV1_0: Layer {
         let fired1 = convolved1 |> fire2, fire3, fire4, maxPool4, fire5, fire6)
         let fired2 = fired1 |> fire7, fire8, maxPool8, fire9)
         let convolved2 = fired2 |> dropout, conv10, avgPool10)
-            .reshape([input.shape.[0], conv10.filter.shape.[3]])
+            .view([input.shape.[0], conv10.filter.shape.[3]])
         return convolved2
 
 
@@ -126,7 +126,7 @@ type SqueezeNetV1_1: Layer {
         stride=2,
         padding="same",
         activation= relu)
-    let maxPool1 = MaxPool2D<Float>(poolSize: (3, 3), stride=2)
+    let maxPool1 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire2 = Fire(
         inputFilterCount: 64,
         squeezeFilterCount: 16,
@@ -137,7 +137,7 @@ type SqueezeNetV1_1: Layer {
         squeezeFilterCount: 16,
         expand1FilterCount: 64,
         expand3FilterCount: 64)
-    let maxPool3 = MaxPool2D<Float>(poolSize: (3, 3), stride=2)
+    let maxPool3 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire4 = Fire(
         inputFilterCount: 128,
         squeezeFilterCount: 32,
@@ -148,7 +148,7 @@ type SqueezeNetV1_1: Layer {
         squeezeFilterCount: 32,
         expand1FilterCount: 128,
         expand3FilterCount: 128)
-    let maxPool5 = MaxPool2D<Float>(poolSize: (3, 3), stride=2)
+    let maxPool5 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire6 = Fire(
         inputFilterCount: 256,
         squeezeFilterCount: 48,
@@ -183,7 +183,7 @@ type SqueezeNetV1_1: Layer {
         let fired1 = convolved1 |> fire2, fire3, maxPool3, fire4, fire5)
         let fired2 = fired1 |> maxPool5, fire6, fire7, fire8, fire9)
         let convolved2 = fired2 |> dropout, conv10, avgPool10)
-            .reshape([input.shape.[0], conv10.filter.shape.[3]])
+            .view([input.shape.[0], conv10.filter.shape.[3]])
         return convolved2
 
 

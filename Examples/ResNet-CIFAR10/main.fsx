@@ -32,7 +32,7 @@ let optimizer = SGD(model, learningRate=0.001)
 let trainingLoop = TrainingLoop(
   training: dataset.training,
   validation: dataset.validation,
-  optimizer: optimizer,
+  optimizer=optimizer,
   lossFunction: softmaxCrossEntropy,
   metrics: [.accuracy])
 

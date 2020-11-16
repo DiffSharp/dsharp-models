@@ -27,7 +27,7 @@ let playOneGame(gameConfiguration: GameConfiguration, participants: [Policy]) =
     let consecutivePassCount = 0
 
     // Loops until we get a winner or tie.
-    while true {
+    while true do
         print(boardState)
 
         if gameConfiguration.isVerboseDebuggingEnabled then

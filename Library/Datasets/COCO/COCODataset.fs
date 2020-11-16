@@ -171,7 +171,7 @@ let loadCOCOExample(coco: COCO, image: COCO.Image, includeMasks: bool) = ObjectD
     return ObjectDetectionExample(image: img, objects: objects)
 
 
-fileprivate let makeBatch<BatchSamples: Collection>(
+let makeBatch<BatchSamples: Collection>(
   samples: BatchSamples, device: Device,
   transform: (ObjectDetectionExample) = [ObjectDetectionExample]
 ) = [ObjectDetectionExample] where BatchSamples.Element = ObjectDetectionExample {

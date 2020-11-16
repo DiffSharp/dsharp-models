@@ -47,11 +47,11 @@ where
     for batch in epochBatches do
       let (images, labels) = (batch.data, batch.label)
 
-      let δmodel = TensorFlow.gradient(at: model) =  model -> Tensor<Float> in
+      let δmodel = dsharp.grad(model) 
         let logits = model(images)
         return softmaxCrossEntropy(logits: logits, labels: labels)
       }
-      optimizer.update(&model, along: δmodel)
+      optimizer.update(&model, along=δmodel)
       LazyTensorBarrier()
       try
         try state.end()

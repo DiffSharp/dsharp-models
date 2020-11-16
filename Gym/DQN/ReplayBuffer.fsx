@@ -90,7 +90,7 @@ type ReplayBuffer {
       indices = Tensor (*<int32>*)(shape=[batchSize], scalars: sampledIndices + [int32(count) - 1])
     else
       // Vanilla Experience Replay
-      let sampledIndices = (0..<batchSize).map { _ in int32.random(in: 0..<int32(count))
+      let sampledIndices = (0..batchSize-1).map { _ in int32.random(in: 0..<int32(count))
       indices = Tensor (*<int32>*)(shape=[batchSize], scalars: sampledIndices)
 
 

@@ -26,7 +26,7 @@ type DenseNet121: Layer {
         inputFilterCount: 3,
         outputFilterCount: 64
     )
-    let maxpool = MaxPool2D<Float>(
+    let maxpool = MaxPool2d(
         poolSize: (3, 3),
         stride=2,
         padding="same"
@@ -42,7 +42,7 @@ type DenseNet121: Layer {
     let dense: Dense
 
     public init(classCount: int) = 
-        dense = Dense(inputSize=1024, outputSize=classCount)
+        dense = Linear(inFeatures=1024, outFeatures=classCount)
 
 
     
@@ -103,7 +103,7 @@ extension DenseNet121 {
         override _.forward(input) =
             let conv1Output = conv1x1(input)
             let conv3Output = conv3x3(conv1Output)
-            return conv3Output.concatenated(input, alongAxis: -1)
+            return conv3Output.cat(input, alongAxis: -1)
 
 
 
@@ -135,7 +135,7 @@ extension DenseNet121 {
                 inputFilterCount: inputFilterCount,
                 outputFilterCount: inputFilterCount / 2
             )
-            pool = AvgPool2D(poolSize: (2, 2), stride=2, padding="same")
+            pool = AvgPool2D(kernelSize=2, stride=2, padding="same")
 
 
         

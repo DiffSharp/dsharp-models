@@ -31,12 +31,10 @@
     <None Include="PersonLab\Personlab.fsx" />
     <None Include="PersonLab\Pose.fsx" />
     <None Include="PersonLab\main.fsx" />
-    <None Include="pix2pix\Utils.fsx" />
     <None Include="pix2pix\Dataset.fsx" />
     <None Include="pix2pix\Discriminator.fsx" />
     <None Include="pix2pix\Generator.fsx" />
     <None Include="pix2pix\Layers.fsx" />
-    <None Include="pix2pix\CLI.fsx" />
     <None Include="pix2pix\main.fsx" />
     <None Include="Autoencoder\Autoencoder1D\main.fsx" />
     <None Include="Autoencoder\Autoencoder2D\main.fsx" />
@@ -45,7 +43,6 @@
     <None Include="CycleGAN\Models\Layers.fsx" />
     <None Include="CycleGAN\Models\Discriminator.fsx" />
     <None Include="CycleGAN\Models\Generator.fsx" />
-    <None Include="CycleGAN\CLI.fsx" />
     <None Include="CycleGAN\main.fsx" />
     <None Include="Examples\BERT-CoLA\main.fsx" />
     <None Include="Examples\Custom-CIFAR10\main.fsx" />

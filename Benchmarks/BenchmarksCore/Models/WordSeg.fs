@@ -103,7 +103,7 @@ let wordSegBenchmark(_ operation: @escaping (SNLM, CharacterSequence, Device) = 
     let model = SNLM(parameters: modelParameters)
     model.move(to: device)
 
-    while true {
+    while true do
       operation(model, sentence, device)
       LazyTensorBarrier()
 
@@ -141,7 +141,7 @@ let score(model: SNLM, sentence: CharacterSequence, device: Device) =
 let scoreAndGradient(model: SNLM, sentence: CharacterSequence, device: Device) = 
   let lambd: Float = 0.00075
 
-  let _ = valueWithGradient(at: model) =  model -> Tensor<Float> in
+  let _ = valueWithGradient(at: model) 
     let lattice = model.buildLattice(sentence, maxLen: maximumSequenceLength, device=device)
     let score = lattice[sentence.count].semiringScore
     let expectedLength = exp(score.logr - score.logp)

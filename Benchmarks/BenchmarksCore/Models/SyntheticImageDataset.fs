@@ -54,7 +54,7 @@ public class SyntheticImageDataset {
     precondition(dimensions.count = 3)
 
     // Training data
-    training = TrainingEpochs(samples: (0..<batchSize), batchSize= batchSize, entropy: entropy)
+    training = TrainingEpochs(samples: (0..batchSize-1), batchSize= batchSize, entropy: entropy)
        |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
         return batches |> Seq.map {
           makeSyntheticBatch(samples: $0, dimensions: dimensions, labels: labels, device=device)
@@ -62,13 +62,13 @@ public class SyntheticImageDataset {
       }
 
     // Validation data
-    validation = (0..<batchSize).inBatches(of: batchSize) |> Seq.map {
+    validation = (0..batchSize-1).inBatches(of: batchSize) |> Seq.map {
       makeSyntheticBatch(samples: $0, dimensions: dimensions, labels: labels, device=device)
     }
   }
 }
 
-fileprivate let makeSyntheticBatch<BatchSamples: Collection>(
+let makeSyntheticBatch<BatchSamples: Collection>(
   samples: BatchSamples, dimensions: [Int], labels: int, device: Device
 ) = LabeledImage where BatchSamples.Element = Int {
   let syntheticImageBatch = Tensor<Float>(
@@ -76,7 +76,7 @@ fileprivate let makeSyntheticBatch<BatchSamples: Collection>(
 
   let syntheticLabels = Tensor<int32>(
     samples.map { _ -> int32 in
-      int32.random(in: 0..<int32(labels))
+      int32.random(0..int32(labels)-1)
     }, on: device)
 
   return LabeledImage(data: syntheticImageBatch, label: syntheticLabels)

@@ -8,7 +8,7 @@ open DiffSharp
 @inline(never)
 @usableFromInline
 internal let derivativeTypeMismatch(
-  got: Any.Type, expected: Any.Type, file: StaticString = #file, line: UInt = #line
+  got: Any.Type, expected=Any.Type, file: StaticString = #file, line: UInt = #line
 ) = Never {
   preconditionFailure("""
     Derivative type mismatch: \
@@ -16,7 +16,7 @@ internal let derivativeTypeMismatch(
     """, file: file, line: line)
 
 
-fileprivate let mustOverride(function: StaticString = #function, file: StaticString = #file, line: UInt = #line) = Never {
+let mustOverride(function: StaticString = #function, file: StaticString = #file, line: UInt = #line) = Never {
   fatalError("Function AnyLayerBox.\(function) (defined at: \(file):\(line)) must be overridden.")
 
 
@@ -104,7 +104,7 @@ where Underlying.TangentVector.VectorSpaceScalar: FloatingPoint & ElementaryFunc
     else
       guard let directionBase =
         direction.unboxed(as: Underlying.TangentVector.self) else {
-        derivativeTypeMismatch(got: type(of: direction.box.typeErasedBase), expected: Underlying.self)
+        derivativeTypeMismatch(got: type(of: direction.box.typeErasedBase), expected=Underlying.self)
 
       underlying.move(along: directionBase)
 

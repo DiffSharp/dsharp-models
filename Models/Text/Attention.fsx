@@ -184,9 +184,9 @@ type MultiHeadAttention: Layer, Regularizable {
         let k = keyActivation(matmul(target, keyWeight) + keyBias)  // [B * T, N * H]
         let v = valueActivation(matmul(target, valueWeight) + valueBias)  // [B * T, N * H]
 
-        q = q.reshape([B, F, N, H]).transposed(permutation: 0, 2, 1, 3)  // [B, N, F, H]
-        k = k.reshape([B, T, N, H]).transposed(permutation: 0, 2, 1, 3)  // [B, N, T, H]
-        v = v.reshape([B, T, N, H]).transposed(permutation: 0, 2, 1, 3)  // [B, N, T, H]
+        q = q.view([B, F, N, H]).transposed(permutation: 0, 2, 1, 3)  // [B, N, F, H]
+        k = k.view([B, T, N, H]).transposed(permutation: 0, 2, 1, 3)  // [B, N, T, H]
+        v = v.view([B, T, N, H]).transposed(permutation: 0, 2, 1, 3)  // [B, N, T, H]
 
         // Take the dot product between the query and the key to get the raw attention scores.
         let attentionScores = matmul(q, transposed: false, k, transposed: true)  // [B, N, F, T]
@@ -207,7 +207,7 @@ type MultiHeadAttention: Layer, Regularizable {
         let result = matmul(attentionProbabilities, v)  // [B, N, F, H]
             .transposed(permutation: 0, 2, 1, 3)  // [B, F, N, H]
         return matrixResult
-            ? result.reshape([B * F, N * H]) : result.reshape([B, F, N * H])
+            ? result.view([B * F, N * H]) : result.view([B, F, N * H])
 
 
 

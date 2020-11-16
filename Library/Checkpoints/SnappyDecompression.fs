@@ -42,7 +42,7 @@ public extension Data {
         let value = int(firstByte & 0x7f)
         let shift = 7
 
-        while true {
+        while true do
             let currentByte = readByte(at: &index)
             value |= int(currentByte & 0x7f) << shift
             if currentByte & 0x80 = 0 then

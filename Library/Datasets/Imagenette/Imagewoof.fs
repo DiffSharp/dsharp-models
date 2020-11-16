@@ -86,7 +86,7 @@ type Imagewoof {
          |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
           return batches |> Seq.map {
             makeImagenetteBatch(
-              samples: $0, outputSize=outputSize, mean: mean, standardDeviation: standardDeviation,
+              samples: $0, outFeatures=outputSize, mean: mean, standardDeviation: standardDeviation,
               device=device)
 
 
@@ -97,7 +97,7 @@ type Imagewoof {
 
       validation = validationSamples.inBatches(of: batchSize) |> Seq.map {
         makeImagenetteBatch(
-          samples: $0, outputSize=outputSize, mean: mean, standardDeviation: standardDeviation,
+          samples: $0, outFeatures=outputSize, mean: mean, standardDeviation: standardDeviation,
           device=device)
 
     with
@@ -115,11 +115,11 @@ extension Imagewoof: ImageClassificationData where Entropy = SystemRandomNumberG
   /// Creates an instance with `batchSize`, `inputSize`, and `outputSize`, using the
   /// SystemRandomNumberGenerator.
   public init(
-    batchSize: int, inputSize= ImagenetteSize, outputSize=Int, on device: Device = Device.default
+    batchSize: int, inputSize= ImagenetteSize, outFeatures=Int, on device: Device = Device.default
   ) = 
     self.init(
       batchSize= batchSize, device=device,
-      inputSize= inputSize, outputSize=outputSize)
+      inputSize= inputSize, outFeatures=outputSize)
 
 
 *)

@@ -45,8 +45,8 @@ type HumanInputError: Error {
 
 
 /// Gets the next move from user via stdio.
-fileprivate let promptAndReadMove(validatingWith validator: (Position) -> ()) = Position? {
-    while true {
+let promptAndReadMove(validator) : Position option =
+    while true do
         try
             print("Your input (x: -1, y: -1) means `pass`:")
             print("x: ", terminator: "")
@@ -61,10 +61,10 @@ fileprivate let promptAndReadMove(validatingWith validator: (Position) -> ()) = 
             let position = Position(x: x, y: y)
             try validator(position)
             return position
- catch let HumanInputError.invalidInput(message) = 
+        with HumanInputError.invalidInput(message) ->
             print("The input is invalid: \(message)")
             print("Please try again!")
- catch HumanInputError.emptyInput {
+        with HumanInputError.emptyInput ->
             print("Empty input is now allowed.")
             print("Please try again!")
         with e ->
@@ -74,7 +74,7 @@ fileprivate let promptAndReadMove(validatingWith validator: (Position) -> ()) = 
 
 
 
-fileprivate let readCoordinate() -> Int {
+let readCoordinate() -> Int {
     guard let line = readLine() else {
         throw HumanInputError.emptyInput
 

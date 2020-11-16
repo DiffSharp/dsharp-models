@@ -29,13 +29,13 @@ for (epoch, epochBatches) in dataset.training.prefix(100).enumerated() =
     let trainingBatchCount = 0
     for batch in epochBatches do
         let (images, labels) = (batch.data, batch.label)
-        let (loss, gradients) = valueWithGradient(at: model) =  model -> Tensor<Float> in
+        let (loss, gradients) = valueWithGradient(at: model) 
             let logits = model(images)
             return softmaxCrossEntropy(logits: logits, labels: labels)
 
         trainingLossSum <- trainingLossSum + loss.scalarized()
         trainingBatchCount <- trainingBatchCount + 1
-        optimizer.update(&model, along: gradients)
+        optimizer.update(&model, along=gradients)
 
 
     vae.mode <- Mode.Eval

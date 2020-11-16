@@ -45,7 +45,7 @@ public class StatisticsRecorder {
 
   /// Instances of MetricsMeasurers that you can reset accumulate and compute 
   /// statistics periodically.
-  fileprivate let metricMeasurers: [MetricsMeasurer]
+  let metricMeasurers: [MetricsMeasurer]
 
   /// Creates an instance that records `metrics` during the training loop.
   public init(metrics: [TrainingMetrics]) = 

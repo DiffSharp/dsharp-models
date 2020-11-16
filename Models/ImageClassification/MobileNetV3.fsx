@@ -19,7 +19,7 @@ open DiffSharp
 // Yukun Zhu, Ruoming Pang, Vijay Vasudevan, Quoc V. Le, Hartwig Adam
 // https://arxiv.org/abs/1905.02244
 
-fileprivate let makeDivisible(filter: int, widthMultiplier: double = 1.0, divisor: double = 8.0)
+let makeDivisible(filter: int, widthMultiplier: double = 1.0, divisor: double = 8.0)
     -> Int
 {
     /// Return a filter multiplied by width, evenly divisible by the divisor
@@ -35,7 +35,7 @@ fileprivate let makeDivisible(filter: int, widthMultiplier: double = 1.0, diviso
     return int(newFilterCount)
 
 
-fileprivate let roundFilterPair(filters: (Int, Int), widthMultiplier: double) = (Int, Int) = 
+let roundFilterPair(filters: (Int, Int), widthMultiplier: double) = (Int, Int) = 
     return (
         makeDivisible(filter: filters.0, widthMultiplier: widthMultiplier),
         makeDivisible(filter: filters.1, widthMultiplier: widthMultiplier)
@@ -68,7 +68,7 @@ type SqueezeExcitationBlock: Layer {
 
     
     override _.forward(input) =
-        let avgPoolReshaped = averagePool(input).reshape([
+        let avgPoolReshaped = averagePool(input).view([
             input.shape.[0], 1, 1, self.inputOutputSize,
         ])
         return input
@@ -353,7 +353,7 @@ type MobileNetV3Large: Layer {
             invertedResidualBlock12, invertedResidualBlock13, invertedResidualBlock14,
             invertedResidualBlock15)
         let outputConvResult = hardSwish(outputConvBatchNorm(outputConv(backbone3)))
-        let averagePool = avgPool(outputConvResult).reshape([
+        let averagePool = avgPool(outputConvResult).view([
             input.shape.[0], 1, 1, self.lastConvChannel,
         ])
         let finalConvResult = dropoutLayer(hardSwish(finalConv(averagePool)))
@@ -469,7 +469,7 @@ type MobileNetV3Small: Layer {
             invertedResidualBlock8, invertedResidualBlock9, invertedResidualBlock10,
             invertedResidualBlock11)
         let outputConvResult = hardSwish(outputConvBatchNorm(outputConv(backbone2)))
-        let averagePool = avgPool(outputConvResult).reshape([
+        let averagePool = avgPool(outputConvResult).view([
             input.shape.[0], 1, 1, lastConvChannel,
         ])
         let finalConvResult = dropoutLayer(hardSwish(finalConv(averagePool)))

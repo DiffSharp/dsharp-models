@@ -53,13 +53,13 @@ public extension ImportableLayer {
                     weights = weights.transposed(permutation: permutes)
 
                 if weights.shape <> shape then
-                    fatalError("Shapes do not match for \(label): \(shape) vs. \(weights.shape)")
+                    fatalError($"Shapes do not match for {label}: \(shape) vs. \(weights.shape)")
 
                 self[keyPath: keyPath] = weights
                 // print("imported \(mapping.0) \(shape) = \(label) \(weights.shape)")
  else if let weights = parameters[label] then
                 self[keyPath: keyPath] = weights
-                // print("imported \(label) \(shape) = \(label) \(weights.shape)")
+                // print($"imported {label} {shape} = \(label) \(weights.shape)")
 
 
 

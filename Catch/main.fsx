@@ -42,7 +42,7 @@ type CatchAgent(learningRate, initialReward) =
     //interface Agent
     //type Action = CatchAction
 
-    let model = Sequential(Dense(inputSize=3, outputSize=50, activation= dsharp.sigmoid), Dense(inputSize=50, outputSize=3, activation= dsharp.sigmoid))
+    let model = Sequential(Linear(inFeatures=3, outFeatures=50, activation= dsharp.sigmoid), Linear(inFeatures=50, outFeatures=3, activation= dsharp.sigmoid))
 
     let learningRate: double = learningRate
     let optimizer = Adam(model, dsharp.tensor(learningRate))
@@ -59,7 +59,7 @@ type CatchAgent(learningRate, initialReward) =
 
         let δloss = -log(dsharp.tensor(ŷ.max(), dtype=Dtype.Float32)).expand(like: ŷ) * previousReward
         let (δmodel, _) = backprop(δloss)
-        optimizer.update(&model, along: δmodel)
+        optimizer.update(&model, along=δmodel)
 
         enum<CatchAction>(int(maxIndex))
 

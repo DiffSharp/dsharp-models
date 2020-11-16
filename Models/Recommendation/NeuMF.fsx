@@ -85,10 +85,10 @@ type NeuMF: Module {
             vocabularySize: self.numItems, embeddingSize: self.mlpLayerSizes[0] / 2)
 
         for (inputSize, outputSize) in zip(mlpLayerSizes, mlpLayerSizes[1...]) = 
-            mlpLayers.append(Dense(inputSize=inputSize, outputSize=outputSize, activation= relu))
+            mlpLayers.append(Linear(inFeatures=inputSize, outFeatures=outputSize, activation= relu))
 
 
-        neuMFLayer = Dense(inputSize=(self.mlpLayerSizes.last! + self.numLatentFeatures), outputSize=1)
+        neuMFLayer = Linear(inFeatures=(self.mlpLayerSizes.last! + self.numLatentFeatures), outFeatures=1)
 
 
     
@@ -107,11 +107,11 @@ type NeuMF: Module {
 
         let mfVector = userEmbeddingMF * itemEmbeddingMF
 
-        let mlpVector = userEmbeddingMLP.concatenated(itemEmbeddingMLP, alongAxis: -1)
+        let mlpVector = userEmbeddingMLP.cat(itemEmbeddingMLP, alongAxis: -1)
         mlpVector = mlpLayers.differentiableReduce(mlpVector){ $1($0)
 
         // Concatenate MF and MLP parts
-        let vector = mlpVector.concatenated(mfVector, alongAxis: -1)
+        let vector = mlpVector.cat(mfVector, alongAxis: -1)
 
         // Final prediction layer
         return neuMFLayer(vector)

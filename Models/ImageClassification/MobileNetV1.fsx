@@ -223,11 +223,11 @@ type MobileNetV1: Layer {
             through: dConvBlock5, dConvBlock6,
             dConvBlock7, dConvBlock8, dConvBlock9)
         let convolved3 = convolved2.sequenced(
-            through: dConvBlock10, dConvBlock11, dConvBlock12, dConvBlock13, avgPool).reshape([
+            through: dConvBlock10, dConvBlock11, dConvBlock12, dConvBlock13, avgPool).view([
                 input.shape.[0], 1, 1, scaledFilterShape
             ])
         let convolved4 = convolved3 |> dropoutLayer, convLast)
-        let output = convolved4.reshape([input.shape.[0], classCount])
+        let output = convolved4.view([input.shape.[0], classCount])
         return output
 
 

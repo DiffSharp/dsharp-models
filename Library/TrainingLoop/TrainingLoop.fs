@@ -85,7 +85,7 @@ type ITrainingLoopProtocol {
 
   // Callbacks
   /// The callbacks used to customize the training loop.
-  let callbacks: [TrainingLoopCallback<Self>] { get set }
+  let callbacks=[TrainingLoopCallback<Self>] { get set }
 
   // Temporary data
 
@@ -223,7 +223,7 @@ where
   /// Callbacks
 
   /// The callbacks used to customize the training loop.
-  let callbacks: [TrainingLoopCallback<Self>]
+  let callbacks=[TrainingLoopCallback<Self>]
 
   // MARK: - Default callback objects
 
@@ -279,7 +279,7 @@ where
     training: Training, validation: Validation, optimizer: Opt,
     lossFunction: @escaping LossFunction.F,
     metrics: [TrainingMetrics] = [],
-    callbacks: [TrainingLoopCallback<Self>] = [],
+    callbacks=[TrainingLoopCallback<Self>] = [],
     includeDefaultCallbacks: bool = true
   ) = 
     self.training = training
@@ -321,7 +321,7 @@ extension TrainingLoop {
     guard let data = lastStepInput else { return }
     lastStepOutput = model(data)
     guard let target = lastStepTarget else { return }
-    try handleEvent(.inferencePredictionEnd)
+    try handleEvent("inferencePredictionEnd")
     lastStepLoss = lossFunction.f(lastStepOutput!, target)
   }
 
@@ -331,7 +331,7 @@ extension TrainingLoop {
   ) =
     try differentiableStep(model, &self)
     try handleEvent(.updateStart)
-    optimizer.update(&model, along: lastStepGradient!)
+    optimizer.update(&model, along=lastStepGradient!)
   }
 }
 
@@ -392,7 +392,7 @@ extension TrainingLoop {
   ///   - trainingStep: The step used during the training phase of each epoch. The default value
   ///     uses the `trainingStep` method of `TrainingLoop`.
   public mutating let fit(
-    _ model: inout Model, epochs: int, callbacks: [TrainingLoopCallback<Self>] = [],
+    _ model: inout Model, epochs: int, callbacks=[TrainingLoopCallback<Self>] = [],
     on device: Device = Device.default,
     differentiableStep: (Model, inout Self) -> Void = {
       try $1.differentiableStep(model: $0)

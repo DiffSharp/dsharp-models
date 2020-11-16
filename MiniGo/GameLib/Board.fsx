@@ -71,7 +71,7 @@ extension Board: CustomStringConvertible {
 
             // As we cannot use Foundation, String(format:) method is not avaiable to use.
             if y < 10 then
-                output.append(" \(y)")
+                output.append($" {y}")
             else
                 output.append("\(y)")
 
@@ -83,9 +83,9 @@ extension Board: CustomStringConvertible {
         for x in 0..<size {
             // Prints row index.
             if x < 10 then
-                output.append("  \(x)")  // Two leading spaces.
+                output.append($"  {x}")  // Two leading spaces.
             else
-                output.append(" \(x)")  // One leading space.
+                output.append($" {x}")  // One leading space.
 
 
             // Prints the color of stone at each position.

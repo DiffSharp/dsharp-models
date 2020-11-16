@@ -20,11 +20,12 @@ namespace Datasets
 
 open DiffSharp
 
-type KuzushijiMNIST(batchSize: int, device: Device, ?flattening: bool, ?normalizing, 
+type KuzushijiMNIST(batchSize: int, ?device: Device, ?flattening: bool, ?normalizing, 
                     ?localStorageDirectory: FilePath, ?entropy: RandomNumberGenerator) = 
 
     let localStorageDirectory = defaultArg localStorageDirectory (DatasetUtilities.defaultDirectory </> "KuzushijiMNIST")
 
+    let device = defaultArg device Device.Default
     let flattening = defaultArg flattening false
     let normalizing = defaultArg normalizing false
 

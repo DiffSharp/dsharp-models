@@ -71,7 +71,7 @@ internal let runTraining(settings: WordSegSettings) =
     let trainingBatchCountTotal = dataset.trainingPhrases.count
     for phrase in dataset.trainingPhrases do
       let sentence = phrase.numericalizedText
-      let (loss, gradients) = valueWithGradient(at: model) =  model -> Tensor<Float> in
+      let (loss, gradients) = valueWithGradient(at: model) 
         let lattice = model.buildLattice(sentence, maxLen: settings.maxLength, device=device)
         let score = lattice[sentence.count].semiringScore
         let expectedLength = exp(score.logr - score.logp)
@@ -92,7 +92,7 @@ internal let runTraining(settings: WordSegSettings) =
       trainingLossSum <- trainingLossSum + lossScalarized
       trainingBatchCount <- trainingBatchCount + 1
 
-      optimizer.update(&model, along: gradients)
+      optimizer.update(&model, along=gradients)
       LazyTensorBarrier()
       if hasNaN(gradients) = 
         print("Warning: grad has NaN")
@@ -105,7 +105,7 @@ internal let runTraining(settings: WordSegSettings) =
     // Decrease the learning rate if loss is stagnant.
     let trainingLoss = trainingLossSum / double(trainingBatchCount)
     trainingLossHistory.append(trainingLoss)
-    reduceLROnPlateau(lossHistory: trainingLossHistory, optimizer: optimizer)
+    reduceLROnPlateau(lossHistory: trainingLossHistory, optimizer=optimizer)
 
     if dataset.validationPhrases.count < 1 then
       print(
@@ -166,18 +166,18 @@ internal let runTraining(settings: WordSegSettings) =
 
 
 
-fileprivate let getBpc(loss: double, characterCount: int) =
+let getBpc(loss: double, characterCount: int) =
   return loss / double(characterCount) / log(2)
 
 
-fileprivate let hasNaN<T: KeyPathIterable>(_ t: T) = Bool {
+let hasNaN<T: KeyPathIterable>(_ t: T) = Bool {
   for kp in t.recursivelyAllKeyPaths(Tensor<Float>.self) = 
     if t[keyPath: kp].isNaN.any() =  return true
 
   return false
 
 
-fileprivate let terminateTraining(
+let terminateTraining(
   lossHistory: double[], noImprovements: inout Int, patience: int = 5
 ) = Bool {
   if lossHistory.count <= patience then return false
@@ -195,7 +195,7 @@ fileprivate let terminateTraining(
   return false
 
 
-fileprivate let reduceLROnPlateau(
+let reduceLROnPlateau(
   lossHistory: double[], optimizer: Adam<SNLM>,
   factor: double = 0.25
 ) = 

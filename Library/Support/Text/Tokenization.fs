@@ -29,7 +29,7 @@ module Tokenization =
         let batchSize = text.tokenIds.shape.[0]
         let fromSequenceLength = text.tokenIds.shape.[1]
         let toSequenceLength = text.mask.shape.[1]
-        let reshapedMask = text.mask.reshape([batchSize; 1; toSequenceLength])
+        let reshapedMask = text.mask.view([batchSize; 1; toSequenceLength])
 
         // We do not assume that `input.tokenIds` is a mask. We do not actually care if we attend
         // *from* padding tokens (only *to* padding tokens) so we create a tensor of all ones.

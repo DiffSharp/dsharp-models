@@ -17,7 +17,7 @@ open Datasets
 open RecommendationModels
 open DiffSharp
 
-let dataset = MovieLens(trainbatchSize= 1024)
+let dataset = MovieLens(trainBatchSize= 1024)
 let numUsers = dataset.numUsers
 let numItems = dataset.numItems
 
@@ -52,12 +52,12 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     for batch in epochBatches do
         let userId = batch.first
         let rating = batch.second
-        let (loss, grad) = valueWithGradient(at: model) =  model -> Tensor<Float> in
+        let (loss, grad) = valueWithGradient(at: model) 
             let logits = model(userId)
             return dsharp.sigmoidCrossEntropy(logits=logits, labels: rating)
 
 
-        optimizer.update(&model, along: grad)
+        optimizer.update(&model, along=grad)
         avgLoss = avgLoss + loss.scalarized()
 
 

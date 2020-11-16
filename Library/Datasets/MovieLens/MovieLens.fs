@@ -73,7 +73,7 @@ type MovieLens {
 
 
     public init(
-            trainbatchSize= Int = 1024, 
+            trainBatchSize: int = 1024, 
             entropy: Entropy) = 
         let trainFiles = try! String(
             contentsOf: MovieLens.downloadMovieLensDatasetIfNotPresent() </> (
@@ -160,9 +160,9 @@ type MovieLens {
 
 
 extension MovieLens where Entropy = SystemRandomNumberGenerator {
-    public init(trainbatchSize= Int = 1024) = 
+    public init(trainBatchSize: int = 1024) = 
         self.init(
-            trainbatchSize= trainBatchSize, 
+            trainBatchSize= trainBatchSize, 
             entropy=SystemRandomNumberGenerator())
 
 

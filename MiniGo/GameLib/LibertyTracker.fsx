@@ -169,8 +169,8 @@ extension LibertyTracker {
 
 
     let fatalErrorForGroupsInvariance(groupID: int) = Never {
-        print("The group ID \(groupID) should exist.")
-        print("Current groups are \(groups).")
+        print($"The group ID {groupID} should exist.")
+        print($"Current groups are {groups}.")
         fatalError()
 
 
@@ -280,9 +280,9 @@ extension LibertyTracker {
                 | .none ->
                     print("  .", terminator: "")
                 case .some(let id) where id < 10:
-                    print("  \(id)", terminator: "")
+                    print($"  {id}", terminator: "")
                 case .some(let id):
-                    print(" \(id)", terminator: "")
+                    print($" {id}", terminator: "")
 
 
             print("")

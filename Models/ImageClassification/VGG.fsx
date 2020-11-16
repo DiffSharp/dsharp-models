@@ -21,7 +21,7 @@ open DiffSharp
 
 type VGGBlock: Layer {
     let blocks: [Conv2D<Float>] = []
-    let maxpool = MaxPool2D<Float>(poolSize: (2, 2), stride=2)
+    let maxpool = MaxPool2d(kernelSize=2, stride=2)
 
     public init(featureCounts: (Int, Int, Int, Int), blockCount: int) = 
         self.blocks = [Conv2d(filterShape=(3, 3, featureCounts.0, featureCounts.1),
@@ -48,8 +48,8 @@ type VGG16: Layer {
     let layer5: VGGBlock
 
     let flatten = Flatten()
-    let dense1 = Dense(inputSize=512 * 7 * 7, outputSize=4096, activation= relu)
-    let dense2 = Dense(inputSize=4096, outputSize=4096, activation= relu)
+    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096, activation= relu)
+    let dense2 = Linear(inFeatures=4096, outFeatures=4096, activation= relu)
     let output: Dense
 
     public init(classCount: int = 1000) = 
@@ -58,7 +58,7 @@ type VGG16: Layer {
         layer3 = VGGBlock(featureCounts: (128, 256, 256, 256), blockCount: 3)
         layer4 = VGGBlock(featureCounts: (256, 512, 512, 512), blockCount: 3)
         layer5 = VGGBlock(featureCounts: (512, 512, 512, 512), blockCount: 3)
-        output = Dense(inputSize=4096, outputSize=classCount)
+        output = Linear(inFeatures=4096, outFeatures=classCount)
 
 
     
@@ -76,8 +76,8 @@ type VGG19: Layer {
     let layer5: VGGBlock
 
     let flatten = Flatten()
-    let dense1 = Dense(inputSize=512 * 7 * 7, outputSize=4096, activation= relu)
-    let dense2 = Dense(inputSize=4096, outputSize=4096, activation= relu)
+    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096, activation= relu)
+    let dense2 = Linear(inFeatures=4096, outFeatures=4096, activation= relu)
     let output: Dense
 
     public init(classCount: int = 1000) = 
@@ -86,7 +86,7 @@ type VGG19: Layer {
         layer3 = VGGBlock(featureCounts: (128, 256, 256, 256), blockCount: 4)
         layer4 = VGGBlock(featureCounts: (256, 512, 512, 512), blockCount: 4)
         layer5 = VGGBlock(featureCounts: (512, 512, 512, 512), blockCount: 4)
-        output = Dense(inputSize=4096, outputSize=classCount)
+        output = Linear(inFeatures=4096, outFeatures=classCount)
 
 
     

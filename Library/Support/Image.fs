@@ -123,10 +123,10 @@ type Image {
         match self.imageData {
         case let .uint8(data):
             let resizedImage = resize(images: dsharp.tensor(data), size: size, method: .bilinear)
-            return Image(tensor: Tensor<byte>(resizedImage))
+            resizedImage
         case let .float(data):
             let resizedImage = resize(images: data, size: size, method: .bilinear)
-            return Image(tensor: resizedImage)
+            resizedImage
 
 
 
@@ -144,8 +144,8 @@ let saveImage(
     | .grayscale -> channels = 1
 
 
-    let reshapedTensor = tensor.reshape([shape.0, shape.1, channels])
-    let image = Image(tensor: reshapedTensor)
+    let reshapedTensor = tensor.view([shape.0, shape.1, channels])
+    let image = reshapedTensor
     let resizedImage = size <> nil ? image.resized((size!.0, size!.1)) : image
     let outputURL = Uri(fileURLWithPath: "\(directory)\(name).jpg")
     resizedImage.save(outputURL, format: format, quality: quality)

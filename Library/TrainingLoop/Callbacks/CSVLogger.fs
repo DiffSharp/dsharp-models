@@ -14,7 +14,7 @@ public class CSVLogger {
   public let path: string
 
   // True iff the header of the CSV file has been written.
-  fileprivate let headerWritten: bool
+  let headerWritten: bool
 
   /// Creates an instance that logs to a file with the given `path`.
   ///

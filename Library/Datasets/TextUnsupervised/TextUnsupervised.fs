@@ -91,7 +91,7 @@ type TextUnsupervised {
   public init(
     bpe: BytePairEncoder? = nil,
     variant: TextUnsupervisedVariant = TextUnsupervisedVariant.wikiText2,
-    trainingbatchSize= Int = 8, validationbatchSize= Int = 4, sequenceLength: int = 1024,
+    trainingbatchSize: int = 8, validationbatchSize: int = 4, sequenceLength: int = 1024,
     trainingDocumentCount: int = 4, validationDocumentCount: int = 4,
     entropy: Entropy,
     on device: Device = Device.defaultTFEager
@@ -142,7 +142,7 @@ type TextUnsupervised {
 
 
     with
-      fatalError("Could not load dataset for \(variant): \(error)")
+      fatalError($"Could not load dataset for {variant}: \(error)")
 
 
 
@@ -270,7 +270,7 @@ extension TextUnsupervised where Entropy = SystemRandomNumberGenerator {
   public init(
     bpe: BytePairEncoder? = nil,
     variant: TextUnsupervisedVariant = TextUnsupervisedVariant.wikiText2,
-    trainingbatchSize= Int = 8, validationbatchSize= Int = 4, sequenceLength: int = 1024,
+    trainingbatchSize: int = 8, validationbatchSize: int = 4, sequenceLength: int = 1024,
     trainingDocumentCount: int = 4, validationDocumentCount: int = 4,
     on device: Device = Device.defaultTFEager
   ) = 
@@ -289,7 +289,7 @@ extension TextUnsupervised where Entropy = SystemRandomNumberGenerator {
 
 
 extension Array {
-  fileprivate let concurrentMap<B>(_ transform: @escaping (Element) = B) = [B] {
+  let concurrentMap<B>(_ transform: @escaping (Element) = B) = [B] {
     let res = [B?](repeating: nil, count: count)
     let threadCount = min count 10
     let q = DispatchQueue(label: "sync queue")

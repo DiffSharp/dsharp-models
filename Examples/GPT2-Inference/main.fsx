@@ -33,7 +33,7 @@ if CommandLine.arguments.count = 3 then
     print(CommandLine.arguments[2], terminator: "")
 
 
-for _ in 0..<100 {
+for _ in 0..99 do
     try
         try print(gpt.generate(), terminator: "")
  catch GPT2.GPT2Error.invalidEncoding(let id) = 
@@ -57,7 +57,7 @@ with
 
 let recreatedmodel = try GPT2(checkpoint: temporaryDirectory </> ("model2.ckpt"))
 
-for _ in 0..<100 {
+for _ in 0..99 do
     try
         try print(recreatedmodel.generate(), terminator: "")
  catch GPT2.GPT2Error.invalidEncoding(let id) = 

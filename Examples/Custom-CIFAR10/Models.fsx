@@ -20,13 +20,13 @@ type PyTorchModel: Layer {
     type Output = Tensor<Float>
 
     let conv1 = Conv2d(filterShape=(5, 5, 3, 6), activation= relu)
-    let pool1 = MaxPool2D<Float>(poolSize: (2, 2), stride=2)
+    let pool1 = MaxPool2d(kernelSize=2, stride=2)
     let conv2 = Conv2d(filterShape=(5, 5, 6, 16), activation= relu)
-    let pool2 = MaxPool2D<Float>(poolSize: (2, 2), stride=2)
+    let pool2 = MaxPool2d(kernelSize=2, stride=2)
     let flatten = Flatten()
-    let dense1 = Dense(inputSize=16 * 5 * 5, outputSize=120, activation= relu)
-    let dense2 = Dense(inputSize=120, outputSize=84, activation= relu)
-    let dense3 = Dense(inputSize=84, outputSize=10, activation= identity)
+    let dense1 = Linear(inFeatures=16 * 5 * 5, outFeatures=120, activation= relu)
+    let dense2 = Linear(inFeatures=120, outFeatures=84, activation= relu)
+    let dense3 = Linear(inFeatures=84, outFeatures=10, activation= identity)
 
     
     override _.forward(input: Input) = Output {
@@ -42,16 +42,16 @@ type KerasModel: Layer {
 
     let conv1a = Conv2d(filterShape=(3, 3, 3, 32), padding="same", activation= relu)
     let conv1b = Conv2d(filterShape=(3, 3, 32, 32), activation= relu)
-    let pool1 = MaxPool2D<Float>(poolSize: (2, 2), stride=2)
+    let pool1 = MaxPool2d(kernelSize=2, stride=2)
     let dropout1 = Dropout2d(p=0.25)
     let conv2a = Conv2d(filterShape=(3, 3, 32, 64), padding="same", activation= relu)
     let conv2b = Conv2d(filterShape=(3, 3, 64, 64), activation= relu)
-    let pool2 = MaxPool2D<Float>(poolSize: (2, 2), stride=2)
+    let pool2 = MaxPool2d(kernelSize=2, stride=2)
     let dropout2 = Dropout2d(p=0.25)
     let flatten = Flatten()
-    let dense1 = Dense(inputSize=64 * 6 * 6, outputSize=512, activation= relu)
+    let dense1 = Linear(inFeatures=64 * 6 * 6, outFeatures=512, activation= relu)
     let dropout3 = Dropout2d(p=0.5)
-    let dense2 = Dense(inputSize=512, outputSize=10, activation= identity)
+    let dense2 = Linear(inFeatures=512, outFeatures=10, activation= identity)
 
     
     override _.forward(input: Input) = Output {

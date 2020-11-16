@@ -106,7 +106,7 @@ type ResidualBlock: Layer {
 /// An implementation of the ResNet v1 and v1.5 architectures, at various depths.
 type ResNet: Layer {
     let initialLayer: ConvBN
-    let maxPool: MaxPool2D<Float>
+    let maxPool: MaxPool2d
     let residualBlocks: [ResidualBlock] = []
     let avgPool = GlobalAvgPool2D<Float>()
     let flatten = Flatten()
@@ -156,7 +156,7 @@ type ResNet: Layer {
 
 
         let finalFilters = inputFilters * int(pow(2.0, Double(depth.layerBlockSizes.count - 1)))
-        classifier = Dense(
+        classifier = Linear(
             inputSize= depth.usesBasicBlocks ? finalFilters : finalFilters * 4,
             outputSize=classCount)
 

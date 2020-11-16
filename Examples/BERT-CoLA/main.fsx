@@ -102,14 +102,14 @@ let scheduledLearningRate = LinearlyDecayedParameter(
 
 print("Training \(bertPretrained.name) for the CoLA task!")
 for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated() = 
-    print("[Epoch \(epoch + 1)]")
+    print($"[Epoch {epoch + 1}]")
     vae.mode <- Mode.Train
     let trainingLossSum: double = 0
     let trainingBatchCount = 0
 
     for batch in epochBatches do
         let (documents, labels) = (batch.data, Tensor<Float>(batch.label))
-        let (loss, gradients) = valueWithGradient(at: bertClassifier) =  model -> Tensor<Float> in
+        let (loss, gradients) = valueWithGradient(at: bertClassifier) 
             let logits = model(documents)
             return dsharp.sigmoidCrossEntropy(
                 logits: logits.squeeze(-1),
@@ -128,7 +128,7 @@ for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated()
           optimizer.learningRate *= sqrtf(1 - powf(beta2, step)) / (1 - powf(beta1, step))
 
 
-        optimizer.update(&bertClassifier, along: gradients)
+        optimizer.update(&bertClassifier, along=gradients)
         LazyTensorBarrier()
 
         print(

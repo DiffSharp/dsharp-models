@@ -42,12 +42,12 @@ let latentDim = 20
 type VAE() =
     inherit Model()
     // Encoder
-    let encoderDense1 = Dense(inputSize= inputDim, outputSize=hiddenDim, activation= dsharp.relu)
-    let encoderDense2_1 = Dense(inputSize=hiddenDim, outputSize=latentDim)
-    let encoderDense2_2 = Dense(inputSize=hiddenDim, outputSize=latentDim)
+    let encoderDense1 = Linear(inFeatures= inputDim, outFeatures=hiddenDim, activation= dsharp.relu)
+    let encoderDense2_1 = Linear(inFeatures=hiddenDim, outFeatures=latentDim)
+    let encoderDense2_2 = Linear(inFeatures=hiddenDim, outFeatures=latentDim)
 
-    let decoderDense1 = Dense(inputSize= latentDim, outputSize=hiddenDim, activation= dsharp.relu)
-    let decoderDense2 = Dense(inputSize=hiddenDim, outputSize=inputDim)
+    let decoderDense1 = Linear(inFeatures= latentDim, outFeatures=hiddenDim, activation= dsharp.relu)
+    let decoderDense2 = Linear(inFeatures=hiddenDim, outFeatures=inputDim)
 
     member _.call(input: Tensor) =
         // Encode
@@ -88,7 +88,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         let output, mu, logVar = vae(x)
         vaeLossFunction(x, output, mu, logVar)
 
-        optimizer.update(&vae, along: δmodel)
+        optimizer.update(&vae, along=δmodel)
 
 
     vae.mode <- Mode.Eval
@@ -100,11 +100,11 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         //if epoch = 0 || (epoch + 1) % 10 = 0 then
         //    try
         //        try saveImage(
-        //            sampleImages[0..<1], shape=[imageWidth, imageHeight), format: .grayscale,
-        //            directory: outputFolder, name= "epoch-\(epoch)-input")
+        //            sampleImages.[0..0], shape=[imageWidth, imageHeight), format="grayscale",
+        //            directory=outputFolder, name= $"epoch-{epoch}-input")
         //        try saveImage(
-        //            testImages[0..<1], shape=[imageWidth, imageHeight), format: .grayscale,
-        //            directory: outputFolder, name= "epoch-\(epoch)-output")
+        //            testImages.[0..0], shape=[imageWidth, imageHeight), format="grayscale",
+        //            directory=outputFolder, name= $"epoch-{epoch}-output")
         //    with e ->
         //        print("Could not save image with error: \(error)")
 

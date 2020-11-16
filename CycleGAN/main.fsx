@@ -31,7 +31,15 @@ open Layers
 open Generator
 open Discriminator
 
-//let options = Options.parseOrExit()
+module options = 
+    //@Option(help: ArgumentHelp("Path to the dataset folder", valueName: "dataset-path"))
+    let datasetPath: string option = None
+
+    //@Option(help: ArgumentHelp("Number of epochs", valueName: "epochs"))
+    let epochs: int = 50
+
+    //@Option(help: ArgumentHelp("Number of steps to log a sample image into tensorboard", valueName: "sampleLogPeriod"))
+    let sampleLogPeriod: int = 20
 
 let dataset = CycleGANDataset(trainBatchSize= 1, testBatchSize= 1)
 
@@ -46,9 +54,9 @@ let optimizerDX = Adam(discriminatorX, learningRate=dsharp.scalar(0.0002), beta1
 let optimizerDY = Adam(discriminatorY, learningRate=dsharp.scalar(0.0002), beta1=dsharp.scalar(0.5))
 
 let epochCount = options.epochs
-let lambdaL1 = Tensorf(10)
-let _zeros = Tensorf.zero
-let _ones = Tensorf.one
+let lambdaL1 = dsharp.scalar(10)
+let _zeros = dsharp.zero()
+let _ones = dsharp.one()
 
 let step = 0
 
@@ -57,8 +65,8 @@ let validationImageURL = __SOURCE_DIRECTORY__ </> ("sample.jpg")
 
 // MARK: Train
 
-for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() = 
-    print("Epoch \(epoch) started at: \(Date())")
+for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
+    print($"Epoch {epoch} started at: \(Date())")
     vae.mode <- Mode.Train
     
     for batch in epochBatches do
@@ -68,12 +76,12 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         let inputY = batch.domainB
 
         // we do it outside of GPU scope so that dataset shuffling happens on CPU side
-        let concatanatedImages = inputX.concatenated(inputY)
+        let concatanatedImages = inputX.cat(inputY)
 
         let scaledImages = resize(images: concatanatedImages, size: (286, 286), method: .nearest)
-        let croppedImages = scaledImages.slice(lowerBounds: Tensor (*<int32>*)([0, int32(random() % 30), int32(random() % 30), 0]),
-                                               sizes: [2, 256, 256, 3])
-        if Bool.random() = 
+        let croppedImages = scaledImages.slice(lowerBounds=dsharp.tensor([0, int32(random() % 30), int32(random() % 30), 0]),
+                                               sizes=[2, 256, 256, 3])
+        if Bool.random() then
             croppedImages = croppedImages.reversed(inAxes: 2)
 
         let realX = croppedImages[0].unsqueeze(0)
@@ -85,82 +93,84 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         let _fakeX = Tensorf.zero
         let _fakeY = Tensorf.zero
 
-        let (gLoss, δgeneratorG) = valueWithGradient(at: generatorG) =  g -> Tensorf in
-            let fakeY = g(realX)
-            let cycledX = generatorF(fakeY)
-            let fakeX = generatorF(realY)
-            let cycledY = g(fakeX)
+        let (gLoss, δgeneratorG) =
+            generatorG.gradv(fun g ->
+                let fakeY = g(realX)
+                let cycledX = generatorF(fakeY)
+                let fakeX = generatorF(realY)
+                let cycledY = g(fakeX)
 
-            let cycleConsistencyLoss = (abs(realX - cycledX).mean() +
-                abs(realY - cycledY).mean()) * lambdaL1
+                let cycleConsistencyLoss = (abs(realX - cycledX).mean() + abs(realY - cycledY).mean()) * lambdaL1
 
-            let discFakeY = discriminatorY(fakeY)
-            let generatorLoss = dsharp.sigmoidCrossEntropy(logits=discFakeY, labels: onesd)
+                let discFakeY = discriminatorY(fakeY)
+                let generatorLoss = dsharp.sigmoidCrossEntropy(logits=discFakeY, labels=onesd)
 
-            let sameY = g(realY)
-            let identityLoss = abs(sameY - realY).mean() * lambdaL1 * 0.5
+                let sameY = g(realY)
+                let identityLoss = abs(sameY - realY).mean() * lambdaL1 * 0.5
 
-            let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
+                let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
 
-            _fakeX = fakeX
+                _fakeX = fakeX
 
-            totalLoss
-
-
-        let (fLoss, δgeneratorF) = valueWithGradient(at: generatorF) =  g -> Tensorf in
-            let fakeX = g(realY)
-            let cycledY = generatorG(fakeX)
-            let fakeY = generatorG(realX)
-            let cycledX = g(fakeY)
-
-            let cycleConsistencyLoss = (abs(realY - cycledY).mean()
-                + abs(realX - cycledX).mean()) * lambdaL1
-
-            let discFakeX = discriminatorX(fakeX)
-            let generatorLoss = dsharp.sigmoidCrossEntropy(logits=discFakeX, labels: onesd)
-
-            let sameX = g(realX)
-            let identityLoss = abs(sameX - realX).mean() * lambdaL1 * 0.5
-
-            let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
-
-            _fakeY = fakeY
-            totalLoss
+                totalLoss)
 
 
-        let (xLoss, δdiscriminatorX) = valueWithGradient(at: discriminatorX) =  d -> Tensorf in
-            let discFakeX = d(_fakeX)
-            let discRealX = d(realX)
+        let (fLoss, δgeneratorF) = 
+            generatorF.gradv (fun g ->
+                let fakeX = g(realY)
+                let cycledY = generatorG(fakeX)
+                let fakeY = generatorG(realX)
+                let cycledX = g(fakeY)
 
-            let totalLoss = 0.5 * (sigmoidCrossEntropy(logits=discFakeX, labels: zerosd)
-                + dsharp.sigmoidCrossEntropy(logits=discRealX, labels: onesd))
+                let cycleConsistencyLoss = (abs(realY - cycledY).mean()
+                    + abs(realX - cycledX).mean()) * lambdaL1
 
-            totalLoss
+                let discFakeX = discriminatorX(fakeX)
+                let generatorLoss = dsharp.sigmoidCrossEntropy(logits=discFakeX, labels=onesd)
+
+                let sameX = g(realX)
+                let identityLoss = abs(sameX - realX).mean() * lambdaL1 * 0.5
+
+                let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
+
+                _fakeY = fakeY
+                totalLoss)
 
 
-        let (yLoss, δdiscriminatorY) = valueWithGradient(at: discriminatorY) =  d -> Tensorf in
-            let discFakeY = d(_fakeY)
-            let discRealY = d(realY)
+        let (xLoss, δdiscriminatorX) = 
+            discriminatorX.gradv (fun d ->
+                let discFakeX = d(_fakeX)
+                let discRealX = d(realX)
 
-            let totalLoss = 0.5 * (sigmoidCrossEntropy(logits=discFakeY, labels: zerosd)
-                + dsharp.sigmoidCrossEntropy(logits=discRealY, labels: onesd))
+                let totalLoss = 0.5 * (dsharp.sigmoidCrossEntropy(logits=discFakeX, labels=zerosd)
+                    + dsharp.sigmoidCrossEntropy(logits=discRealX, labels=onesd))
 
-            totalLoss
+                totalLoss)
 
 
-        optimizerGG.update(&generatorG, along: δgeneratorG)
-        optimizerGF.update(&generatorF, along: δgeneratorF)
-        optimizerDX.update(&discriminatorX, along: δdiscriminatorX)
-        optimizerDY.update(&discriminatorY, along: δdiscriminatorY)
+        let (yLoss, δdiscriminatorY) =
+            discriminatorY.gradv (fun d ->
+                let discFakeY = d(_fakeY)
+                let discRealY = d(realY)
+
+                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits=discFakeY, labels=zerosd)
+                    + dsharp.sigmoidCrossEntropy(logits=discRealY, labels=onesd))
+
+                totalLoss)
+
+        optimizerGG.update(&generatorG, along=δgeneratorG)
+        optimizerGF.update(&generatorF, along=δgeneratorF)
+        optimizerDX.update(&discriminatorX, along=δdiscriminatorX)
+        optimizerDY.update(&discriminatorY, along=δdiscriminatorY)
 
         // MARK: Inference
 
         if step % options.sampleLogPeriod = 0 then
             vae.mode <- Mode.Eval
             
-            let fakeSample = generatorG(validationImage) * 0.5 + 0.5
+            let fakeSample = generatorG.forward(validationImage) * 0.5 + 0.5
 
-            let fakeSampleImage = Image(tensor: fakeSample[0] * 255)
+            let fakeSampleImage = fakeSample.[0] * 255
             fakeSampleImage.save(validationImageURL, format="rgb")
 
             print("GeneratorG loss: \(gLoss.scalars[0])")
@@ -173,8 +183,8 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
 
 // MARK: Final test
 
-let aResultsFolder = Directory.Create(__SOURCE_DIRECTORY__ + "/testA_results")
-let bResultsFolder = Directory.Create(__SOURCE_DIRECTORY__ + "/testB_results")
+let aResultsFolder = Directory.CreateDirectory(__SOURCE_DIRECTORY__ + "/testA_results")
+let bResultsFolder = Directory.CreateDirectory(__SOURCE_DIRECTORY__ + "/testB_results")
 
 let testStep = 0
 for testBatch in dataset.testing do
@@ -184,11 +194,11 @@ for testBatch in dataset.testing do
     let fakeY = generatorG(realX)
     let fakeX = generatorF(realY)
 
-    let resultX = realX.concatenated(fakeY, alongAxis: 2) * 0.5 + 0.5
-    let resultY = realY.concatenated(fakeX, alongAxis: 2) * 0.5 + 0.5
+    let resultX = realX.cat(fakeY, alongAxis: 2) * 0.5 + 0.5
+    let resultY = realY.cat(fakeX, alongAxis: 2) * 0.5 + 0.5
 
-    let imageX = Image(tensor: resultX[0] * 255)
-    let imageY = Image(tensor: resultY[0] * 255)
+    let imageX = resultX[0] * 255
+    let imageY = resultY[0] * 255
 
     imageX.save(aResultsFolder </> ("\(String(testStep)).jpg", isDirectory: false),
                 format="rgb")

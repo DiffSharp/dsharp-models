@@ -47,8 +47,8 @@ let softmaxCrossEntropyReshaped<Scalar>(logits: Tensor<Scalar>, labels: Tensor (
   Scalar
 > where Scalar: TensorFlowFloatingPoint {
   return softmaxCrossEntropy(
-  	logits: logits.reshape([logits.shape.dropLast().reduce(1, *), logits.shape.last!]), 
-  	labels: labels.reshape([labels.shape.reduce(1, *)]), 
+  	logits: logits.view([logits.shape.dropLast().reduce(1, *), logits.shape.last!]), 
+  	labels: labels.view([labels.shape.reduce(1, *)]), 
   	reduction: _mean)
 
 

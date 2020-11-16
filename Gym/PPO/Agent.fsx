@@ -129,7 +129,7 @@ type PPOAgent {
 
                 return loss.mean()
 
-            self.actorOptimizer.update(&self.actorCritic.actorNetwork, along: actorGradients)
+            self.actorOptimizer.update(&self.actorCritic.actorNetwork, along=actorGradients)
             actorLosses.append(actorLoss.scalarized())
 
             // Optimize value network (critic)
@@ -139,7 +139,7 @@ type PPOAgent {
 
                 return loss.mean()
 
-            self.criticOptimizer.update(&self.actorCritic.criticNetwork, along: criticGradients)
+            self.criticOptimizer.update(&self.actorCritic.criticNetwork, along=criticGradients)
             criticLosses.append(criticLoss.scalarized())
 
         self.oldActorCritic = self.actorCritic

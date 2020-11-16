@@ -16,8 +16,6 @@
 #r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
 #r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
 
-open ArgumentParser
-
 
 open DiffSharp
 
@@ -67,7 +65,7 @@ type Inference: ParsableCommand {
     for pose in poses do
       draw(pose, device=&drawnTensor)
 
-    Image(tensor: drawnTensor).save(Uri(fileURLWithPath= "out.jpg"))
+    drawnTensor.saveImage("out.jpg")
     print("Output image saved to 'out.jpg'")
 
 

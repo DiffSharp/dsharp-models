@@ -32,13 +32,13 @@ let dataset = MNIST(batchSize= batchSize, device=device)
 // The LeNet-5 model, equivalent to `LeNet` in `ImageClassificationModels`.
 let classifier = Sequential {
   Conv2d(filterShape=(5, 5, 1, 6), padding="same", activation= relu)
-  AvgPool2D<Float>(poolSize: (2, 2), stride=2)
+  AvgPool2D<Float>(kernelSize=2, stride=2)
   Conv2d(filterShape=(5, 5, 6, 16), activation= relu)
-  AvgPool2D<Float>(poolSize: (2, 2), stride=2)
+  AvgPool2D<Float>(kernelSize=2, stride=2)
   Flatten()
-  Dense(inputSize=400, outputSize=120, activation= relu)
-  Dense(inputSize=120, outputSize=84, activation= relu)
-  Dense(inputSize=84, outputSize=10)
+  Linear(inFeatures=400, outFeatures=120, activation= relu)
+  Linear(inFeatures=120, outFeatures=84, activation= relu)
+  Linear(inFeatures=84, outFeatures=10)
 
 
 let optimizer = SGD(classifier, learningRate=0.1)
@@ -46,10 +46,10 @@ let optimizer = SGD(classifier, learningRate=0.1)
 let trainingLoop = TrainingLoop(
   training: dataset.training,
   validation: dataset.validation,
-  optimizer: optimizer,
+  optimizer=optimizer,
   lossFunction: softmaxCrossEntropy,
   metrics: [.accuracy],
-  callbacks: [try! CSVLogger().log])
+  callbacks=[try! CSVLogger().log])
 
 trainingLoop.statisticsRecorder!.setReportTrigger(.endOfEpoch)
 

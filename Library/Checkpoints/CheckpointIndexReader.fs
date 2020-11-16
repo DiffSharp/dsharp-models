@@ -95,7 +95,7 @@ extension CheckpointIndexReader {
         let newBytes = binaryData.readDataBlock(at: &index, size: unsharedBytes)
         guard sharedBytes <= currentPrefix.count else {
             fatalError(
-                "Shared bytes of \(sharedBytes) exceeded stored prefix size of \(currentPrefix.count)."
+                $"Shared bytes of {sharedBytes} exceeded stored prefix size of \(currentPrefix.count)."
             )
 
         let keyData = currentPrefix[0..<sharedBytes] + newBytes

@@ -59,13 +59,13 @@ type BostonHousing() =
     let yTrainPrelim = dataLabels.[0..numTrainRecords-1]  |> Array.concat
     let yTestPrelim = dataLabels.[numTrainRecords..] |> Array.concat
 
-    let xTrainDeNorm = dsharp.tensor(xTrainPrelim, dtype=Dtype.Float32).reshape([numTrainRecords; numColumns - 1])
-    let xTestDeNorm = dsharp.tensor(xTestPrelim, dtype=Dtype.Float32).reshape([numTestRecords; numColumns - 1])
+    let xTrainDeNorm = dsharp.tensor(xTrainPrelim, dtype=Dtype.Float32).view([numTrainRecords; numColumns - 1])
+    let xTestDeNorm = dsharp.tensor(xTestPrelim, dtype=Dtype.Float32).view([numTestRecords; numColumns - 1])
 
     let mean = xTrainDeNorm.mean(dim=0)
     let std = xTrainDeNorm.stddev(dim=0)
 
     member val xTrain = (xTrainDeNorm - mean) / std
     member val xTest = (xTestDeNorm - mean) / std
-    member val yTrain = dsharp.tensor(yTrainPrelim, dtype=Dtype.Float32).reshape([numTrainRecords; 1])
-    member val yTest = dsharp.tensor(yTestPrelim, dtype=Dtype.Float32).reshape([numTestRecords; 1])
+    member val yTrain = dsharp.tensor(yTrainPrelim, dtype=Dtype.Float32).view([numTrainRecords; 1])
+    member val yTest = dsharp.tensor(yTestPrelim, dtype=Dtype.Float32).view([numTestRecords; 1])

@@ -31,20 +31,20 @@ let latentSize = 64
 // Models
 
 type Generator: Layer {
-    let dense1 = Dense(
-        inputSize= latentSize, outputSize=latentSize * 2,
+    let dense1 = Linear(
+        inputSize= latentSize, outFeatures=latentSize * 2,
         activation= { leakyRelu($0))
 
-    let dense2 = Dense(
-        inputSize= latentSize * 2, outputSize=latentSize * 4,
+    let dense2 = Linear(
+        inputSize= latentSize * 2, outFeatures=latentSize * 4,
         activation= { leakyRelu($0))
 
-    let dense3 = Dense(
-        inputSize= latentSize * 4, outputSize=latentSize * 8,
+    let dense3 = Linear(
+        inputSize= latentSize * 4, outFeatures=latentSize * 8,
         activation= { leakyRelu($0))
 
-    let dense4 = Dense(
-        inputSize= latentSize * 8, outputSize=imageSize,
+    let dense4 = Linear(
+        inputSize= latentSize * 8, outFeatures=imageSize,
         activation= tanh)
 
     let batchnorm1 = BatchNorm(featureCount=latentSize * 2)
@@ -61,20 +61,20 @@ type Generator: Layer {
 
 
 type Discriminator: Layer {
-    let dense1 = Dense(
-        inputSize= imageSize, outputSize=256,
+    let dense1 = Linear(
+        inputSize= imageSize, outFeatures=256,
         activation= { leakyRelu($0))
 
-    let dense2 = Dense(
-        inputSize= 256, outputSize=64,
+    let dense2 = Linear(
+        inputSize= 256, outFeatures=64,
         activation= { leakyRelu($0))
 
-    let dense3 = Dense(
-        inputSize= 64, outputSize=16,
+    let dense3 = Linear(
+        inputSize= 64, outFeatures=16,
         activation= { leakyRelu($0))
 
-    let dense4 = Dense(
-        inputSize= 16, outputSize=1,
+    let dense4 = Linear(
+        inputSize= 16, outFeatures=1,
         activation= identity)
 
     
@@ -122,7 +122,7 @@ let testImageGridSize = 4
 let testVector = sampleVector(size: testImageGridSize * testImageGridSize)
 
 let saveImageGrid(_ testImage: Tensor, name: string) =
-    let gridImage = testImage.reshape(
+    let gridImage = testImage.view(
         [
             testImageGridSize, testImageGridSize,
             imageHeight, imageWidth,
@@ -131,7 +131,7 @@ let saveImageGrid(_ testImage: Tensor, name: string) =
     gridImage = gridImage.pad(forSizes: [(0, 0), (0, 0), (1, 1), (1, 1)], with: 1)
     // Transpose to create single image.
     gridImage = gridImage.transposed(permutation: [0, 2, 1, 3])
-    gridImage = gridImage.reshape(
+    gridImage = gridImage.view(
         [
             (imageHeight + 2) * testImageGridSize,
             (imageWidth + 2) * testImageGridSize,
@@ -140,8 +140,8 @@ let saveImageGrid(_ testImage: Tensor, name: string) =
     gridImage = (gridImage + 1) / 2
 
     try saveImage(
-        gridImage, shape=gridImage.shape.[0..1], format: .grayscale,
-        directory: outputFolder, name= name)
+        gridImage, shape=gridImage.shape.[0..1], format="grayscale",
+        directory=outputFolder, name= name)
 
 
 print("Start training...")
@@ -155,26 +155,26 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         // Update generator.
         let vec1 = sampleVector(size: batchSize)
 
-        let δgenerator = TensorFlow.gradient(at: generator) =  generator -> Tensor<Float> in
+        let δgenerator = dsharp.grad(generator) =  generator -> Tensor<Float> in
             let fakeImages = generator(vec1)
             let fakeLogits = discriminator(fakeImages)
             let loss = generatorLoss(fakeLogits: fakeLogits)
             return loss
 
-        optG.update(&generator, along: δgenerator)
+        optG.update(&generator, along=δgenerator)
 
         // Update discriminator.
         let realImages = batch.data
         let vec2 = sampleVector(size: batchSize)
         let fakeImages = generator(vec2)
 
-        let δdiscriminator = TensorFlow.gradient(at: discriminator) =  discriminator -> Tensor<Float> in
+        let δdiscriminator = dsharp.grad(discriminator) =  discriminator -> Tensor<Float> in
             let realLogits = discriminator(realImages)
             let fakeLogits = discriminator(fakeImages)
             let loss = discriminatorLoss(realLogits: realLogits, fakeLogits: fakeLogits)
             return loss
 
-        optD.update(&discriminator, along: δdiscriminator)
+        optD.update(&discriminator, along=δdiscriminator)
 
 
     // Start inference phase.
@@ -182,7 +182,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     let testImage = generator(testVector)
 
     try
-        try saveImageGrid(testImage, name= "epoch-\(epoch)-output")
+        try saveImageGrid(testImage, name= $"epoch-{epoch}-output")
     with
         print("Could not save image grid with error: \(error)")
 

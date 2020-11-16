@@ -31,7 +31,7 @@ type BERTClassifier: Module, Regularizable {
 
   public init(bert: BERT, classCount: int) = 
     self.bert = bert
-    self.dense = Dense(inputSize=bert.hiddenSize, outputSize=classCount)
+    self.dense = Linear(inFeatures=bert.hiddenSize, outFeatures=classCount)
 
 
   /// Returns: logits with shape `[batchSize, classCount]`.

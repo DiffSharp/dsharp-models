@@ -33,9 +33,9 @@ type ChannelShuffle: ParameterlessLayer {
         channels = input.shape.[3]
         let channelsPerGroup: int = channels / groups
         
-        let output = input.reshape([batchSize, height, width, groups, channelsPerGroup])
+        let output = input.view([batchSize, height, width, groups, channelsPerGroup])
         output = output.transposed(permutation: [0, 1, 2, 4, 3])
-        output = output.reshape([batchSize, height, width, channels])
+        output = output.view([batchSize, height, width, channels])
         return output
 
 
@@ -98,13 +98,13 @@ type InvertedResidual: Layer {
             let output2 = relu(input2 |> conv1, batchNorm1))
             output2 = relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
                                              batchNorm3))
-            return ChannelShuffle()(input1.concatenated(output2, alongAxis: 3))
+            return ChannelShuffle()(input1.cat(output2, alongAxis: 3))
         else
             let output1 = branch(input)
             let output2 = relu(input |> conv1, batchNorm1))
             output2 = relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
                                              batchNorm3))
-            return ChannelShuffle()(output1.concatenated(output2, alongAxis: 3))
+            return ChannelShuffle()(output1.cat(output2, alongAxis: 3))
 
 
 
@@ -116,7 +116,7 @@ type ShuffleNetV2: Layer {
     
     let conv1: Conv2D<Float>
     let batchNorm1: BatchNorm<Float>
-    let maxPool: MaxPool2D<Float>
+    let maxPool: MaxPool2d
     let invertedResidualBlocksStage1: [InvertedResidual]
     let invertedResidualBlocksStage2: [InvertedResidual]
     let invertedResidualBlocksStage3: [InvertedResidual]
@@ -136,7 +136,7 @@ type ShuffleNetV2: Layer {
             filterShape=(1, 1, stagesOutputChannels.3, stagesOutputChannels.4), stride=1,
             useBias: false
         )
-        dense = Dense(inputSize=stagesOutputChannels.4, outputSize=classCount)
+        dense = Linear(inFeatures=stagesOutputChannels.4, outFeatures=classCount)
         batchNorm1 = BatchNorm(featureCount=outputChannels)
         inputChannels = outputChannels
         outputChannels = stagesOutputChannels.1

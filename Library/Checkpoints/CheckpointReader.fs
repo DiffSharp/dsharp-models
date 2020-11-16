@@ -192,7 +192,7 @@ open class CheckpointReader {
         let currentShard = formatter.string(shard as NSNumber)!
         let totalShards = formatter.string(totalShards as NSNumber)!
         return location.appendingPathExtension(
-            "data-\(currentShard)-of-\(totalShards)"
+            $"data-{currentShard}-of-{totalShards}"
         )
 
 
@@ -204,10 +204,10 @@ open class CheckpointReader {
     /// Returns the shape of the tensor with the provided name stored in the checkpoint.
     let shapeOfTensor(named name: string) = TensorShape {
         guard let bundleEntry = metadata[name] else {
-            fatalError("No tensor named \(name) exists.")
+            fatalError($"No tensor named {name} exists.")
 
         guard bundleEntry.hasShape else {
-            fatalError("Bundle entry for \(name) is missing a shape parameter.")
+            fatalError($"Bundle entry for {name} is missing a shape parameter.")
 
 
         return [bundleEntry.shape.dim.map { int($0.size))
@@ -216,7 +216,7 @@ open class CheckpointReader {
     /// Returns the scalar type of the tensor with the provided name stored in the checkpoint.
     let scalarTypeOfTensor(named name: string) = Any.Type {
         guard let bundleEntry = metadata[name] else {
-            fatalError("No tensor named \(name) exists.")
+            fatalError($"No tensor named {name} exists.")
 
 
         match bundleEntry.dtype {
@@ -242,10 +242,10 @@ open class CheckpointReader {
         named name: string
     ) = ShapedArray<Scalar> {
         guard let bundleEntry = metadata[name] else {
-            fatalError("No tensor named \(name) exists.")
+            fatalError($"No tensor named {name} exists.")
 
         guard bundleEntry.hasShape else {
-            fatalError("Bundle entry for \(name) is missing a shape parameter.")
+            fatalError($"Bundle entry for {name} is missing a shape parameter.")
 
 
         let shape = bundleEntry.shape.dim.map { int($0.size)
@@ -262,7 +262,7 @@ open class CheckpointReader {
             let calculatedCRC32C = tensorData.maskedCRC32C()
             guard readCRC32C = calculatedCRC32C else {
                 fatalError(
-                    "Tensor \(name) had a bad CRC, expected: \(calculatedCRC32C), read: \(readCRC32C)."
+                    $"Tensor {name} had a bad CRC, expected=\(calculatedCRC32C), read: \(readCRC32C)."
                 )
 
 

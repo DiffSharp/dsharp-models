@@ -44,7 +44,7 @@ public class ProgressPrinter {
         return
       }
 
-      print("Epoch \(epochIndex + 1)/\(epochCount)")
+      print($"Epoch {epochIndex + 1}/\(epochCount)")
     | .batchEnd ->
       guard let batchIndex = loop.batchIndex, let batchCount = loop.batchCount else {
         return
@@ -83,7 +83,7 @@ public class ProgressPrinter {
       separator = ""
       trailing = ""
     }
-    return "[\(leading)\(separator)\(trailing)]"
+    return $"[{leading}{separator}{trailing}]"
   }
 
   let formatStats(_ stats: [(String, Float)]) =

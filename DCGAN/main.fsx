@@ -33,7 +33,7 @@ type Generator() =
     inherit Model()
     let flatten = Flatten()
 
-    let dense1 = Dense(inputSize=zDim, outputSize=7 * 7 * 256)
+    let dense1 = Linear(inFeatures=zDim, outFeatures=7 * 7 * 256)
     let batchNorm1 = BatchNorm2d(numFeatures=7 * 7 * 256)
     let transConv2D1 = ConvTranspose2d(256, 128, 5, stride=1, padding=5/2)
     let batchNorm2 = BatchNorm2d(numFeatures=7 * 7 * 128)
@@ -61,7 +61,7 @@ type Discriminator() =
     let dropout = Dropout2d(p=0.3)
     let conv2D2 = Conv2d(64, 128, kernelSize=5,stride=2,padding=5/2)
     let flatten = Flatten()
-    let dense = Dense(inputSize=6272, outputSize=1)
+    let dense = Linear(inFeatures=6272, outFeatures=1)
     
     override _.forward(input) =
         let x1 = input |> conv2D1.forward |> dsharp.leakyRelu |> dropout.forward
@@ -94,25 +94,25 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
 
         // Train generator.
         let noiseG = dsharp.randn([batchSize; zDim])
-        let δgenerator = TensorFlow.gradient(at: generator) =  generator -> Tensor<Float> in
+        let δgenerator = dsharp.grad(generator) =  generator -> Tensor<Float> in
             let fakeImages = generator(noiseG)
             let fakeLabels = discriminator(fakeImages)
             let loss = generatorLoss(fakeLabels: fakeLabels)
             return loss
 
-        optG.update(&generator, along: δgenerator)
+        optG.update(&generator, along=δgenerator)
 
         // Train discriminator.
         let noiseD = dsharp.randn([batchSize; zDim])
         let fakeImages = generator(noiseD)
 
-        let δdiscriminator = TensorFlow.gradient(at: discriminator) =  discriminator -> Tensor<Float> in
+        let δdiscriminator = dsharp.grad(discriminator) =  discriminator -> Tensor<Float> in
             let realLabels = discriminator(realImages)
             let fakeLabels = discriminator(fakeImages)
             let loss = discriminatorLoss(realLabels: realLabels, fakeLabels: fakeLabels)
             return loss
 
-        optD.update(&discriminator, along: δdiscriminator)
+        optD.update(&discriminator, along=δdiscriminator)
 
     // Test the networks.
     vae.mode <- Mode.Eval
@@ -120,7 +120,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     // Render images.
     let generatedImage = generator(noise)
     try saveImage(
-        generatedImage, shape=[28; 28], format: .grayscale, directory: outputFolder,
+        generatedImage, shape=[28; 28], format="grayscale", directory=outputFolder,
         name= "\(epoch)")
 
     // Print loss.
@@ -130,4 +130,4 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
 // Generate another image.
 let noise1 = dsharp.randn([1; 100])
 let generatedImage = generator(noise1)
-dsharp.saveImage(generatedImage, shape=[28; 28], format: .grayscale, directory: outputFolder, name= "final")
+dsharp.saveImage(generatedImage, shape=[28; 28], format="grayscale", directory=outputFolder, name= "final")

@@ -22,14 +22,14 @@ open DiffSharp
 
 /// some utility functions to help generate network variants
 /// original: https://github.com/tensorflow/tpu/blob/d6f2ef3edfeb4b1c2039b81014dc5271a7753832/models/official/efficientnet/efficientnet_model.py#L138
-fileprivate let resizeDepth(blockCount: int, depth: double) = Int {
+let resizeDepth(blockCount: int, depth: double) = Int {
     /// Multiply + round up the number of blocks based on depth multiplier
     let newFilterCount = depth * double(blockCount)
     newFilterCount.round(.up)
     return int(newFilterCount)
 
 
-fileprivate let makeDivisible(filter: int, width: double, divisor: double = 8.0) = Int {
+let makeDivisible(filter: int, width: double, divisor: double = 8.0) = Int {
     /// Return a filter multiplied by width, rounded down and evenly divisible by the divisor
     let filterMult = double(filter) * width
     let filterAdd = double(filterMult) + (divisor / 2.0)
@@ -43,7 +43,7 @@ fileprivate let makeDivisible(filter: int, width: double, divisor: double = 8.0)
     return int(newFilterCount)
 
 
-fileprivate let roundFilterPair(filters: (Int, Int), width: double) = (Int, Int) = 
+let roundFilterPair(filters: (Int, Int), width: double) = (Int, Int) = 
     return (
         makeDivisible(filter: filters.0, width: width),
         makeDivisible(filter: filters.1, width: width)
@@ -86,7 +86,7 @@ type InitialMBConvBlock: Layer {
     
     override _.forward(input) =
         let depthwise = swish(batchNormDConv(dConv(input)))
-        let seAvgPoolReshaped = seAveragePool(depthwise).reshape([
+        let seAvgPoolReshaped = seAveragePool(depthwise).view([
             input.shape.[0], 1, 1, self.hiddenDimension
         ])
         let squeezeExcite = depthwise
@@ -158,7 +158,7 @@ type MBConvBlock: Layer {
         else
             depthwise = swish(batchNormDConv(dConv(zeroPad(piecewise))))
 
-        let seAvgPoolReshaped = seAveragePool(depthwise).reshape([
+        let seAvgPoolReshaped = seAveragePool(depthwise).view([
             input.shape.[0], 1, 1, self.hiddenDimension
         ])
         let squeezeExcite = depthwise
@@ -269,7 +269,7 @@ type EfficientNet: Layer {
         outputConvBatchNorm = BatchNorm(featureCount=makeDivisible(filter: 1280, width: width))
 
         dropoutProb = Dropout(probability: dropout)
-        outputClassifier = Dense(
+        outputClassifier = Linear(
             inputSize= makeDivisible(filter: 1280, width: width),
             outputSize=classCount)
 

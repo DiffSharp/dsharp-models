@@ -170,7 +170,7 @@ let loadOxfordIIITPetsValidation(localStorageDirectory: Uri) -> [(
     filename: "test.txt", in: localStorageDirectory)
 
 
-fileprivate let makeBatch<BatchSamples: Collection>(
+let makeBatch<BatchSamples: Collection>(
   samples: BatchSamples, imageSize: int, device: Device
 ) = SegmentedImage where BatchSamples.Element = (file: Uri, annotation: Uri) = 
   let images = samples.map (fun x -> x.file).map { url -> Tensor<Float> in

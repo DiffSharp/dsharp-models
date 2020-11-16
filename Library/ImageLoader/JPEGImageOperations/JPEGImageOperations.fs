@@ -77,7 +77,7 @@ let loadJPEG(atPath path: string, imageFormat: pixelFormat) -> ImageData {
     let height: CInt = 0
 
     guard FileManager.default.fileExists(atPath: path) else {
-        throw ("File does not exist at \(path).")
+        throw ($"File does not exist at {path}.")
     }
 
     let data: Data = FileManager.default.contents(atPath: path)!

@@ -113,7 +113,7 @@ type WideResNet: Layer {
 
         self.norm = BatchNorm(featureCount=64 * widenFactor)
         self.avgPool = AvgPool2D(poolSize: (8, 8), strides = [8, 8))
-        self.classifier = Dense(inputSize=64 * widenFactor, outputSize=10)
+        self.classifier = Linear(inFeatures=64 * widenFactor, outFeatures=10)
 
 
     
