@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 open DiffSharp
 
@@ -43,7 +43,7 @@ type Keypoint {
     self.score = score
 
 
-  let isWithinRadiusOfCorrespondingKeypoints(in poses: [Pose], radius: double) = Bool {
+  let isWithinRadiusOfCorrespondingKeypoints(in poses: Pose[], radius: double) = Bool {
     return poses.contains { pose in
       let correspondingKeypoint = pose.getKeypoint(self.index)!
       let dy = correspondingKeypoint.y - self.y
@@ -76,7 +76,7 @@ type KeypointIndex: int, CaseIterable {
 
 type Direction { case fwd, bwd
 
-let getNextKeypointIndexAndDirection(_ keypointId: KeypointIndex) = [(KeypointIndex, Direction)] {
+let getNextKeypointIndexAndDirection(keypointId: KeypointIndex) = [(KeypointIndex, Direction)] {
   match keypointId with
   | .nose ->
     return [(.leftEye, .fwd), (.rightEye, .fwd), (.leftShoulder, .fwd), (.rightShoulder, .fwd)]
@@ -121,14 +121,14 @@ let keypointPairToDisplacementIndexMap: [Set<KeypointIndex>: int] = [
 ]
 
 type Pose {
-  let keypoints: [Keypoint?] = Array(repeating: nil, count: KeypointIndex.allCases.count)
+  let keypoints: [Keypoint?] = Array.replicate nil, count: KeypointIndex.allCases.count)
   let resolution: (height: int, width: int)
 
-  mutating let add(_ keypoint: Keypoint) = 
+  mutating let add(keypoint: Keypoint) = 
     keypoints[keypoint.index.rawValue] = keypoint
 
 
-  let getKeypoint(_ index: KeypointIndex) = Keypoint? {
+  let getKeypoint(index: KeypointIndex) = Keypoint? {
     return keypoints[index.rawValue]
 
 
@@ -149,7 +149,7 @@ extension Pose: CustomStringConvertible {
     let description = ""
     for keypoint in keypoints do
       description.append(
-        "\(keypoint!.index) - \(keypoint!.score) | \(keypoint!.y) - \(keypoint!.x)\n")
+        $"\(keypoint!.index) - \(keypoint!.score) | \(keypoint!.y) - \(keypoint!.x)\n")
 
     return description
 

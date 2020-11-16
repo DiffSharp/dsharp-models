@@ -64,7 +64,7 @@ let registerCustomColumns() =
   BenchmarkColumn.register(
     BenchmarkColumn(
       name= "wall_time",
-      value: { $0.measurements.reduce(0, +) + $0.warmupMeasurements.reduce(0, +) },
+      value: (fun x -> x.measurements.reduce(0, +) + $0.warmupMeasurements.reduce(0, +) },
       unit: .time))
 }
 *)

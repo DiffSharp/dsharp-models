@@ -32,20 +32,20 @@ type ShallowWaterPDE: ParsableCommand {
     case tasks
 
   @Flag(help: "Task to run.")
-  let tasks: [Task] = [.splash]
+  let tasks: Task[] = [.splash]
 
   let n = 256
   let duration = 512
 
   /// Runs a simple simulation in a rectangular bathtub initialized with Dirac delta function.
   let runSplash() = 
-    let initialSplashLevel = Tensor<Float>(zeros: [n, n])
+    let initialSplashLevel = dsharp.zeros([n, n])
     initialSplashLevel[n / 2, n / 2] = dsharp.tensor(100)
 
     let initialSplash = TensorSliceSolution(waterLevel: initialSplashLevel)
     let splashEvolution = [TensorSliceSolution](evolve: initialSplash, duration)
 
-    for (i, solution) in splashEvolution.enumerated() = 
+    for (i, solution) in splashEvolution.enumerated() do
       let file = Uri(fileURLWithPath= "Images/Splash-\(String(format: "%03d", i)).jpg")
       solution.visualization.waterLevel.save(file, format="grayscale", quality: 100)
 
@@ -54,7 +54,7 @@ type ShallowWaterPDE: ParsableCommand {
   /// Runs an optimization through time-steps and updates the initial water height to obtain a specific wave patter at the end.
   let runOptimization() = 
     let α: double = 500.0
-    let initialWaterLevel = Tensor<Float>(zeros: [n, n])
+    let initialWaterLevel = dsharp.zeros([n, n])
 
     let targetImage = Image(jpeg: Uri(fileURLWithPath= "Images/Target.jpg"))
     let target = targetImage.tensor - double(byte.max) / 2
@@ -72,14 +72,14 @@ type ShallowWaterPDE: ParsableCommand {
         loss
 
 
-      print("\(opt): \(loss)")
+      print($"{opt}: {loss}")
       initialWaterLevel.move(along: δinitialWaterLevel.scaled(by: -α))
 
 
     let initialSolution = TensorSliceSolution(waterLevel: initialWaterLevel)
     let evolution = [TensorSliceSolution](evolve: initialSolution, duration)
 
-    for (i, solution) in evolution.enumerated() = 
+    for (i, solution) in evolution.enumerated() do
       let file = Uri(fileURLWithPath= "Images/Optimization-\(String(format: "%03d", i)).jpg")
       solution.visualization.waterLevel.save(file, format="grayscale", quality: 100)
 
@@ -94,7 +94,7 @@ type ShallowWaterPDE: ParsableCommand {
 
 
   let runSplashTensorLoopBenchmark(on device: Device) = 
-    let initialWaterLevel = Tensor<Float>(zeros: [n, n], device=device)
+    let initialWaterLevel = dsharp.zeros([n, n], device=device)
     initialWaterLevel[n / 2][n / 2] = Tensor<Float>(100, device=device)
 
     let initialSolution = TensorLoopSolution(waterLevel: initialWaterLevel)
@@ -102,7 +102,7 @@ type ShallowWaterPDE: ParsableCommand {
 
 
   let runSplashTensorSliceBenchmark(on device: Device) = 
-    let initialWaterLevel = Tensor<Float>(zeros: [n, n], device=device)
+    let initialWaterLevel = dsharp.zeros([n, n], device=device)
     initialWaterLevel[n / 2][n / 2] = Tensor<Float>(100, device=device)
 
     let initialSolution = TensorSliceSolution(waterLevel: initialWaterLevel)
@@ -110,7 +110,7 @@ type ShallowWaterPDE: ParsableCommand {
 
 
   let runSplashTensorConvBenchmark(on device: Device) = 
-    let initialWaterLevel = Tensor<Float>(zeros: [n, n], device=device)
+    let initialWaterLevel = dsharp.zeros([n, n], device=device)
     initialWaterLevel[n / 2][n / 2] = Tensor<Float>(100, device=device)
 
     let initialSolution = TensorConvSolution(waterLevel: initialWaterLevel)
@@ -160,7 +160,7 @@ type ShallowWaterPDE: ParsableCommand {
         runOptimization()
       | .benchmark ->
         let runner = BenchmarkRunner(
-          suites: [splashBenchmarks], settings: [TimeUnit(.ms)], customDefaults: [])
+          suites: splashBenchmarks[], settings: [TimeUnit(.ms)], customDefaults: [])
         try runner.run()
 
 

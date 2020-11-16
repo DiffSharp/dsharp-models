@@ -50,7 +50,8 @@ let ResNetCIFAR10 = BenchmarkSuite(
   suite.benchmark("training_x10", settings: Backend(.x10), function: training)
 }
 
-type ResNet56: Layer {
+type ResNet56() = 
+  inherit Model()
   let model: ResNet
 
   init() = 
@@ -58,13 +59,13 @@ type ResNet56: Layer {
   }
 
   
-  let callAsFunction(_ input: Tensor<Float>) = Tensor<Float> {
+  let callAsFunction(input: Tensor<Float>) = Tensor<Float> {
     return model(input)
   }
 }
 
 extension ResNet56: ImageClassificationModel {
-  static let preferredInputDimensions: [Int] { [32, 32, 3] }
+  static let preferredInputDimensions: int[] { [32, 32, 3] }
   static let outputLabels: int { 10 }
 }
 
@@ -73,7 +74,7 @@ final class SyntheticCIFAR10: SyntheticImageDataset<SystemRandomNumberGenerator>
 {
   public init(batchSize: int, on device: Device = Device.default) = 
     super.init(
-      batchSize= batchSize, labels: ResNet56.outputLabels,
+      batchSize= batchSize, labels=ResNet56.outputLabels,
       dimensions: ResNet56.preferredInputDimensions, entropy=SystemRandomNumberGenerator(),
       device=device)
   }

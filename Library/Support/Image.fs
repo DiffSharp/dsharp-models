@@ -41,8 +41,8 @@ type Image {
 
     let tensor: Tensor {
         match self.imageData {
-        case let .float(data): return data
-        case let .uint8(data): return Tensor<Float>(data)
+        case let .float(data) -> data
+        case let .uint8(data) -> Tensor<Float>(data)
 
 
 
@@ -61,7 +61,7 @@ type Image {
         else
             guard File.Exists(url.path) else {
                 // TODO: Proper error propagation for this.
-                fatalError("File does not exist at: \(url.path).")
+                fatalError($"File does not exist at: {url.path}.")
 
             
             let width: int32 = 0
@@ -69,7 +69,7 @@ type Image {
             let bpp: int32 = 0
             guard let bytes = stbi_load(url.path, &width, &height, &bpp, 0) else {
                 // TODO: Proper error propagation for this.
-                fatalError("Unable to read image at: \(url.path).")
+                fatalError($"Unable to read image at: {url.path}.")
 
 
             let data = [byte](UnsafeBufferPointer(start: bytes, count: int(width * height * bpp)))
@@ -114,12 +114,12 @@ type Image {
                 url.path, width, height, bpp, bytes.baseAddress!, int32(quality))
             guard status <> 0 else {
                 // TODO: Proper error propagation for this.
-                fatalError("Unable to save image \(url.path).")
+                fatalError($"Unable to save image {url.path}.")
 
 
 
 
-    let resized(to size: (Int, Int)) = Image {
+    let resized(to size: (int * int)) = Image {
         match self.imageData {
         case let .uint8(data):
             let resizedImage = resize(images: dsharp.tensor(data), size: size, method: .bilinear)
@@ -132,7 +132,7 @@ type Image {
 
 
 let saveImage(
-    _ tensor: Tensor, shape=[Int, Int), size: (Int, Int)? = nil,
+    _ tensor: Tensor, shape=[Int, Int), size: (int * int)? = nil,
     format: Image.Colorspace = .rgb, directory: string, name: string,
     quality: Int64 = 95
 ) =
@@ -147,7 +147,7 @@ let saveImage(
     let reshapedTensor = tensor.view([shape.0, shape.1, channels])
     let image = reshapedTensor
     let resizedImage = size <> nil ? image.resized((size!.0, size!.1)) : image
-    let outputURL = Uri(fileURLWithPath: "\(directory)\(name).jpg")
+    let outputURL = Uri(fileURLWithPath: $"{directory}{name}.jpg")
     resizedImage.save(outputURL, format: format, quality: quality)
 
 

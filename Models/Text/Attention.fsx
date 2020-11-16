@@ -19,19 +19,19 @@ type AttentionInput<Scalar: TensorFlowFloatingPoint>: Differentiable {
     /// Source tensor that we are attending from, with shape
     /// `[batchSize, sourceSequenceLength, sourceDepth]` or
     /// `[batchSize, sourceSequenceLength * sourceDepth]`.
-    let source: Tensor<Scalar>
+    let source: Tensor
 
     /// Target tensor that we are attending to, with shape
     /// `[batchSize, targetSequenceLength, targetDepth]` or
     /// `[batchSize, targetSequenceLength * targetDepth]`.
-    let target: Tensor<Scalar>
+    let target: Tensor
 
     /// Mask to apply on the attention scores. This is a tensor with shape
     /// `[batchSize, sourceSequenceLength, targetSequenceLength]` or
     /// `[batchSize, sourceSequenceLength * targetSequenceLength]`. The values should be `1` or `0`.
     /// The attention scores will effectively be set to negative infinity for any positions in the
     /// mask that are set to `0`, and will be unchanged for positions that are set to `1`.
-    let mask: Tensor<Scalar>
+    let mask: Tensor
 
     /// The batch size of this input. This is optional because it is only needed if the input
     /// sequences have been reshaped to matrices.
@@ -39,12 +39,12 @@ type AttentionInput<Scalar: TensorFlowFloatingPoint>: Differentiable {
 
     
     public init(
-        source: Tensor<Scalar>,
-        target: Tensor<Scalar>,
-        mask: Tensor<Scalar>,
+        source: Tensor,
+        target: Tensor,
+        mask: Tensor,
         batchSize: int? = nil
     ) = 
-        precondition(
+        Debug.Assert(
             source.rank = target.rank,
             "The rank of the attention source and target tensors must match.")
         self.source = source
@@ -86,12 +86,12 @@ type MultiHeadAttention: Layer, Regularizable {
     let valueactivation= Activation<Scalar>
     let matrixResult: bool
 
-    let queryWeight: Tensor<Scalar>
-    let queryBias: Tensor<Scalar>
-    let keyWeight: Tensor<Scalar>
-    let keyBias: Tensor<Scalar>
-    let valueWeight: Tensor<Scalar>
-    let valueBias: Tensor<Scalar>
+    let queryWeight: Tensor
+    let queryBias: Tensor
+    let keyWeight: Tensor
+    let keyBias: Tensor
+    let valueWeight: Tensor
+    let valueBias: Tensor
     let attentionDropout: Dropout<Scalar>
 
     let regularizationValue: TangentVector {
@@ -161,7 +161,7 @@ type MultiHeadAttention: Layer, Regularizable {
 
     
     override _.forward(input: AttentionInput<Scalar>) : Tensor =
-        precondition(
+        Debug.Assert(
             input.source.rank = 3 || input.batchSize <> nil,
             "Whenever the input is provided in matrix form, the batch size must also be provided.")
         // Scalar dimensions referenced here:
@@ -214,7 +214,7 @@ type MultiHeadAttention: Layer, Regularizable {
 extension MultiHeadAttention {
     /// Default initializer to use for the linear transform weights.
     public static let defaultWeightInitializer: ParameterInitializer<Scalar> {
-        truncatedNormalInitializer(standardDeviation: Tensor<Scalar>(0.02))
+        truncatedNormalInitializer(standardDeviation=Tensor(0.02))
 
 
     /// Default initializer to use for the linear transform biases.

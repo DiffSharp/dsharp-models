@@ -81,7 +81,7 @@ let agent: PPOAgent = PPOAgent(
 // Training loop
 let timestep: int = 0
 let episodeReturn: double = 0
-let episodeReturns: double[] = []
+let episodeReturns: double[] = [| |]
 let maxEpisodeReturn: double = -1
 for episodeIndex in 1..<maxEpisodes+1 {
     let state = env.reset()

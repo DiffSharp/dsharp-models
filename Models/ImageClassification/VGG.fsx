@@ -19,18 +19,19 @@ open DiffSharp
 // Karen Simonyan, Andrew Zisserman
 // https://arxiv.org/abs/1409.1556
 
-type VGGBlock: Layer {
+type VGGBlock() =
+    inherit Model()
     let blocks: [Conv2D<Float>] = []
     let maxpool = MaxPool2d(kernelSize=2, stride=2)
 
     public init(featureCounts: (Int, Int, Int, Int), blockCount: int) = 
         self.blocks = [Conv2d(filterShape=(3, 3, featureCounts.0, featureCounts.1),
             padding="same",
-            activation= relu)]
+            activation= dsharp.relu)]
         for _ in 1..<blockCount {
             self.blocks <- blocks + [Conv2d(filterShape=(3, 3, featureCounts.2, featureCounts.3),
                 padding="same",
-                activation= relu)]
+                activation= dsharp.relu)]
 
 
 
@@ -40,7 +41,8 @@ type VGGBlock: Layer {
 
 
 
-type VGG16: Layer {
+type VGG16() =
+    inherit Model()
     let layer1: VGGBlock
     let layer2: VGGBlock
     let layer3: VGGBlock
@@ -48,8 +50,8 @@ type VGG16: Layer {
     let layer5: VGGBlock
 
     let flatten = Flatten()
-    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096, activation= relu)
-    let dense2 = Linear(inFeatures=4096, outFeatures=4096, activation= relu)
+    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096, activation= dsharp.relu)
+    let dense2 = Linear(inFeatures=4096, outFeatures=4096, activation= dsharp.relu)
     let output: Dense
 
     public init(classCount: int = 1000) = 
@@ -68,7 +70,8 @@ type VGG16: Layer {
 
 
 
-type VGG19: Layer {
+type VGG19() =
+    inherit Model()
     let layer1: VGGBlock
     let layer2: VGGBlock
     let layer3: VGGBlock
@@ -76,8 +79,8 @@ type VGG19: Layer {
     let layer5: VGGBlock
 
     let flatten = Flatten()
-    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096, activation= relu)
-    let dense2 = Linear(inFeatures=4096, outFeatures=4096, activation= relu)
+    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096, activation= dsharp.relu)
+    let dense2 = Linear(inFeatures=4096, outFeatures=4096, activation= dsharp.relu)
     let output: Dense
 
     public init(classCount: int = 1000) = 

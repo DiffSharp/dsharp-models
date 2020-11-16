@@ -12,25 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 open DiffSharp
+open DiffSharp.Model
 
 
-type IFeatureChannelInitializable: Layer {
-    init(featureCount=int)
+//extension BatchNorm: FeatureChannelInitializable {
+//    public init(featureCount: int) = 
+//        self.init(featureCount=featureCount, axis = -1, momentum: 0.99, epsilon: 0.001)
 
-
-extension BatchNorm: FeatureChannelInitializable {
-    public init(featureCount=int) = 
-        self.init(featureCount=featureCount, axis: -1, momentum: 0.99, epsilon: 0.001)
-
-
-
-extension InstanceNorm2D: FeatureChannelInitializable {
-    public init(featureCount=int) = 
-        self.init(featureCount=featureCount, epsilon: dsharp.tensor(1e-5))
+//extension InstanceNorm2D: FeatureChannelInitializable {
+//    public init(featureCount: int) = 
+//        self.init(featureCount=featureCount, epsilon: dsharp.tensor(1e-5))
 
 

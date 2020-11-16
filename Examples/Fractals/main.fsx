@@ -93,7 +93,7 @@ extension FractalCommand {
           divergenceGrid, iterations: parameters.iterations ?? 200,
           fileName: parameters.outputFile ?? "julia")
       with e ->
-        print("Error saving fractal image: \(error)")
+        print($"Error saving fractal image: {error}")
 
 
 
@@ -127,7 +127,7 @@ extension FractalCommand {
           divergenceGrid, iterations: parameters.iterations ?? 200,
           fileName: parameters.outputFile ?? "mandelbrot")
       with e ->
-        print("Error saving fractal image: \(error)")
+        print($"Error saving fractal image: {error}")
 
 
 

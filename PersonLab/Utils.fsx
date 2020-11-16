@@ -35,11 +35,11 @@ type Config {
 
 extension CheckpointReader {
   let load(from name: string) : Tensor =
-    return dsharp.tensor(self.loadTensor(named: "MobilenetV1/\(name)"))
+    return dsharp.tensor(self.loadTensor(named: "MobilenetV1/{name}"))
 
 
 
-let draw(_ pose: Pose, on imageTensor: inout Tensor<Float>) = 
+let draw(pose: Pose, on imageTensor: inout Tensor<Float>) = 
   let pose = pose
   pose.rescale((height: imageTensor.shape.[0], width: imageTensor.shape.[1]))
 
@@ -65,7 +65,7 @@ let draw(_ pose: Pose, on imageTensor: inout Tensor<Float>) =
 
 /// Used as an ad-hoc "hash" for tensor checking when copying the backbone from
 /// our Python Tensorflow 1.5 version
-let hash(_ tensor: Tensor) = 
+let hash(tensor: Tensor) = 
   print(
     "[\(tensor.flattened().sum()), \(tensor[0, 0, 0]) \(tensor[0, -1, 1]), \(tensor[0, 1, 0]), \(tensor[0, -1, -1])]"
   )
@@ -74,10 +74,10 @@ let hash(_ tensor: Tensor) =
 /// Wrapper for Tensor which allows several order of magnitude faster subscript access,
 /// as it avoids unnecesary GPU->CPU copies on each access.
 type CPUTensor<T: TensorFlowScalar> {
-  let flattenedTensor: [T]
+  let flattenedTensor: T[]
   let shape: TensorShape
 
-  init(_ tensor: Tensor<T>) = 
+  init(tensor: Tensor<T>) = 
     self.flattenedTensor = tensor.scalars
     self.shape = tensor.shape
 
@@ -88,7 +88,7 @@ type CPUTensor<T: TensorFlowScalar> {
       oneDimensionalIndex <- oneDimensionalIndex + indexes[i - 1] * shape[i...].reduce(1, *)
 
     // Last dimension doesn't have multipliers.
-    oneDimensionalIndex <- oneDimensionalIndex + indexes.last!
+    oneDimensionalIndex <- oneDimensionalIndex + indexes |> Array.last
     return flattenedTensor[oneDimensionalIndex]
 
 

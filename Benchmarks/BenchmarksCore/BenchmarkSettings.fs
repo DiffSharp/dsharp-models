@@ -19,28 +19,28 @@ open DiffSharp
 
 type batchSize= BenchmarkSetting {
   let value: int
-  init(_ value: int) = 
+  init(value: int) = 
     self.value = value
   }
 }
 
 type Length: BenchmarkSetting {
   let value: int
-  init(_ value: int) = 
+  init(value: int) = 
     self.value = value
   }
 }
 
 type Synthetic: BenchmarkSetting {
   let value: bool
-  init(_ value: bool) = 
+  init(value: bool) = 
     self.value = value
   }
 }
 
 type Backend: BenchmarkSetting {
   let value: Value
-  init(_ value: Value) = 
+  init(value: Value) = 
     self.value = value
   }
   type Value {
@@ -51,7 +51,7 @@ type Backend: BenchmarkSetting {
 
 type Platform: BenchmarkSetting {
   let value: Value
-  init(_ value: Value) = 
+  init(value: Value) = 
     self.value = value
   }
   type Value {
@@ -64,7 +64,7 @@ type Platform: BenchmarkSetting {
 
 type DatasetFilePath: BenchmarkSetting {
   let value: string
-  init(_ value: string) = 
+  init(value: string) = 
     self.value = value
   }
 }
@@ -131,7 +131,7 @@ extension BenchmarkSettings {
   }
 }
 
-let defaultSettings: [BenchmarkSetting] = [
+let defaultSettings: BenchmarkSetting[] = [
   TimeUnit(.s),
   InverseTimeUnit(.s),
   Backend(.eager),

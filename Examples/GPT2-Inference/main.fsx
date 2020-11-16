@@ -37,9 +37,9 @@ for _ in 0..99 do
     try
         try print(gpt.generate(), terminator: "")
  catch GPT2.GPT2Error.invalidEncoding(let id) = 
-        print("ERROR: Invalid encoding: \(id)")
+        print($"ERROR: Invalid encoding: {id}")
     with
-        fatalError("ERROR: Unexpected error: \(error).")
+        fatalError($"ERROR: Unexpected error: {error}.")
 
 
 print()
@@ -61,9 +61,9 @@ for _ in 0..99 do
     try
         try print(recreatedmodel.generate(), terminator: "")
  catch GPT2.GPT2Error.invalidEncoding(let id) = 
-        print("ERROR: Invalid encoding: \(id)")
+        print($"ERROR: Invalid encoding: {id}")
     with
-        fatalError("ERROR: Unexpected error: \(error).")
+        fatalError($"ERROR: Unexpected error: {error}.")
 
 
 print()

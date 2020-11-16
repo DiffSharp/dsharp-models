@@ -19,11 +19,10 @@ open Datasets
 open ImageClassificationModels
 open DiffSharp
 
-type IImageClassificationModel: Layer where Input = Tensor<Float>, Output = Tensor<Float> {
-  init()
-  static let preferredInputDimensions: [Int] { get }
+type IImageClassificationModel() = 
+  inherit Model()
+  static let preferredInputDimensions: int[] { get }
   static let outputLabels: int { get }
-}
 
 let runImageClassificationInference<Model, ClassificationDataset>(
   model modelType: Model.Type,

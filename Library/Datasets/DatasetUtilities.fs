@@ -48,7 +48,7 @@ type DatasetUtilities() =
         localStorageDirectory: Uri = currentWorkingDirectoryURL,
         extract: bool = true
     ) = URL {
-        printError("Loading resource: \(filename)")
+        printError($"Loading resource: {filename}")
 
         let resource = ResourceDefinition(
             filename: filename,
@@ -58,9 +58,9 @@ type DatasetUtilities() =
 
         let localURL = resource.localURL
 
-        if !File.Exists(localURL.path) = 
+        if not File.Exists(localURL.path) = 
             printError(
-                "File does not exist locally at expected path: \(localURL.path) and must be fetched"
+                "File does not exist locally at expected path: {localURL.path} and must be fetched"
             )
             fetchFromRemoteAndSave(resource, extract: extract)
 
@@ -102,17 +102,17 @@ type DatasetUtilities() =
 
 
 
-    static let fetchFromRemoteAndSave(_ resource: ResourceDefinition, extract: bool) = 
+    static let fetchFromRemoteAndSave(resource: ResourceDefinition, extract: bool) = 
         let remoteLocation = resource.remoteURL
         let archiveLocation = resource.localStorageDirectory
 
         try
-            printError("Fetching URL: \(remoteLocation)...")
+            printError($"Fetching URL: {remoteLocation}...")
             try download(remoteLocation, archiveLocation)
         with e ->
-            fatalError("Failed to fetch and save resource with error: \(error)")
+            fatalError($"Failed to fetch and save resource with error: {error}")
 
-        printError("Archive saved \(archiveLocation.path)")
+        printError("Archive saved {archiveLocation.path}")
 
         if extract then
             extractArchive(

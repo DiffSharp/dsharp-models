@@ -100,7 +100,7 @@ type Imagenette {
          |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
           return batches |> Seq.map {
             makeImagenetteBatch(
-              samples: $0, outFeatures=outputSize, mean: mean, standardDeviation: standardDeviation,
+              samples: $0, outFeatures=outputSize, mean: mean, standardDeviation=standardDeviation,
               device=device)
 
 
@@ -110,11 +110,11 @@ type Imagenette {
 
       validation = validationSamples.inBatches(of: batchSize) |> Seq.map {
         makeImagenetteBatch(
-          samples: $0, outFeatures=outputSize, mean: mean, standardDeviation: standardDeviation,
+          samples: $0, outFeatures=outputSize, mean: mean, standardDeviation=standardDeviation,
           device=device)
 
     with
-      fatalError("Could not load Imagenette dataset: \(error)")
+      fatalError($"Could not load Imagenette dataset: {error}")
 
 
 
@@ -137,17 +137,16 @@ extension Imagenette: ImageClassificationData where Entropy = SystemRandomNumber
 
 
 let downloadImagenetteIfNotPresent(directory: FilePath, size: ImagenetteSize, base: string) = 
-  let downloadPath = directory </> ("\(base)\(size.suffix)").path
+  let downloadPath = directory </> ($"{base}{size.suffix}").path
   let directoryExists = File.Exists(downloadPath)
   let contentsOfDir = try? Directory.GetFiles(downloadPath)
   let directoryEmpty = (contentsOfDir = nil) || (contentsOfDir!.isEmpty)
 
   guard !directoryExists || directoryEmpty else { return
 
-  let location = Uri(
-    string: "https://s3.amazonaws.com/fast-ai-imageclas/\(base)\(size.suffix).tgz")!
+  let location = Uri( $"https://s3.amazonaws.com/fast-ai-imageclas/{base}{size.suffix}.tgz")!
   let _ = DatasetUtilities.downloadResource(
-    filename: "\(base)\(size.suffix)", fileExtension="tgz",
+    filename: $"{base}{size.suffix}", fileExtension="tgz",
     remoteRoot: location.deletingLastPathComponent(), localStorageDirectory: directory)
 
 
@@ -155,11 +154,11 @@ let exploreImagenetteDirectory(
   named name: string, in directory: Uri, inputSize= ImagenetteSize, base: string
 ) -> [URL] {
   downloadImagenetteIfNotPresent(directory, size: inputSize, base: base)
-  let path = directory </> ("\(base)\(inputSize.suffix)/\(name)")
+  let path = directory </> ($"{base}{inputSize.suffix}/{name}")
   let dirContents = try Directory.GetFiles(
     at: path, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
 
-  let urls: [URL] = []
+  let urls: URL[] = [| |]
   for directoryURL in dirContents do
     let subdirContents = try Directory.GetFiles(
       at: directoryURL, includingPropertiesForKeys: [.isDirectoryKey],
@@ -173,10 +172,10 @@ let parentLabel(url: Uri) =
   return url.deletingLastPathComponent().lastPathComponent
 
 
-let createLabelDict(urls: [URL]) = Map<string, int> {
+let createLabelDict(urls: URL[]) = Map<string, int> {
   let allLabels = urls.map(parentLabel)
   let labels = Array(Set(allLabels)).sorted()
-  return Dictionary(uniqueKeysWithValues: labels.enumerated().map { ($0.element, $0.offset))
+  Dictionary(labels|> Seq.map fun x -> (x.element, x.offset))
 
 
 let loadImagenetteDirectory(
@@ -213,7 +212,7 @@ let loadImagenetteValidationDirectory(
 
 
 let makeImagenetteBatch<BatchSamples: Collection>(
-  samples: BatchSamples, outFeatures=Int, mean: Tensor?, standardDeviation: Tensor?,
+  samples: BatchSamples, outFeatures=Int, mean: Tensor?, standardDeviation=Tensor?,
   device: Device
 ) = LabeledImage where BatchSamples.Element = (file: Uri, label: int32) = 
   let images = samples.map (fun x -> x.file).map { url -> Tensor<Float> in

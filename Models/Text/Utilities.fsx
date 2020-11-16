@@ -21,7 +21,7 @@ type Activation<Scalar: TensorFlowFloatingPoint> =
 
 extension KeyPathIterable {
     public mutating let clipByGlobalNorm<Scalar: TensorFlowFloatingPoint>(clipNorm: Scalar) = 
-        let globalNorm: Tensor<Scalar>? = nil
+        let globalNorm: Tensor? = nil
         for kp in self.recursivelyAllWritableKeyPaths(Tensor<Scalar>.self) = 
             let tmp = self[keyPath: kp].squared().sum()
             globalNorm = (globalNorm <> nil) ? globalNorm! + tmp : tmp

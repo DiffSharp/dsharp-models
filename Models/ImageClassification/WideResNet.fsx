@@ -20,7 +20,8 @@ open DiffSharp
 // https://arxiv.org/abs/1605.07146
 // https://github.com/szagoruyko/wide-residual-networks
 
-type BatchNormConv2DBlock: Layer {
+type BatchNormConv2DBlock() =
+    inherit Model()
     let norm1: BatchNorm<Float>
     let conv1: Conv2D<Float>
     let norm2: BatchNorm<Float>
@@ -30,7 +31,7 @@ type BatchNormConv2DBlock: Layer {
     let dropout: Dropout<Float> = Dropout2d(p=0.3)
 
     public init(
-        featureCounts: (Int, Int),
+        featureCounts: (int * int),
         kernelSize: int = 3,
         strides = [Int, Int) = (1, 1),
         padding: Padding = .same
@@ -68,14 +69,15 @@ type BatchNormConv2DBlock: Layer {
 
 
 
-type WideResNetBasicBlock: Layer {
-    let blocks: [BatchNormConv2DBlock]
+type WideResNetBasicBlock() =
+    inherit Model()
+    let blocks: BatchNormConv2DBlock[]
 
     public init(
-        featureCounts: (Int, Int),
+        featureCounts: (int * int),
         kernelSize: int = 3,
         depthFactor: int = 2,
-        initialStride: (Int, Int) = (2, 2)
+        initialStride: (int * int) = (2, 2)
     ) = 
         self.blocks = [BatchNormConv2DBlock(featureCounts: featureCounts, strides: initialStride)]    
         for _ in 1..<depthFactor {
@@ -89,7 +91,8 @@ type WideResNetBasicBlock: Layer {
 
 
 
-type WideResNet: Layer {
+type WideResNet() =
+    inherit Model()
     let l1: Conv2D<Float>
 
     let l2: WideResNetBasicBlock

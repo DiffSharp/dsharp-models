@@ -28,11 +28,11 @@ where Texts: Collection, Texts.Index==Int, Texts.Element==[Int] {
   /// The size of a batch.
   let batchSize: int
   /// The length of a sequence.
-  let sequenceLength: int
+  let sequenceLength=int
   /// The collection of numericalized texts.
   let numericalizedTexts: Texts
   /// The length of each processed item.
-  let lengths: [Int]
+  let lengths: int[]
   //Drop the last batch if its length is less than sequenceLength
   let dropLast: bool
   //The length of a contiguous chunk of text
@@ -42,15 +42,15 @@ where Texts: Collection, Texts.Index==Int, Texts.Element==[Int] {
   /// The sequence length of the last batch.
   let lastLength: int
   /// Indices used to iterate through the dataset.
-  let indices: [Int]
+  let indices: int[]
   /// Cumulative lengths.
-  let cumulativeLengths: [Int]
+  let cumulativeLengths: int[]
 
   public init(
     batchSize: int,
-    sequenceLength: int,
+    sequenceLength=int,
     numericalizedTexts: Texts,
-    lengths: [Int],
+    lengths: int[],
     dropLast: bool = false
   ) = 
     self.batchSize = batchSize
@@ -59,7 +59,7 @@ where Texts: Collection, Texts.Index==Int, Texts.Element==[Int] {
     self.lengths = lengths
     self.dropLast = dropLast
     cumulativeLengths = lengths.reduce(into: []) =  $0.append(($0.last ?? 0) + $1)
-    batchLength = (cumulativeLengths.last! - 1) / batchSize
+    batchLength = (cumulativeLengths |> Array.last - 1) / batchSize
     if dropLast then
         batchLength = (batchLength / sequenceLength) * sequenceLength
 
@@ -70,15 +70,15 @@ where Texts: Collection, Texts.Index==Int, Texts.Element==[Int] {
 
   public init(
     batchSize: int,
-    sequenceLength: int,
+    sequenceLength=int,
     numericalizedTexts: Texts,
     dropLast: bool = false
   ) = 
     self.init(
       batchSize= batchSize,
-      sequenceLength: sequenceLength,
+      sequenceLength=sequenceLength,
       numericalizedTexts: numericalizedTexts,
-      lengths: numericalizedTexts.map { $0.count,
+      lengths: numericalizedTexts.map (fun x -> x.count),
       dropLast: dropLast)
 
 
@@ -86,7 +86,7 @@ where Texts: Collection, Texts.Index==Int, Texts.Element==[Int] {
   public mutating let shuffle() = 
     indices = indices.shuffled()
     cumulativeLengths[0] = lengths[indices[0]]
-    for (i, j) in indices.suffix(1).enumerated() = 
+    for (i, j) in indices.suffix(1).enumerated() do
       cumulativeLengths[i + 1] = cumulativeLengths[i] + lengths[j]
 
 
@@ -114,7 +114,7 @@ extension LanguageModelDataset: Collection {
   
   /// Read a contiguous chunk of texts from start to end (may go through several items).
   let readItems(from start: int, to end: int) = [Int] {
-    let text: [Int] = []
+    let text: int[] = [| |]
     let index = cumulativeLengths.firstIndex { $0 >= start!
     let position = start
     while position < end {

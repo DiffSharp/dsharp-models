@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 open Checkpoints
 
@@ -27,14 +27,14 @@ type PersonLab {
   let backbone: MobileNetLikeBackbone
   let personlabHeads: PersonlabHeads
 
-  public init(_ config: Config) = 
+  public init(config: Config) = 
     self.config = config
     try
       self.ckpt = try CheckpointReader(
         checkpointLocation: config.checkpointPath, modelName: "Personlab"
       )
     with
-      print("Error loading checkpoint file: \(config.checkpointPath)")
+      print($"Error loading checkpoint file: {config.checkpointPath}")
       print(error)
       exit(0)
 
@@ -42,7 +42,7 @@ type PersonLab {
     self.personlabHeads = PersonlabHeads(checkpoint: ckpt)
 
 
-  override _.forward(_ inputImage: Image) = [Pose] {
+  override _.forward(inputImage: Image) = [Pose] {
     let startTime = Date()
 
     let resizedImage = inputImage.resized(config.inputImageSize)
@@ -53,7 +53,7 @@ type PersonLab {
     let convnetResults = personlabHeads(backbone(batchedNormalizedImagesTensor))
     let convnetTime = Date()
 
-    let poseDecoder = PoseDecoder(convnetResults, with: self.config)
+    let poseDecoder = PoseDecoder(convnetResults, self.config)
     let poses = poseDecoder.decode()
     let decoderTime = Date()
 

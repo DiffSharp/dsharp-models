@@ -32,7 +32,7 @@ type FixedParameter<Scalar: FloatingPoint>: ScheduledParameter {
     let value: Scalar
 
     @inlinable
-    public init(_ value: Scalar) = 
+    public init(value: Scalar) = 
         self.value = value
 
 
@@ -54,7 +54,7 @@ where Scalar: _ExpressibleByBuiltinFloatLiteral {
 /// Linearly decayed parameter.
 ///
 /// The decayed parameter is computed as follows:
-/// ```swift
+/// ```
 /// let initial = baseParameter(forStep: step)
 /// let decayed = initial + step * slope
 /// let decayedParameter = max(lowerBound * initial, decayed)
@@ -100,7 +100,7 @@ type LinearlyDecayedParameter<BaseParameter: ScheduledParameter>: ScheduledParam
 /// Exponentially decayed parameter.
 ///
 /// The decayed parameter is computed as follows:
-/// ```swift
+/// ```
 /// let initial = baseParameter(forStep: step)
 /// let decay = decayRate ^ (step / decayStepCount)
 /// let decayedParameter = initial * ((1 - lowerBound) * decay + lowerBound)
@@ -158,7 +158,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
 /// Reciprocal square root decayed parameter.
 ///
 /// The decayed parameter is computed as follows:
-/// ```swift
+/// ```
 /// let initial = baseParameter(forStep: step)
 /// let decay = decayFactor / sqrt(max(step, decayThreshold))
 /// let decayedParameter = initial * ((1 - lowerBound) * decay + lowerBound)
@@ -209,7 +209,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
 /// Cosine decayed parameter.
 ///
 /// The decayed parameter is computed as follows:
-/// ```swift
+/// ```
 /// let initial = baseParameter(forStep: step)
 /// let decay = 0.5 * (1 + cos(pi * min(step, cycleStepCount) / cycleStepCount))
 /// let decayedParameter = initial * ((1 - lowerBound) * decay + lowerBound)
@@ -257,7 +257,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
 /// Cycle-linear 10x decayed parameter.
 ///
 /// The decayed parameter is computed as follows:
-/// ```swift
+/// ```
 /// let initial = baseParameter(forStep: step)
 /// let cyclePosition = 1 - abs((step % (2 * cycleStepCount) - cycleStepCount) / cycleStepCount)
 /// let decay = (0.1 + cyclePosition) * 3

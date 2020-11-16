@@ -86,7 +86,7 @@ type Imagewoof {
          |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
           return batches |> Seq.map {
             makeImagenetteBatch(
-              samples: $0, outFeatures=outputSize, mean: mean, standardDeviation: standardDeviation,
+              samples: $0, outFeatures=outputSize, mean: mean, standardDeviation=standardDeviation,
               device=device)
 
 
@@ -97,11 +97,11 @@ type Imagewoof {
 
       validation = validationSamples.inBatches(of: batchSize) |> Seq.map {
         makeImagenetteBatch(
-          samples: $0, outFeatures=outputSize, mean: mean, standardDeviation: standardDeviation,
+          samples: $0, outFeatures=outputSize, mean: mean, standardDeviation=standardDeviation,
           device=device)
 
     with
-      fatalError("Could not load Imagewoof dataset: \(error)")
+      fatalError($"Could not load Imagewoof dataset: {error}")
 
 
 

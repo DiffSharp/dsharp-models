@@ -35,7 +35,7 @@ let makeDivisible(filter: int, widthMultiplier: double = 1.0, divisor: double = 
     return int(newFilterCount)
 
 
-let roundFilterPair(filters: (Int, Int), widthMultiplier: double) = (Int, Int) = 
+let roundFilterPair(filters: (int * int), widthMultiplier: double) = (int * int) = 
     return (
         makeDivisible(filter: filters.0, widthMultiplier: widthMultiplier),
         makeDivisible(filter: filters.1, widthMultiplier: widthMultiplier)
@@ -47,7 +47,8 @@ type ActivationType {
     case relu
 
 
-type SqueezeExcitationBlock: Layer {
+type SqueezeExcitationBlock() =
+    inherit Model()
     // https://arxiv.org/abs/1709.01507
     let averagePool = GlobalAvgPool2D<Float>()
     let reduceConv: Conv2D<Float>
@@ -76,7 +77,8 @@ type SqueezeExcitationBlock: Layer {
 
 
 
-type InitialInvertedResidualBlock: Layer {
+type InitialInvertedResidualBlock() =
+    inherit Model()
     let addResLayer: bool
     let useSELayer: bool = false
     let activation= ActivationType = .relu
@@ -88,10 +90,10 @@ type InitialInvertedResidualBlock: Layer {
     let batchNormConv2: BatchNorm<Float>
 
     public init(
-        filters: (Int, Int),
+        filters: (int * int),
         widthMultiplier: double,
         strides = [Int, Int) = (1, 1),
-        kernel: (Int, Int) = (3, 3),
+        kernel: (int * int) = (3, 3),
         seLayer: bool = false,
         activation= ActivationType = .relu
     ) = 
@@ -142,7 +144,8 @@ type InitialInvertedResidualBlock: Layer {
 
 
 
-type InvertedResidualBlock: Layer {
+type InvertedResidualBlock() =
+    inherit Model()
     let strides = [Int, Int)
     let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let addResLayer: bool
@@ -158,11 +161,11 @@ type InvertedResidualBlock: Layer {
     let batchNormConv2: BatchNorm<Float>
 
     public init(
-        filters: (Int, Int),
+        filters: (int * int),
         widthMultiplier: double,
         expansionFactor: double,
         strides = [Int, Int) = (1, 1),
-        kernel: (Int, Int) = (3, 3),
+        kernel: (int * int) = (3, 3),
         seLayer: bool = false,
         activation= ActivationType = .relu
     ) = 
@@ -228,7 +231,8 @@ type InvertedResidualBlock: Layer {
 
 
 
-type MobileNetV3Large: Layer {
+type MobileNetV3Large() =
+    inherit Model()
     let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>
@@ -361,7 +365,8 @@ type MobileNetV3Large: Layer {
 
 
 
-type MobileNetV3Small: Layer {
+type MobileNetV3Small() =
+    inherit Model()
     let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>

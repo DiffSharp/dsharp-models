@@ -24,7 +24,8 @@ open DiffSharp
 // The structure of this implementation was inspired by the Flax ResNet example:
 // https://github.com/google/flax/blob/master/examples/imagenet/models.py
 
-type ConvBN: Layer {
+type ConvBN() =
+    inherit Model()
     let conv: Conv2D<Float>
     let norm: BatchNorm<Float>
 
@@ -43,10 +44,11 @@ type ConvBN: Layer {
 
 
 
-type ResidualBlock: Layer {
+type ResidualBlock() =
+    inherit Model()
     let projection: ConvBN
     let needsProjection: bool
-    let earlyConvs: [ConvBN] = []
+    let earlyConvs: ConvBN[] = [| |]
     let lastConv: ConvBN
 
     public init(
@@ -104,10 +106,11 @@ type ResidualBlock: Layer {
 
 
 /// An implementation of the ResNet v1 and v1.5 architectures, at various depths.
-type ResNet: Layer {
+type ResNet() =
+    inherit Model()
     let initialLayer: ConvBN
     let maxPool: MaxPool2d
-    let residualBlocks: [ResidualBlock] = []
+    let residualBlocks: ResidualBlock[] = [| |]
     let avgPool = GlobalAvgPool2D<Float>()
     let flatten = Flatten()
     let classifier: Dense
@@ -143,7 +146,7 @@ type ResNet: Layer {
 
 
         let lastInputFilterCount = inputFilters
-        for (blockSizeIndex, blockSize) in depth.layerBlockSizes.enumerated() = 
+        for (blockSizeIndex, blockSize) in depth.layerBlockSizes.enumerated() do
             for blockIndex in 0..<blockSize {
                 let strides = ((blockSizeIndex > 0) && (blockIndex = 0)) ? (2, 2) : (1, 1)
                 let filters = inputFilters * int(pow(2.0, Double(blockSizeIndex)))
@@ -182,12 +185,12 @@ extension ResNet {
 
         let usesBasicBlocks: bool {
             match self with
-            case .resNet18, .resNet34, .resNet56: return true
+            case .resNet18, .resNet34, .resNet56 -> true
             | _ -> return false
 
 
 
-        let layerBlockSizes: [Int] {
+        let layerBlockSizes: int[] {
             match self with
             | .resNet18 -> return [2, 2, 2, 2]
             | .resNet34 -> return [3, 4, 6, 3]

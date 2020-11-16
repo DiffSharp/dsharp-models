@@ -37,14 +37,14 @@ public class ProgressPrinter {
   /// Epoch 1/12
   /// 468/468 [==============================] - loss: 0.4819 - accuracy: 0.8513
   /// 58/79 [======================>.......] - loss: 0.1520 - accuracy: 0.9521
-  public let printProgress<L: TrainingLoopProtocol>(_ loop: inout L, event: TrainingLoopEvent) =
+  public let printProgress<L: TrainingLoopProtocol>(loop: inout L, event: TrainingLoopEvent) =
     match event with
     | .epochStart ->
       guard let epochIndex = loop.epochIndex, let epochCount = loop.epochCount else {
         return
       }
 
-      print($"Epoch {epochIndex + 1}/\(epochCount)")
+      print($"Epoch {epochIndex + 1}/{epochCount}")
     | .batchEnd ->
       guard let batchIndex = loop.batchIndex, let batchCount = loop.batchCount else {
         return
@@ -58,7 +58,7 @@ public class ProgressPrinter {
       }
 
       print(
-        "\r\(batchIndex + 1)/\(batchCount) \(progressBar)\(stats)",
+        $"\r\(batchIndex + 1)/{batchCount} {progressBar}{stats}",
         terminator: ""
       )
       fflush(stdout)
@@ -86,10 +86,10 @@ public class ProgressPrinter {
     return $"[{leading}{separator}{trailing}]"
   }
 
-  let formatStats(_ stats: [(String, Float)]) =
+  let formatStats(stats: [(String, Float)]) =
     let result = ""
     for stat in stats do
-      result <- result + " - \(stat.0): \(String(format: "%.4f", stat.1))"
+      result <- result + $" - {stat.0}: {String(format: "%.4f", stat.1)}"
     }
     return result
   }

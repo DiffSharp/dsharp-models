@@ -27,7 +27,7 @@ public class HumanPolicy: Policy {
             return .pass
 
 
-        let validator(_ position: Position) =
+        let validator(position: Position) =
             guard legalMoves.contains(position) else {
                 throw HumanInputError.invalidInput(message: "The move is not legal.")
 
@@ -62,13 +62,13 @@ let promptAndReadMove(validator) : Position option =
             try validator(position)
             return position
         with HumanInputError.invalidInput(message) ->
-            print("The input is invalid: \(message)")
+            print($"The input is invalid: {message}")
             print("Please try again!")
         with HumanInputError.emptyInput ->
             print("Empty input is now allowed.")
             print("Please try again!")
         with e ->
-            print("Unknown error: \(error)")
+            print($"Unknown error: {error}")
             print("Please try again!")
 
 

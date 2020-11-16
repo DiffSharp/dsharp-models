@@ -31,13 +31,13 @@ let dataset = MNIST(batchSize= batchSize, device=device)
 
 // The LeNet-5 model, equivalent to `LeNet` in `ImageClassificationModels`.
 let classifier = Sequential {
-  Conv2d(filterShape=(5, 5, 1, 6), padding="same", activation= relu)
+  Conv2d(filterShape=(5, 5, 1, 6), padding="same", activation= dsharp.relu)
   AvgPool2D<Float>(kernelSize=2, stride=2)
-  Conv2d(filterShape=(5, 5, 6, 16), activation= relu)
+  Conv2d(6, 16, kernelSize=5, activation= dsharp.relu)
   AvgPool2D<Float>(kernelSize=2, stride=2)
   Flatten()
-  Linear(inFeatures=400, outFeatures=120, activation= relu)
-  Linear(inFeatures=120, outFeatures=84, activation= relu)
+  Linear(inFeatures=400, outFeatures=120, activation= dsharp.relu)
+  Linear(inFeatures=120, outFeatures=84, activation= dsharp.relu)
   Linear(inFeatures=84, outFeatures=10)
 
 

@@ -72,14 +72,14 @@ type PPOAgent {
     let step(env: PythonObject, state: PythonObject) = (PythonObject, Bool, Float) = 
         let tfState: Tensor = Tensor<Float>(numpy: np.array([state], dtype: np.float32))!
         let dist: Categorical<int32> = oldActorCritic(tfState)
-        let action: int32 = dist.sample().scalarized()
+        let action: int32 = dist.sample().toScalar()
         let (newState, reward, isDone, _) = env.step(action).tuple4
 
         memory.append(
             state: Array(state)!,
             action: action,
             reward: double(reward)!,
-            logProb: dist.logProbabilities[int(action)].scalarized(),
+            logProb: dist.logProbabilities[int(action)].toScalar(),
             isDone: bool(isDone)!
         )
 
@@ -88,7 +88,7 @@ type PPOAgent {
 
     let update() = 
         // Discount rewards for advantage estimation
-        let rewards: double[] = []
+        let rewards: double[] = [| |]
         let discountedReward: double = 0
         for i in (0..<memory.rewards.count).reversed() = 
             if memory.isDones[i] then
@@ -106,8 +106,8 @@ type PPOAgent {
         let oldLogProbs: Tensor = Tensor<Float>(numpy: np.array(memory.logProbs, dtype: np.float32))!
 
         // Optimize actor and critic
-        let actorLosses: double[] = []
-        let criticLosses: double[] = []
+        let actorLosses: double[] = [| |]
+        let criticLosses: double[] = [| |]
         for _ in 0..<epochs {
             // Optimize policy network (actor)
             let (actorLoss, actorGradients) = valueWithGradient(at: self.actorCritic.actorNetwork) =  actorNetwork -> Tensor<Float> in
@@ -130,7 +130,7 @@ type PPOAgent {
                 return loss.mean()
 
             self.actorOptimizer.update(&self.actorCritic.actorNetwork, along=actorGradients)
-            actorLosses.append(actorLoss.scalarized())
+            actorLosses.append(actorLoss.toScalar())
 
             // Optimize value network (critic)
             let (criticLoss, criticGradients) = valueWithGradient(at: self.actorCritic.criticNetwork) =  criticNetwork -> Tensor<Float> in
@@ -140,7 +140,7 @@ type PPOAgent {
                 return loss.mean()
 
             self.criticOptimizer.update(&self.actorCritic.criticNetwork, along=criticGradients)
-            criticLosses.append(criticLoss.scalarized())
+            criticLosses.append(criticLoss.toScalar())
 
         self.oldActorCritic = self.actorCritic
         memory.removeAll()

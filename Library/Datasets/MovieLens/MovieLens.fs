@@ -77,16 +77,16 @@ type MovieLens {
             entropy: Entropy) = 
         let trainFiles = try! String(
             contentsOf: MovieLens.downloadMovieLensDatasetIfNotPresent() </> (
-                "u1.base"), encoding: .utf8)
+                "u1.base"))
         let testFiles = try! String(
             contentsOf: MovieLens.downloadMovieLensDatasetIfNotPresent() </> (
-                "u1.test"), encoding: .utf8)
+                "u1.test"))
 
-        let trainData: double[][] = trainFiles.split(separator: "\n").map {
-            String($0).split(separator: "\t").compactMap { double(String($0))
+        let trainData: double[][] = trainFiles.Split("\n").map {
+            String($0).Split("\t").compactMap { double(String($0))
 
-        let testData: double[][] = testFiles.split(separator: "\n").map {
-            String($0).split(separator: "\t").compactMap { double(String($0))
+        let testData: double[][] = testFiles.Split("\n").map {
+            String($0).Split("\t").compactMap { double(String($0))
 
 
         let trainUsers = trainData[column: 0].unique()
@@ -102,32 +102,32 @@ type MovieLens {
         let item2id = Dictionary(uniqueKeysWithValues: zip(items, itemIndex))
         let id2item = Dictionary(uniqueKeysWithValues: zip(itemIndex, items))
 
-        let trainNegSampling = Tensor<Float>(zeros: [trainUsers.count, items.count])
+        let trainNegSampling = dsharp.zeros([trainUsers.count, items.count])
 
         let dataset: [TensorPair<int32, Float>] = []
 
         for element in trainData do
             let uIndex = user2id[element[0]]!
-            let iIndex = item2id[element[1]]!
+            let iIndex = item2id.[element[1]]!
             let rating = element[2]
             if rating > 0 then
-                trainNegSampling[uIndex][iIndex] = dsharp.tensor(1.0)
+                trainNegSampling.[uIndex][iIndex] = dsharp.tensor(1.0)
 
 
 
         for element in trainData do
             let uIndex = user2id[element[0]]!
-            let iIndex = item2id[element[1]]!
+            let iIndex = item2id.[element[1]]!
             let x = Tensor (*<int32>*)([int32(uIndex), int32(iIndex)])
-            dataset.append(TensorPair<int32, Float>(first: x, second: [1]))
+            dataset.append(TensorPair<int32, Float>(first: x, second: 1[]))
 
             for _ in 0...3 do
                 let iIndex = Int.random(in: itemIndex)
-                while trainNegSampling[uIndex][iIndex].scalarized() = 1.0 {
+                while trainNegSampling.[uIndex][iIndex].toScalar() = 1.0 {
                     iIndex = Int.random(in: itemIndex)
 
                 let x = Tensor (*<int32>*)([int32(uIndex), int32(iIndex)])
-                dataset.append(TensorPair<int32, Float>(first: x, second: [0]))
+                dataset.append(TensorPair<int32, Float>(first: x, second: 0[]))
 
 
 

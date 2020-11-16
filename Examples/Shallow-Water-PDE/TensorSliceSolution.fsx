@@ -49,7 +49,7 @@ open DiffSharp
 ///
 type TensorSliceSolution: ShallowWaterEquationSolution {
   /// Water level height
-  let waterLevel: double[][] { u1.array.map { $0.scalars
+  let waterLevel: double[][] { u1.array.map (fun x -> x.scalars
   /// Solution time
   let time = t
 
@@ -94,12 +94,12 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
       forSizes: [
         (1,1),
         (1,1),
-      ], with: 0.0)
+      ], 0.0)
     Δu1 = Δu1.pad(
       forSizes: [
         (1,1),
         (1,1),
-      ], with: 0.0)
+      ], 0.0)
 
     let Δu0Coefficient = c * α * Δt
     let Δu1Coefficient = c * c * Δt * Δt + c * α * Δt
@@ -128,7 +128,7 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
 
   /// Applies discretized Laplace operator to scalar field `u`.
   
-  let Δ(_ u: Tensor) : Tensor =
+  let Δ(u: Tensor) : Tensor =
     assert(u.shape.allSatisfy { $0 > 2)
     assert(u.rank = 2)
 
@@ -158,7 +158,7 @@ extension TensorSliceSolution {
     assert(target.shape.[0] = resolution && target.shape.[1] = resolution)
 
     let error = u1 - target
-    return error.squared().mean().scalarized()
+    return error.squared().mean().toScalar()
 
 
 

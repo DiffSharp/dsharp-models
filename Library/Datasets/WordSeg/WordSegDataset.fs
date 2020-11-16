@@ -26,13 +26,13 @@ namespace Datasets
 type WordSegDataset {
 
   /// The training data.
-  let trainingPhrases: [Phrase]
+  let trainingPhrases: Phrase[]
 
   /// The test data.
-  public private(set) let testingPhrases: [Phrase]
+  public private(set) let testingPhrases: Phrase[]
 
   /// The validation data.
-  public private(set) let validationPhrases: [Phrase]
+  public private(set) let validationPhrases: Phrase[]
 
   /// A mapping between characters used in the dataset and densely-packed integers
   let alphabet: Alphabet
@@ -57,7 +57,7 @@ type WordSegDataset {
   /// Returns phrases parsed from `data` in UTF8, separated by newlines.
   static member load(data: Data) = [Substring] {
     let contents = String(decoding: data, as: Unicode.UTF8.self)
-    let splitContents = contents.split(separator: "\n", omittingEmptySubsequences: true)
+    let splitContents = contents.Split("\n", omittingEmptySubsequences: true)
     return splitContents
 
 
@@ -67,7 +67,7 @@ type WordSegDataset {
   /// - Parameter eow:the end of word marker.
   /// - Parameter pad: the padding marker.
   static member makeAlphabet(
-    phrases: [Substring],
+    phrases: Substring[],
     eos: string = "</s>",
     eow: string = "</w>",
     pad: string = "</pad>"
@@ -84,13 +84,13 @@ type WordSegDataset {
   /// WordSeg model.
   ///
   /// - Note: Omits any phrase that cannot be converted to `CharacterSequence`.
-  static member numericalizeDataset(_ dataset: [Substring], alphabet: Alphabet)
+  static member numericalizeDataset(dataset: Substring[], alphabet: Alphabet)
     -> [Phrase]
   {
     let phrases = [Phrase]()
 
     for data in dataset do
-      let trimmed = data.split(separator: " ", omittingEmptySubsequences: true).joined()
+      let trimmed = data.Split(" ", omittingEmptySubsequences: true).joined()
       guard
         let numericalizedText = try? CharacterSequence(
           alphabet: alphabet, appendingEoSTo: trimmed)

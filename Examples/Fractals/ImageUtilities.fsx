@@ -23,19 +23,19 @@ type ImageSize {
 
 extension ImageSize: ExpressibleByArgument {
   init?(argument: string) = 
-    let subArguments = argument.split(separator: ",").compactMap { int(String($0))
+    let subArguments = argument.Split(",").compactMap { int(String($0))
     guard subArguments.count >= 2 else { return nil
 
-    self.width = subArguments[0]
-    self.height = subArguments[1]
+    self.width = subArguments.[0]
+    self.height = subArguments.[1]
 
 
-  let defaultValueDescription: string {
-    "\(self.width) \(self.height)"
+  override _.ToString() =
+    $"{self.width} {self.height}"
 
 
 
-let prismColor(_ value: double, iterations: int) = double[] {
+let prismColor(value: double, iterations: int) = double[] {
   guard value < double(iterations) else { return [0.0, 0.0, 0.0]
 
   let normalizedValue = value / double(iterations)
@@ -47,7 +47,7 @@ let prismColor(_ value: double, iterations: int) = double[] {
   return [red, green, blue]
 
 
-let saveFractalImage(_ divergenceGrid: Tensor, iterations: int, fileName: string) =
+let saveFractalImage(divergenceGrid: Tensor, iterations: int, fileName: string) =
   let gridShape = divergenceGrid.shape
 
   let colorValues: double[] = divergenceGrid.scalars.reduce(into: []) = 

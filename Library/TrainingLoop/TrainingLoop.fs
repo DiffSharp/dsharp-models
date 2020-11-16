@@ -22,7 +22,7 @@ open DiffSharp
 public final class LossFunctionWrapper<Output: Differentiable, Target> {
   type F = (Output, Target) = Tensor<Float>
   let f: F
-  init(_ f: @escaping F) =  self.f = f }
+  init(f: @escaping F) =  self.f = f }
 }
 
 /// Types whose elements represent a training loop.
@@ -81,7 +81,7 @@ type ITrainingLoopProtocol {
   let lossFunction: LossFunction { get set }
 
   /// The metrics on which training is measured.
-  let metrics: [TrainingMetrics] { get set }
+  let metrics: TrainingMetrics[] { get set }
 
   // Callbacks
   /// The callbacks used to customize the training loop.
@@ -218,7 +218,7 @@ where
   let lossFunction: LossFunction
 
   /// The metrics
-  let metrics: [TrainingMetrics]
+  let metrics: TrainingMetrics[]
 
   /// Callbacks
 
@@ -278,7 +278,7 @@ where
   public init(
     training: Training, validation: Validation, optimizer: Opt,
     lossFunction: @escaping LossFunction.F,
-    metrics: [TrainingMetrics] = [],
+    metrics: TrainingMetrics[] = [| |],
     callbacks=[TrainingLoopCallback<Self>] = [],
     includeDefaultCallbacks: bool = true
   ) = 
@@ -308,7 +308,7 @@ extension TrainingLoop {
   public mutating let differentiableStep(model: Model) =
     guard let data = lastStepInput else { return }
     guard let target = lastStepTarget else { return }
-    (lastStepLoss, lastStepGradient) = valueWithGradient(at: model) = 
+    (lastStepLoss, lastStepGradient) = valueWithGradient<| fun model -> = 
       (model: Model) = Tensor<Float> in
       let predictions = model(data)
       lastStepOutput = predictions
@@ -357,7 +357,7 @@ public enum TrainingLoopAction: Error {
 
 extension TrainingLoop {
   /// Call `event` on all callbacks.
-  mutating let handleEvent(_ event: TrainingLoopEvent) =
+  mutating let handleEvent(event: TrainingLoopEvent) =
     for callback in callbacks do
       try callback(&self, event)
     }
@@ -370,7 +370,7 @@ extension TrainingLoop {
     on batches: Batches, step: (inout Self) -> Void
   ) where Batches.Element = Batch {
     batchCount = batches.count
-    for (i, batch) in batches.enumerated() = 
+    for (i, batch) in batches.enumerated() do
       batchIndex = i
       (lastStepInput, lastStepTarget) = (batch.data, batch.label)
       try
@@ -410,14 +410,14 @@ extension TrainingLoop {
       try handleEvent(.fitStart)
       LazyTensorBarrier()
 
-      for (i, batches) in training.prefix(epochs).enumerated() = 
+      for (i, batches) in training.prefix(epochs).enumerated() do
         epochIndex = i
         try
           try handleEvent(.epochStart)
 
           // Training phase
           try
-            vae.mode <- Mode.Train
+            model.mode <- Mode.Train
             try handleEvent(.trainingStart)
             try multipleSteps(
               on: batches,
@@ -429,7 +429,7 @@ extension TrainingLoop {
 
           // Validation phase
           try
-            vae.mode <- Mode.Eval
+            model.mode <- Mode.Eval
             try handleEvent(.validationStart)
             try multipleSteps(on: validation, step: { try $0.inferenceStep(model: model) })
           } catch TrainingLoopAction.cancelValidation {}

@@ -37,11 +37,11 @@ type COCO {
     let annotations: [AnnotationId: Annotation] = [:]
     let categories: [CategoryId: Category] = [:]
     let images: [ImageId: Image] = [:]
-    let imageToAnnotations: [ImageId: [Annotation]] = [:]
-    let categoryToImages: [CategoryId: [ImageId]] = [:]
+    let imageToAnnotations: [ImageId: Annotation[]] = [:]
+    let categoryToImages: [CategoryId: ImageId[]] = [:]
 
     public init(fromFile fileURL: Uri, imagesDirectory imgDir: Uri?) =
-        let contents = try String(contentsOfFile: fileURL.path)
+        let contents = File.ReadAllText(fileURL.path)
         let data = contents.data(using: .utf8)!
         let parsed = try JSONSerialization.jsonObject(data)
         self.metadata = parsed :?> Metadata
@@ -85,9 +85,9 @@ type COCO {
 
     /// Get annotation ids that satisfy given filter conditions.
     let getAnnotationIds(
-        imageIds: [ImageId] = [],
+        imageIds: ImageId[] = [| |],
         categoryIds: Set<CategoryId> = [],
-        areaRange: [Double] = [],
+        areaRange: Double[] = [| |],
         isCrowd: int? = nil
     ) = [AnnotationId] {
         let filterByImageId = imageIds.count <> 0
@@ -95,7 +95,7 @@ type COCO {
         let filterByAreaRange = areaRange.count <> 0
         let filterByIsCrowd = isCrowd <> nil
 
-        let anns: [Annotation] = []
+        let anns: Annotation[] = [| |]
         if filterByImageId then
             for imageId in imageIds do
                 if let imageAnns = self.imageToAnnotations[imageId] then
@@ -108,17 +108,17 @@ type COCO {
             anns = self.metadata["annotations"] :?> [Annotation]
 
 
-        let annIds: [AnnotationId] = []
+        let annIds: AnnotationId[] = [| |]
         for ann in anns do
             if filterByCategoryId then
                 let categoryId = ann["category_id"] :?> CategoryId
-                if !categoryIds.contains(categoryId) = 
+                if not categoryIds.contains(categoryId) = 
                     continue
 
 
             if filterByAreaRange then
                 let area = ann["area"] :?> Double
-                if !(area > areaRange[0] && area < areaRange[1]) = 
+                if not (area > areaRange[0] && area < areaRange[1]) = 
                     continue
 
 
@@ -143,7 +143,7 @@ type COCO {
         let filterByName = categoryNames.count <> 0
         let filterBySupercategory = supercategoryNames.count <> 0
         let filterById = categoryIds.count <> 0
-        let categoryIds: [CategoryId] = []
+        let categoryIds: CategoryId[] = [| |]
         let cats = self.metadata["categories"] :?> [Category]
         for cat in cats do
             let name = cat["name"] :?> String
@@ -165,14 +165,14 @@ type COCO {
 
     /// Get image ids that satisfy given filter conditions.
     let getImageIds(
-        imageIds: [ImageId] = [],
-        categoryIds: [CategoryId] = []
+        imageIds: ImageId[] = [| |],
+        categoryIds: CategoryId[] = [| |]
     ) = [ImageId] {
         if imageIds.count = 0 && categoryIds.count = 0 then
             return Array(self.images.keys)
         else
             let ids = Set(imageIds)
-            for (i, catId) in categoryIds.enumerated() = 
+            for (i, catId) in categoryIds.enumerated() do
                 if i = 0 && ids.count = 0 then
                     ids = Set(self.categoryToImages[catId]!)
                 else
@@ -184,8 +184,8 @@ type COCO {
 
 
     /// Load annotations with specified ids.
-    let loadAnnotations(ids: [AnnotationId] = []) = [Annotation] {
-        let anns: [Annotation] = []
+    let loadAnnotations(ids: AnnotationId[] = [| |]) = [Annotation] {
+        let anns: Annotation[] = [| |]
         for id in ids do
             anns.append(self.annotations[id]!)
 
@@ -193,8 +193,8 @@ type COCO {
 
 
     /// Load categories with specified ids.
-    let loadCategories(ids: [CategoryId] = []) = [Category] {
-        let cats: [Category] = []
+    let loadCategories(ids: CategoryId[] = [| |]) = [Category] {
+        let cats: Category[] = [| |]
         for id in ids do
             cats.append(self.categories[id]!)
 
@@ -202,8 +202,8 @@ type COCO {
 
 
     /// Load images with specified ids.
-    let loadImages(ids: [ImageId] = []) = [Image] {
-        let imgs: [Image] = []
+    let loadImages(ids: ImageId[] = [| |]) = [Image] {
+        let imgs: Image[] = [| |]
         for id in ids do
             imgs.append(self.images[id]!)
 
@@ -211,7 +211,7 @@ type COCO {
 
 
     /// Convert segmentation in an annotation to RLE.
-    let annotationToRLE(_ ann: Annotation) = RLE {
+    let annotationToRLE(ann: Annotation) = RLE {
         let imgId = ann["image_id"] :?> ImageId
         let img = self.images[imgId]!
         let h = img["height"] :?> Int
@@ -226,14 +226,14 @@ type COCO {
  else if let countsStr = segmDict["counts"] as? String then
                 return RLE(fromString: countsStr, width: w, height: h)
             else
-                fatalError("unrecognized annotation: \(ann)")
+                fatalError($"unrecognized annotation: {ann}")
 
         else
-            fatalError("unrecognized annotation: \(ann)")
+            fatalError($"unrecognized annotation: {ann}")
 
 
 
-    let annotationToMask(_ ann: Annotation) = Mask {
+    let annotationToMask(ann: Annotation) = Mask {
         let rle = annotationToRLE(ann)
         let mask = Mask(fromRLE: rle)
         return mask
@@ -244,9 +244,9 @@ type Mask {
     let width: int
     let height: int
     let n: int
-    let mask: [Bool]
+    let mask: Bool[]
 
-    init(width w: int, height h: int, n: int, mask: [Bool]) = 
+    init(width w: int, height h: int, n: int, mask: Bool[]) = 
         self.width = w
         self.height = h
         self.n = n
@@ -254,10 +254,10 @@ type Mask {
 
 
     init(fromRLE rle: RLE) = 
-        self.init(fromRLEs: [rle])
+        self.init(fromRLEs: rle[])
 
 
-    init(fromRLEs rles: [RLE]) = 
+    init(fromRLEs rles: RLE[]) = 
         let w = rles[0].width
         let h = rles[0].height
         let n = rles.count
@@ -276,12 +276,12 @@ type Mask {
         self.init(width: w, height: h, n: n, mask: mask)
 
 
-    static let merge(_ rles: [RLE], intersect: bool = false) = RLE {
+    static let merge(rles: RLE[], intersect: bool = false) = RLE {
         return RLE(merging: rles, intersect: intersect)
 
 
-    static let fromBoundingBoxes(_ bboxes: [[Double]], width w: int, height h: int) = [RLE] {
-        let rles: [RLE] = []
+    static let fromBoundingBoxes(bboxes: [[Double]], width w: int, height h: int) = [RLE] {
+        let rles: RLE[] = [| |]
         for bbox in bboxes do
             let rle = RLE(fromBoundingBox: bbox, width: w, height: h)
             rles.append(rle)
@@ -289,8 +289,8 @@ type Mask {
         return rles
 
 
-    static let fromPolygons(_ polys: [[Double]], width w: int, height h: int) = [RLE] {
-        let rles: [RLE] = []
+    static let fromPolygons(polys: [[Double]], width w: int, height h: int) = [RLE] {
+        let rles: RLE[] = [| |]
         for poly in polys do
             let rle = RLE(fromPolygon: poly, width: w, height: h)
             rles.append(rle)
@@ -298,8 +298,8 @@ type Mask {
         return rles
 
 
-    static let fromUncompressedRLEs(_ arr: [[String: Any]], width w: int, height h: int) = [RLE] {
-        let rles: [RLE] = []
+    static let fromUncompressedRLEs(arr: [[String: Any]], width w: int, height h: int) = [RLE] {
+        let rles: RLE[] = [| |]
         for elem in arr do
             let counts = elem["counts"] :?> [Int]
             let m = counts.count
@@ -315,7 +315,7 @@ type Mask {
         return rles
 
 
-    static let fromObject(_ obj: Any, width w: int, height h: int) = [RLE] {
+    static let fromObject(obj: Any, width w: int, height h: int) = [RLE] {
         // encode rle from a list of json deserialized objects
         if let arr = obj as? [[Double]] then
             assert(arr.count > 0)
@@ -352,13 +352,13 @@ type RLE {
     let width: int = 0
     let height: int = 0
     let m: int = 0
-    let counts: [UInt32] = []
+    let counts: UInt32[] = [| |]
 
     let mask: Mask {
         return Mask(fromRLE: self)
 
 
-    init(width w: int, height h: int, m: int, counts: [UInt32]) = 
+    init(width w: int, height h: int, m: int, counts: UInt32[]) = 
         self.width = w
         self.height = h
         self.m = m
@@ -371,7 +371,7 @@ type RLE {
         self.init(fromBytes: bytes, width: w, height: h)
 
 
-    init(fromBytes bytes: [byte], width w: int, height h: int) = 
+    init(fromBytes bytes: byte[], width w: int, height h: int) = 
         let m: int = 0
         let p: int = 0
         let cnts = [UInt32](repeating: 0, count: bytes.count)
@@ -398,16 +398,16 @@ type RLE {
         self.init(width: w, height: h, m: m, counts: cnts)
 
 
-    init(fromBoundingBox bb: [Double], width w: int, height h: int) = 
+    init(fromBoundingBox bb: Double[], width w: int, height h: int) = 
         let xs = bb[0]
         let ys = bb[1]
         let xe = bb[2]
         let ye = bb[3]
-        let xy: [Double] = [xs, ys, xs, ye, xe, ye, xe, ys]
+        let xy: Double[] = [xs, ys, xs, ye, xe, ye, xe, ys]
         self.init(fromPolygon: xy, width: w, height: h)
 
 
-    init(fromPolygon xy: [Double], width w: int, height h: int) = 
+    init(fromPolygon xy: Double[], width w: int, height h: int) = 
         // upsample and get discrete points densely along the entire boundary
         let k: int = xy.count / 2
         let j: int = 0
@@ -496,26 +496,26 @@ type RLE {
         let b = [UInt32](repeating: 0, count: k)
         j = 0
         m = 0
-        b[m] = a[j]
+        b.[m] = a[j]
         m <- m + 1
         j <- j + 1
         while j < k {
             if a[j] > 0 then
-                b[m] = a[j]
+                b.[m] = a[j]
                 m <- m + 1
                 j <- j + 1
             else
                 j <- j + 1
 
             if j < k then
-                b[m - 1] += a[j]
+                b.[m - 1] += a[j]
                 j <- j + 1
 
 
         self.init(width: w, height: h, m: m, counts: b)
 
 
-    init(merging rles: [RLE], intersect: bool) = 
+    init(merging rles: RLE[], intersect: bool) = 
         let c: UInt32
         let ca: UInt32
         let cb: UInt32

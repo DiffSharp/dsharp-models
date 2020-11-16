@@ -19,7 +19,8 @@ open DiffSharp
 // Gao Huang, Zhuang Liu, Laurens van der Maaten, Kilian Q. Weinberger
 // https://arxiv.org/pdf/1608.06993.pdf
 
-type DenseNet121: Layer {
+type DenseNet121() =
+    inherit Model()
     let conv = Conv(
         filterSize: 7,
         stride: 2,
@@ -57,7 +58,8 @@ type DenseNet121: Layer {
 
 
 extension DenseNet121 {
-    type Conv: Layer {
+    type Conv() =
+        inherit Model()
         let batchNorm: BatchNorm<Float>
         let conv: Conv2D<Float>
 
@@ -82,7 +84,8 @@ extension DenseNet121 {
 
 
     /// A pair of a 1x1 `Conv` layer and a 3x3 `Conv` layer.
-    type ConvPair: Layer {
+    type ConvPair() =
+        inherit Model()
         let conv1x1: Conv
         let conv3x3: Conv
 
@@ -107,8 +110,9 @@ extension DenseNet121 {
 
 
 
-    type DenseBlock: Layer {
-        let pairs: [ConvPair] = []
+    type DenseBlock() =
+        inherit Model()
+        let pairs: ConvPair[] = [| |]
 
         public init(repetitionCount: int, growthRate: int = 32, inputFilterCount: int) = 
             for i in 0..<repetitionCount {
@@ -125,7 +129,8 @@ extension DenseNet121 {
 
 
 
-    type TransitionLayer: Layer {
+    type TransitionLayer() =
+        inherit Model()
         let conv: Conv
         let pool: AvgPool2D<Float>
 

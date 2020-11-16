@@ -18,16 +18,16 @@
 /// segments are discarded after the update.
 type PPOMemory {
     /// The states that the agent observed.
-    let states: double[][] = []
+    let states: double[][] = [| |]
     /// The actions that the agent took.
-    let actions: [int32] = []
+    let actions: int32[] = [| |]
     /// The rewards that the agent received from the environment after taking
     /// an action.
-    let rewards: double[] = []
+    let rewards: double[] = [| |]
     /// The log probabilities of the chosen action.
-    let logProbs: double[] = []
+    let logProbs: double[] = [| |]
     /// The episode-terminal flag that the agent received after taking an action.
-    let isDones: [Bool] = []
+    let isDones: Bool[] = [| |]
 
     init() =
 

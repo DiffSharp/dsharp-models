@@ -32,7 +32,7 @@ internal let runTraining(settings: WordSegSettings) =
       testing: settings.testPath)
 
 
-  let sequences = dataset.trainingPhrases.map { $0.numericalizedText
+  let sequences = dataset.trainingPhrases.map (fun x -> x.numericalizedText
   let lexicon = Lexicon(
     from: sequences,
     alphabet: dataset.alphabet,
@@ -65,13 +65,13 @@ internal let runTraining(settings: WordSegSettings) =
   print("Starting training...")
 
   for epoch in 1...settings.maxEpochs do
-    vae.mode <- Mode.Train
-    let trainingLossSum: double = 0
-    let trainingBatchCount = 0
+    model.mode <- Mode.Train
+    let mutable trainingLossSum: double = 0
+    let mutable trainingBatchCount = 0
     let trainingBatchCountTotal = dataset.trainingPhrases.count
     for phrase in dataset.trainingPhrases do
       let sentence = phrase.numericalizedText
-      let (loss, gradients) = valueWithGradient(at: model) 
+      let (loss, gradients) = valueWithGradient<| fun model -> 
         let lattice = model.buildLattice(sentence, maxLen: settings.maxLength, device=device)
         let score = lattice[sentence.count].semiringScore
         let expectedLength = exp(score.logr - score.logp)
@@ -79,12 +79,11 @@ internal let runTraining(settings: WordSegSettings) =
         return dsharp.tensor(loss, device=device)
 
 
-      let lossScalarized = loss.scalarized()
+      let lossScalarized = loss.toScalar()
       if trainingBatchCount % 10 = 0 then
         let bpc = getBpc(loss: lossScalarized, characterCount: sentence.count)
-        print(
-          """
-          [Epoch \(epoch)] (\(trainingBatchCount)/\(trainingBatchCountTotal)) | Bits per character: \(bpc)
+        print($"""
+          [Epoch {epoch}] ({trainingBatchCount}/{trainingBatchCountTotal}) | Bits per character: {bpc}
           """
         )
 
@@ -108,10 +107,9 @@ internal let runTraining(settings: WordSegSettings) =
     reduceLROnPlateau(lossHistory: trainingLossHistory, optimizer=optimizer)
 
     if dataset.validationPhrases.count < 1 then
-      print(
-        """
-        [Epoch \(epoch)] \
-        Training loss: \(trainingLoss)
+      print($"""
+        [Epoch {epoch}] \
+        Training loss: {trainingLoss}
         """
       )
 
@@ -126,7 +124,7 @@ internal let runTraining(settings: WordSegSettings) =
       continue
 
 
-    vae.mode <- Mode.Eval
+    model.mode <- Mode.Eval
     let validationLossSum: double = 0
     let validationBatchCount = 0
     let validationCharacterCount = 0
@@ -150,11 +148,10 @@ internal let runTraining(settings: WordSegSettings) =
     let bpc = getBpc(loss: validationLossSum, characterCount: validationCharacterCount)
     let validationLoss = validationLossSum / double(validationBatchCount)
 
-    print(
-      """
-      [Epoch \(epoch)] Learning rate: \(optimizer.learningRate)
-        Validation loss: \(validationLoss), Bits per character: \(bpc)
-        \(validationPlainText)
+    print($"""
+      [Epoch {epoch}] Learning rate: {optimizer.learningRate}
+        Validation loss: {validationLoss}, Bits per character: {bpc}
+        {validationPlainText}
       """
     )
 
@@ -170,7 +167,7 @@ let getBpc(loss: double, characterCount: int) =
   return loss / double(characterCount) / log(2)
 
 
-let hasNaN<T: KeyPathIterable>(_ t: T) = Bool {
+let hasNaN<T: KeyPathIterable>(t: T) = Bool {
   for kp in t.recursivelyAllKeyPaths(Tensor<Float>.self) = 
     if t[keyPath: kp].isNaN.any() =  return true
 

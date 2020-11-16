@@ -55,7 +55,7 @@ type Agent {
     /// The "action value" (expected future reward value) of a pair of state and action.
     let actionValues: [StateAction: double] = [:]
 
-    init(_ environment: PythonObject) = 
+    init(environment: PythonObject) = 
         actionCount = int(environment.action_space.n).unwrapped()
         state = State(environment.reset()).unwrapped()
 
@@ -140,7 +140,7 @@ while true do
 
     testReward /= double(testEpisodeCount)
     if testReward > bestReward then
-        print($"Best reward updated {bestReward} = \(testReward)")
+        print($"Best reward updated {bestReward} = {testReward}")
         bestReward = testReward
 
     if testReward > 0.80 then

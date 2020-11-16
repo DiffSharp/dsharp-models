@@ -20,7 +20,8 @@ open DiffSharp
 // and Kurt Keutzer
 // https://arxiv.org/pdf/1602.07360.pdf
 
-type Fire: Layer {
+type Fire() =
+    inherit Model()
     let squeeze: Conv2D<Float>
     let expand1: Conv2D<Float>
     let expand3: Conv2D<Float>
@@ -33,14 +34,14 @@ type Fire: Layer {
     ) = 
         squeeze = Conv2d(
             filterShape=(1, 1, inputFilterCount, squeezeFilterCount),
-            activation= relu)
+            activation= dsharp.relu)
         expand1 = Conv2d(
             filterShape=(1, 1, squeezeFilterCount, expand1FilterCount),
-            activation= relu)
+            activation= dsharp.relu)
         expand3 = Conv2d(
             filterShape=(3, 3, squeezeFilterCount, expand3FilterCount),
             padding="same",
-            activation= relu)
+            activation= dsharp.relu)
 
 
     
@@ -52,12 +53,13 @@ type Fire: Layer {
 
 
 
-type SqueezeNetV1_0: Layer {
+type SqueezeNetV1_0() =
+    inherit Model()
     let conv1 = Conv2d(
         filterShape=(7, 7, 3, 96),
         stride=2,
         padding="same",
-        activation= relu)
+        activation= dsharp.relu)
     let maxPool1 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire2 = Fire(
         inputFilterCount: 96,
@@ -106,7 +108,7 @@ type SqueezeNetV1_0: Layer {
     let dropout = Dropout2d(p=0.5)
 
     public init(classCount: int) = 
-        conv10 = Conv2d(filterShape=(1, 1, 512, classCount), stride=1, activation= relu)
+        conv10 = Conv2d(filterShape=(1, 1, 512, classCount), stride=1, activation= dsharp.relu)
 
 
     
@@ -120,12 +122,13 @@ type SqueezeNetV1_0: Layer {
 
 
 
-type SqueezeNetV1_1: Layer {
+type SqueezeNetV1_1() =
+    inherit Model()
     let conv1 = Conv2d(
         filterShape=(3, 3, 3, 64),
         stride=2,
         padding="same",
-        activation= relu)
+        activation= dsharp.relu)
     let maxPool1 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire2 = Fire(
         inputFilterCount: 64,
@@ -174,7 +177,7 @@ type SqueezeNetV1_1: Layer {
     let dropout = Dropout2d(p=0.5)
 
     public init(classCount: int) = 
-        conv10 = Conv2d(filterShape=(1, 1, 512, classCount), stride=1, activation= relu)
+        conv10 = Conv2d(filterShape=(1, 1, 512, classCount), stride=1, activation= dsharp.relu)
 
 
     

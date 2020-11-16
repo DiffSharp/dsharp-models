@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
+
 open Datasets
-
-
 open DiffSharp
 open TextModels
 open x10_optimizers_optimizer
@@ -23,11 +26,11 @@ let device = Device.defaultXLA
 
 let bertPretrained: BERT.PreTrainedModel
 if CommandLine.arguments.count >= 2 then
-    if CommandLine.arguments[1].lowercased() = "albert" then
+    if CommandLine.arguments[1].ToLower() = "albert" then
         bertPretrained = BERT.PreTrainedModel.albertBase
- else if CommandLine.arguments[1].lowercased() = "roberta" then
+ else if CommandLine.arguments[1].ToLower() = "roberta" then
         bertPretrained = BERT.PreTrainedModel.robertaBase
- else if CommandLine.arguments[1].lowercased() = "electra" then
+ else if CommandLine.arguments[1].ToLower() = "electra" then
         bertPretrained = BERT.PreTrainedModel.electraBase
     else
         bertPretrained = BERT.PreTrainedModel.bertBase(cased: false, multilingual: false)
@@ -84,7 +87,7 @@ let useBiasCorrection = true
 let optimizer = x10_optimizers_optimizer.GeneralOptimizer(
     bertClassifier,
     TensorVisitorPlan(bertClassifier.differentiableVectorView),
-    defaultOptimizer: makeWeightDecayedAdam(
+    defaultOptimizer=WeightDecayedAdam(
       learningRate: peakLearningRate,
       beta1: beta1,
       beta2: beta2
@@ -100,24 +103,25 @@ let scheduledLearningRate = LinearlyDecayedParameter(
   startStep: 10
 )
 
-print("Training \(bertPretrained.name) for the CoLA task!")
-for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated() = 
+print($"Training {bertPretrained.name} for the CoLA task!")
+for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated() do
     print($"[Epoch {epoch + 1}]")
-    vae.mode <- Mode.Train
-    let trainingLossSum: double = 0
-    let trainingBatchCount = 0
+    model.mode <- Mode.Train
+    let mutable trainingLossSum = 0.0
+    let mutable trainingBatchCount = 0
 
     for batch in epochBatches do
         let (documents, labels) = (batch.data, Tensor<Float>(batch.label))
-        let (loss, gradients) = valueWithGradient(at: bertClassifier) 
-            let logits = model(documents)
-            return dsharp.sigmoidCrossEntropy(
-                logits: logits.squeeze(-1),
-                labels: labels,
-                reduction: { $0.mean())
+        let (loss, gradients) = 
+            valueWithGradient <| fun bertClassifier -> 
+                let logits = model(documents)
+                dsharp.sigmoidCrossEntropy(
+                    logits=logits.squeeze(-1),
+                    labels=labels,
+                    reduction=dsharp.mean)
 
 
-        trainingLossSum <- trainingLossSum + loss.scalarized()
+        trainingLossSum <- trainingLossSum + loss.toScalar()
         trainingBatchCount <- trainingBatchCount + 1
         gradients.clipByGlobalNorm(clipNorm: 1)
 
@@ -127,18 +131,14 @@ for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated()
           let step = double(step)
           optimizer.learningRate *= sqrtf(1 - powf(beta2, step)) / (1 - powf(beta1, step))
 
-
         optimizer.update(&bertClassifier, along=gradients)
         LazyTensorBarrier()
 
-        print(
-            """
-              Training loss: \(trainingLossSum / double(trainingBatchCount))
-            """
-        )
+        print($"""
+              Training loss: {trainingLossSum / double(trainingBatchCount)}
+            """)
 
-
-    vae.mode <- Mode.Eval
+    model.mode <- Mode.Eval
     let devLossSum: double = 0
     let devBatchCount = 0
     let devPredictedLabels = [Bool]()
@@ -146,27 +146,20 @@ for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated()
     for batch in cola.validationBatches do
         let (documents, labels) = (batch.data, Tensor<Float>(batch.label))
         let logits = bertClassifier(documents)
-        let loss = dsharp.sigmoidCrossEntropy(
-            logits: logits.squeeze(-1),
-            labels: labels,
-            reduction: { $0.mean()
-        )
-        devLossSum <- devLossSum + loss.scalarized()
+        let loss = dsharp.sigmoidCrossEntropy(logits=logits.squeeze(-1), labels=labels, reduction=dsharp.mean)
+        devLossSum <- devLossSum + loss.toScalar()
         devBatchCount <- devBatchCount + 1
 
         let predictedLabels = sigmoid(logits.squeeze(-1)) .>= 0.5
-        devPredictedLabels.append(contentsOf: predictedLabels.scalars)
-        devGroundTruth.append(contentsOf: labels.scalars.map { $0 = 1)
+        devPredictedLabels.append(predictedLabels.scalars)
+        devGroundTruth.append(labels.scalars.map (fun _ -> 1))
 
-
-    let mcc = matthewsCorrelationCoefficient(
-        predictions: devPredictedLabels,
-        groundTruth: devGroundTruth)
+    let mcc = matthewsCorrelationCoefficient(predictions=devPredictedLabels, groundTruth=devGroundTruth)
 
     print(
-        """
-          MCC: \(mcc)
-          Eval loss: \(devLossSum / double(devBatchCount))
+        $"""
+          MCC: {mcc}
+          Eval loss: {devLossSum / double(devBatchCount)}
         """
     )
 

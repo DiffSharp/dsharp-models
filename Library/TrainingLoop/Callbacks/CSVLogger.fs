@@ -39,7 +39,7 @@ public class CSVLogger {
   /// ignoring other events.
   ///
   ///: File system errors.
-  public let log<L: TrainingLoopProtocol>(_ loop: inout L, event: TrainingLoopEvent) =
+  public let log<L: TrainingLoopProtocol>(loop: inout L, event: TrainingLoopEvent) =
     match event with
     | .batchEnd ->
       guard let epochIndex = loop.epochIndex, let epochCount = loop.epochCount,
@@ -49,14 +49,14 @@ public class CSVLogger {
         return
       }
 
-      if !headerWritten {
+      if not headerWritten {
         try writeHeader(stats: stats)
         headerWritten = true
       }
 
       try writeDataRow(
-        epoch: "\(epochIndex + 1)/\(epochCount)",
-        batch: "\(batchIndex + 1)/\(batchCount)",
+        epoch: $"\(epochIndex + 1)/{epochCount}",
+        batch: $"\(batchIndex + 1)/{batchCount}",
         stats: stats)
     | _ ->
       return
@@ -68,7 +68,7 @@ public class CSVLogger {
   /// Column names are "epoch", "batch" and the `name` of each element of `stats`, 
   /// in that order.
   let writeHeader(stats: [(name: string, value: Float)]) =
-    let header = (["epoch", "batch"] + stats |> Seq.map { $0.name }).joined(separator: ", ") + "\n"
+    let header = (["epoch", "batch"] + stats |> Seq.map (fun x -> x.name }) |> String.concat ", " + "\n")
     try FoundationFile(path: path).append(header.data(using: .utf8)!)
   }
 
@@ -76,7 +76,7 @@ public class CSVLogger {
   /// "epoch" column, `batch` for "batch" column, and `value`s of `stats` for corresponding 
   /// columns indicated by `stats` `name`s.
   let writeDataRow(epoch: string, batch: string, stats: [(name: string, value: Float)]) =
-    let dataRow = ([epoch, batch] + stats |> Seq.map { String($0.value) }).joined(separator: ", ")
+    let dataRow = ([epoch, batch] + stats |> Seq.map { String($0.value) }) |> String.concat ", "
       + "\n"
     try FoundationFile(path: path).append(dataRow.data(using: .utf8)!)
   }

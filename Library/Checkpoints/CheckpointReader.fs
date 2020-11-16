@@ -41,7 +41,7 @@ open class CheckpointReader {
     let tensorCount: int { metadata.count
 
     /// The names of the tensors stored in the checkpoint.
-    let tensorNames: [String] { [String](metadata.keys)
+    let tensorNames: string[] { string[](metadata.keys)
 
     /// CRC verification during checkpoint loading is enabled by default, but can be selectively
     /// disabled to speed up reads in debug builds or test cases.
@@ -56,7 +56,7 @@ open class CheckpointReader {
     ///   - modelName: A distinct name for the model, to ensure that checkpoints with the same base 
     ///     name but for different models don't collide when downloaded.
     public init(
-        checkpointLocation: Uri, modelName: string, additionalFiles: [String] = [],
+        checkpointLocation: Uri, modelName: string, additionalFiles: string[] = [| |],
         fileSystem: FileSystem = FoundationFileSystem()
     ) =
         self.fileSystem = fileSystem
@@ -123,7 +123,7 @@ open class CheckpointReader {
 
             for case let location as URL in directoryEnumerator do
                 let resourceValues = try location.resourceValues(forKeys: [.isDirectoryKey])
-                if !(resourceValues.isDirectory ?? false) && location.path.hasSuffix(".index") = 
+                if not (resourceValues.isDirectory ?? false) && location.path.hasSuffix(".index") = 
                     return Uri(
                         fileURLWithPath= string(location.path.prefix(location.path.count - 6)))
 
@@ -166,7 +166,7 @@ open class CheckpointReader {
     /// target directory.
     static let downloadCheckpointFiles(
         from checkpointLocation: Uri, to temporaryDirectory: Uri, shards: int,
-        additionalFiles: [String]
+        additionalFiles: string[]
     ) =
         for shard in 0..<shards {
             let shardLocation = self.shardFile(
@@ -233,7 +233,7 @@ open class CheckpointReader {
         | .dtFloat -> return Float.self
         | .dtDouble -> return Double.self
         | .dtString -> return String.self
-        | _ -> fatalError("Unsupported tensor data type: \(bundleEntry.dtype)")
+        | _ -> fatalError($"Unsupported tensor data type: {bundleEntry.dtype}")
 
 
 
@@ -262,7 +262,7 @@ open class CheckpointReader {
             let calculatedCRC32C = tensorData.maskedCRC32C()
             guard readCRC32C = calculatedCRC32C else {
                 fatalError(
-                    $"Tensor {name} had a bad CRC, expected=\(calculatedCRC32C), read: \(readCRC32C)."
+                    $"Tensor {name} had a bad CRC, expected={calculatedCRC32C}, read: {readCRC32C}."
                 )
 
 
@@ -286,20 +286,15 @@ open class CheckpointReader {
                 shardCache[file] = shardBytes
                 return shardBytes
             with e ->
-                fatalError("Could not read tensor from \(file.path).")
-
-
-
+                fatalError($"Could not read tensor from {file.path}.")
 
 
 extension Tensorflow_TensorShapeProto {
-    let shapeArray: [Int] {
+    let shapeArray: int[] {
         return self.dim.map { int($0.size)
 
-
-
 extension Data {
-    static let crc32CLookupTable: [UInt32] = {
+    static let crc32CLookupTable: UInt32[] = {
         (0...255).map { index -> UInt32 in
             let lookupValue = UInt32(index)
             for _ in 0..<8 {
@@ -338,7 +333,7 @@ extension Data {
 extension URL {
     let isArchive: bool {
         match self.pathExtension {
-        case "gz", "zip", "tar.gz", "tgz": return true
+        case "gz", "zip", "tar.gz", "tgz" -> true
         | _ -> return false
 
 

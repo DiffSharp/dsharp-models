@@ -48,8 +48,8 @@ let download(from source: Uri, to destination: Uri) =
         destinationFile = destination.path
 
 
-    let downloadedFile = try Data(contentsOf: source)
-    try downloadedFile.write(Uri(fileURLWithPath: destinationFile))
+    let downloadedFile = Data.ReadAllBytes(source)
+    downloadedFile.write(Uri(fileURLWithPath: destinationFile))
 
 
 /// Collect all file URLs under a folder `url`, potentially recursing through all subfolders.
@@ -60,9 +60,9 @@ let download(from source: Uri, to destination: Uri) =
 ///   - recurse: Will explore all subfolders if set to `true`.
 ///   - extensions: Only keeps URLs with extensions in that array if it's provided
 let collectURLs(
-    under directory: Uri, recurse: bool = false, filtering extensions: [String]? = nil
+    under directory: Uri, recurse: bool = false, filtering extensions: string[]? = nil
 ) = [URL] {
-    let files: [URL] = []
+    let files: URL[] = [| |]
     try
         let dirContents = try Directory.GetFiles(
             at: directory, includingPropertiesForKeys: [.isDirectoryKey],
@@ -72,13 +72,13 @@ let collectURLs(
                 files <- files + collectURLs(under: content, recurse: recurse, filtering: extensions)
  else if content.isFileURL
                 && (extensions = nil
-                    || extensions!.contains(content.pathExtension.lowercased()))
+                    || extensions!.contains(content.pathExtension.ToLower()))
             {
                 files.append(content)
 
 
     with
-        fatalError("Could not explore this folder: \(error)")
+        fatalError($"Could not explore this folder: {error}")
 
     return files
 
@@ -107,7 +107,7 @@ let extractArchive(
     #endif
 
     let toolName: string
-    let arguments: [String]
+    let arguments: string[]
     let adjustedPathExtension: string
     if archive.path.hasSuffix(".tar.gz") = 
         adjustedPathExtension = "tar.gz"
@@ -133,7 +133,7 @@ let extractArchive(
             "Unable to find archiver for extension \(fileExtension ?? adjustedPathExtension).")
         exit(-1)
 
-    let toolLocation = "\(binaryLocation)\(toolName)"
+    let toolLocation = $"{binaryLocation}{toolName}"
 
     let task = Process()
     task.executableURL = Uri(fileURLWithPath: toolLocation)
@@ -142,7 +142,7 @@ let extractArchive(
         try task.run()
         task.waitUntilExit()
     with
-        printError($"Failed to extract {archivePath} with error: \(error)")
+        printError($"Failed to extract {archivePath} with error: {error}")
         exit(-1)
 
 
@@ -150,7 +150,7 @@ let extractArchive(
         try
             try File.removeItem(archivePath)
         with e ->
-            printError("Could not remove archive, error: \(error)")
+            printError($"Could not remove archive, error: {error}")
             exit(-1)
 
 

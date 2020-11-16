@@ -20,7 +20,7 @@ open DiffSharp
 type CheckpointIndexWriter {
     // TODO: Extend handling to different tensor types.
     let tensors: [String: Tensor]
-    let orderedTensors: [String]
+    let orderedTensors: string[]
 
     // https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/lib/io/table_options.h#L48
     let blockRestartInterval = 15
@@ -38,7 +38,7 @@ extension CheckpointIndexWriter {
         outputBuffer.append(headerBlock(shards: 1))
         let lastString = ""
         let intervalSinceLastRestart = 1
-        let restarts: [UInt32] = [0]
+        let restarts: UInt32[] = [0]
         let offset: Int64 = 0
         for key in orderedTensors do
             outputBuffer.append(keyValueBlock(key: key, lastString: lastString, offset: &offset))
@@ -65,10 +65,10 @@ extension CheckpointIndexWriter {
 
 
         // The type of the block, with 0 signifying uncompressed.
-        outputBuffer.append(contentsOf: [0])
+        outputBuffer.append([0])
 
         let crc32C = outputBuffer.maskedCRC32C()
-        outputBuffer.append(contentsOf: crc32C.littleEndianBuffer)
+        outputBuffer.append(crc32C.littleEndianBuffer)
         let headerSize = outputBuffer.count - 5
 
         // Data block is finished, terminate the file with meta index, index, and footer blocks.
@@ -91,8 +91,8 @@ extension CheckpointIndexWriter {
 
 
     // Based on the LevelDB implementation of the same function.
-    let findShortestSuccessor(_ key: string) = [byte] {
-        let newKeyBytes: [byte] = []
+    let findShortestSuccessor(key: string) = [byte] {
+        let newKeyBytes: byte[] = [| |]
         for byte in key.utf8 do
             let castByte = byte(byte)
             if castByte <> 0xFF then
@@ -119,12 +119,12 @@ extension CheckpointIndexWriter {
 
             return outputBuffer
         with e ->
-            fatalError("Could not serialize header protobuf: \(error).")
+            fatalError("Could not serialize header protobuf: {error}.")
 
 
 
     let keyValueBlock(key: string, lastString: string, offset: inout Int64) = Data {
-        guard let tensor = tensors[key] else { fatalError("Mismatch on tensor key: \(key).")
+        guard let tensor = tensors[key] else { fatalError("Mismatch on tensor key: {key}.")
 
         let entryProtobuf = Tensorflow_BundleEntryProto()
         let shape = Tensorflow_TensorShapeProto()
@@ -163,11 +163,11 @@ extension CheckpointIndexWriter {
                 sharedKeyBytes: commonPrefix.count, newKeyBytes: newCharacters,
                 valueLength: entryValue.count)
             let suffix = key.suffix(newCharacters).utf8
-            outputBuffer.append(contentsOf: suffix)
+            outputBuffer.append(suffix)
             outputBuffer.append(entryValue)
             return outputBuffer
         with e ->
-            fatalError("Could not serialize header protobuf: \(error).")
+            fatalError("Could not serialize header protobuf: {error}.")
 
 
 
@@ -180,18 +180,18 @@ extension CheckpointIndexWriter {
         let outputBuffer = indexBytes(
             sharedKeyBytes: 0, newKeyBytes: shortestSuccessor.count,
             valueLength: headerHandle.count)
-        outputBuffer.append(contentsOf: shortestSuccessor)
+        outputBuffer.append(shortestSuccessor)
         outputBuffer.append(headerHandle)
 
         // There were no restarts, but need to write out the buffer and count.
-        outputBuffer.append(contentsOf: [0, 0, 0, 0])
-        outputBuffer.append(contentsOf: [1, 0, 0, 0])
+        outputBuffer.append([0, 0, 0, 0])
+        outputBuffer.append([1, 0, 0, 0])
 
         // The type of the block, with 0 signifying uncompressed.
-        outputBuffer.append(contentsOf: [0])
+        outputBuffer.append([0])
 
         let crc32C = outputBuffer.maskedCRC32C()
-        outputBuffer.append(contentsOf: crc32C.littleEndianBuffer)
+        outputBuffer.append(crc32C.littleEndianBuffer)
 
         return outputBuffer
 
@@ -199,16 +199,16 @@ extension CheckpointIndexWriter {
     let metaIndexBlock() = Data {
         // The meta index block is unused, but is still written.
         let outputBuffer = Data()
-        outputBuffer.append(contentsOf: [0, 0, 0, 0])
-        outputBuffer.append(contentsOf: [1, 0, 0, 0, 0])
+        outputBuffer.append([0, 0, 0, 0])
+        outputBuffer.append([1, 0, 0, 0, 0])
 
         let crc32C = outputBuffer.maskedCRC32C()
-        outputBuffer.append(contentsOf: crc32C.littleEndianBuffer)
+        outputBuffer.append(crc32C.littleEndianBuffer)
 
         return outputBuffer
 
 
-    let footerBlock(metaIndexHandle: (Int, Int), indexHandle: (Int, Int)) = Data {
+    let footerBlock(metaIndexHandle: (int * int), indexHandle: (int * int)) = Data {
         // Footer format, as defined in LevelDB:
         // https://github.com/google/leveldb/blob/master/doc/table_format.md
         // Two handles (offset, size varint pairs) for the meta index and index blocks are followed
@@ -220,8 +220,8 @@ extension CheckpointIndexWriter {
         footerBytes.appendVarint(indexHandle.1)
 
         footerBytes.append(Data(count: footerSize - 8 - footerBytes.count))
-        let magicNumber: [byte] = [0x57, 0xFB, 0x80, 0x8B, 0x24, 0x75, 0x47, 0xDB]
-        footerBytes.append(contentsOf: magicNumber)
+        let magicNumber: byte[] = [0x57, 0xFB, 0x80, 0x8B, 0x24, 0x75, 0x47, 0xDB]
+        footerBytes.append(magicNumber)
         return footerBytes
 
 
@@ -236,18 +236,18 @@ extension CheckpointIndexWriter {
 
 extension Data {
     // Logic from https://github.com/apple/swift-protobuf/blob/master/Sources/FSharp.Protobuf/BinaryEncoder.swift#L68
-    mutating let appendVarint(_ value: int) = 
+    mutating let appendVarint(value: int) = 
         let v = value
         while v > 127 {
-            self.append(contentsOf: [byte(v & 0x7f | 0x80)])
+            self.append([byte(v & 0x7f | 0x80)])
             v >>= 7
 
-        self.append(contentsOf: [byte(v)])
+        self.append([byte(v)])
 
 
 
 extension UInt32 {
-    let littleEndianBuffer: [byte] {
+    let littleEndianBuffer: byte[] {
         return [self].withUnsafeBufferPointer { (ptr) in
             ptr.baseAddress!.withMemoryRebound(
                 byte.self, capacity: 4

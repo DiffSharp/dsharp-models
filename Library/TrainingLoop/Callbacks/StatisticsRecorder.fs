@@ -45,11 +45,11 @@ public class StatisticsRecorder {
 
   /// Instances of MetricsMeasurers that you can reset accumulate and compute 
   /// statistics periodically.
-  let metricMeasurers: [MetricsMeasurer]
+  let metricMeasurers: MetricsMeasurer[]
 
   /// Creates an instance that records `metrics` during the training loop.
-  public init(metrics: [TrainingMetrics]) = 
-    metricMeasurers = metrics.map { $0.measurer }
+  public init(metrics: TrainingMetrics[]) = 
+    metricMeasurers = metrics.map (fun x -> x.measurer)
 
     shouldReset = {
         (
@@ -80,7 +80,7 @@ public class StatisticsRecorder {
   ///
   /// It will record the statistics into lastStatsLog property in the `loop` where other 
   /// callbacks can consume from.
-  public let record<L: TrainingLoopProtocol>(_ loop: inout L, event: TrainingLoopEvent) =
+  public let record<L: TrainingLoopProtocol>(loop: inout L, event: TrainingLoopEvent) =
     guard let batchIndex = loop.batchIndex,
       let batchCount = loop.batchCount,
       let epochIndex = loop.epochIndex,
@@ -98,7 +98,7 @@ public class StatisticsRecorder {
     }
 
     if shouldAccumulate(batchIndex, batchCount, epochIndex, epochCount, event) = 
-      accumulateMetrics(loss: loss, predictions: output, labels: target)
+      accumulateMetrics(loss: loss, predictions=output, labels=target)
     }
 
     if shouldCompute(batchIndex, batchCount, epochIndex, epochCount, event) = 
@@ -115,9 +115,9 @@ public class StatisticsRecorder {
 
   /// Lets each of the metricMeasurers accumulate data from
   /// `loss`, `predictions`, `labels`.
-  let accumulateMetrics<Output, Target>(loss: Tensor<Float>, predictions: Output, labels: Target) = 
+  let accumulateMetrics<Output, Target>(loss: Tensor<Float>, predictions=Output, labels=Target) = 
     for index in metricMeasurers.indices do
-      metricMeasurers[index].accumulate(loss: loss, predictions: predictions, labels: labels)
+      metricMeasurers[index].accumulate(loss: loss, predictions=predictions, labels=labels)
     }
   }
 
@@ -141,7 +141,7 @@ extension StatisticsRecorder {
   }
 
   /// Updates `self` to report statistics when `trigger` is encountered.
-  public let setReportTrigger(_ trigger: ReportTrigger) = 
+  public let setReportTrigger(trigger: ReportTrigger) = 
     if trigger = .endOfBatch {
       shouldCompute = {
           (

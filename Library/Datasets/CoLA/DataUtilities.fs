@@ -17,24 +17,24 @@ namespace Datasets
 (*
 
 let extract(zipFileAt source: Uri, to destination: Uri) =
-    print("Extracting file at '\(source.path)'.")
+    print("Extracting file at '{source.path}'.")
     let process = Process()
     process.environment = ProcessInfo.processInfo.environment
     process.executableURL = Uri(fileURLWithPath= "/bin/bash")
-    process.arguments = ["-c", "unzip -d \(destination.path) \(source.path)"]
+    process.arguments = ["-c", $"unzip -d {destination.path} {source.path}"]
     try process.run()
     process.waitUntilExit()
 
 
 let extract(tarGZippedFileAt source: Uri, to destination: Uri) =
-    print("Extracting file at '\(source.path)'.")
+    print($"Extracting file at '{source.path}'.")
     try Directory.Create(
         at: destination,
         withIntermediateDirectories: false)
     let process = Process()
     process.environment = ProcessInfo.processInfo.environment
     process.executableURL = Uri(fileURLWithPath= "/bin/bash")
-    process.arguments = ["-c", "tar -C \(destination.path) -xzf \(source.path)"]
+    process.arguments = ["-c", $"tar -C {destination.path} -xzf {source.path}"]
     try process.run()
     process.waitUntilExit()
 *)

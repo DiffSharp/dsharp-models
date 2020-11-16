@@ -69,9 +69,9 @@ type LabeledObject {
 
 type ObjectDetectionExample: KeyPathIterable {
     let image: LazyImage
-    let objects: [LabeledObject]
+    let objects: LabeledObject[]
 
-    public init(image: LazyImage, objects: [LabeledObject]) = 
+    public init(image: LazyImage, objects: LabeledObject[]) = 
         self.image = image
         self.objects = objects
 

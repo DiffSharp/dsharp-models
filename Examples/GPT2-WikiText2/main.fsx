@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
+
 open Datasets
 open DiffSharp
 open TextModels
@@ -33,9 +39,9 @@ let gpt = try GPT2()
 let sequenceLength = gpt.contextSize
 let trainingBatchSize = 2
 let validationBatchSize = 2
-let dataset = TextUnsupervised(bpe: gpt.bpe, variant: .wikiText2,
+let dataset = TextUnsupervised(bpe: gpt.bpe, variant=".wikiText2",
     trainingbatchSize= trainingBatchSize, validationbatchSize= validationBatchSize,
-    sequenceLength: sequenceLength, device=device)
+    sequenceLength=sequenceLength, device=device)
 print("Dataset acquired.")
 
 /// Reshape the `logits` and `labels` to required shape before calling
@@ -43,13 +49,13 @@ print("Dataset acquired.")
 ///
 /// - Note: This can potentially be added to standard softmaxCrossEntropy API.
 
-let softmaxCrossEntropyReshaped<Scalar>(logits: Tensor<Scalar>, labels: Tensor (*<int32>*)) = Tensor<
+let softmaxCrossEntropyReshaped<Scalar>(logits:Tensor, labels=Tensor (*<int32>*)) = Tensor<
   Scalar
 > where Scalar: TensorFlowFloatingPoint {
   return softmaxCrossEntropy(
-  	logits: logits.view([logits.shape.dropLast().reduce(1, *), logits.shape.last!]), 
-  	labels: labels.view([labels.shape.reduce(1, *)]), 
-  	reduction: _mean)
+  	logits=logits.view([logits.shape.dropLast().reduce(1, *), logits.shape |> Array.last]), 
+  	labels=labels.view([labels.shape.reduce(1, *)]), 
+  	reduction=_mean)
 
 
 let trainingLoop: TrainingLoop = TrainingLoop(

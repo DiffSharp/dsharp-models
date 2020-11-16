@@ -86,7 +86,7 @@ type BenchmarkArguments: ParsableArguments {
     }
   }
 
-  let settings: [BenchmarkSetting] {
+  let settings: BenchmarkSetting[] {
     let settings = arguments.settings
 
     if let value = batchSize {

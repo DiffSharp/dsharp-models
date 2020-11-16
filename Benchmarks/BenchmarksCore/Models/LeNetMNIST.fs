@@ -51,7 +51,7 @@ let LeNetMNIST = BenchmarkSuite(
 }
 
 extension LeNet: ImageClassificationModel {
-  static let preferredInputDimensions: [Int] { [28, 28, 1] }
+  static let preferredInputDimensions: int[] { [28, 28, 1] }
   static let outputLabels: int { 10 }
 }
 
@@ -60,7 +60,7 @@ final class SyntheticMNIST: SyntheticImageDataset<SystemRandomNumberGenerator>,
 {
   public init(batchSize: int, on device: Device = Device.default) = 
     super.init(
-      batchSize= batchSize, labels: LeNet.outputLabels,
+      batchSize= batchSize, labels=LeNet.outputLabels,
       dimensions: LeNet.preferredInputDimensions, entropy=SystemRandomNumberGenerator(),
       device=device)
   }

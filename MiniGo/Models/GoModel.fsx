@@ -40,7 +40,8 @@ type ModelConfiguration {
 
 
 
-type ConvBN: Layer {
+type ConvBN() =
+    inherit Model()
     let conv: Conv2D<Float>
     let norm: BatchNorm<Float>
 
@@ -70,11 +71,12 @@ extension ConvBN: LoadableFromPythonCheckpoint {
 
 
 
-type ResidualIdentityBlock: Layer {
+type ResidualIdentityBlock() =
+    inherit Model()
     let layer1: ConvBN
     let layer2: ConvBN
 
-    public init(featureCounts: (Int, Int), kernelSize: int = 3) = 
+    public init(featureCounts: (int * int), kernelSize: int = 3) = 
         self.layer1 = ConvBN(
             filterShape=(kernelSize, kernelSize, featureCounts.0, featureCounts.1),
             padding="same",
@@ -105,13 +107,14 @@ extension ResidualIdentityBlock: LoadableFromPythonCheckpoint {
 type GoModelOutput: Differentiable {
     let policy: Tensor
     let value: Tensor
-    let logits: Tensor
+    let logits=Tensor
 
 
-type GoModel: Layer {
+type GoModel() =
+    inherit Model()
     let configuration: ModelConfiguration
     let initialConv: ConvBN
-    let residualBlocks: [ResidualIdentityBlock]
+    let residualBlocks: ResidualIdentityBlock[]
     let policyConv: ConvBN
     let policyDense: Dense
     let valueConv: ConvBN
@@ -147,7 +150,7 @@ type GoModel: Layer {
             inputSize= configuration.valueConvWidth * configuration.boardSize
                 * configuration.boardSize,
             outputSize=configuration.valueDenseWidth,
-            activation= relu)
+            activation= dsharp.relu)
         valueDense2 = Linear(
             inputSize= configuration.valueDenseWidth,
             outputSize=1,
@@ -175,7 +178,7 @@ type GoModel: Layer {
              configuration.valueConvWidth * configuration.boardSize * configuration.boardSize]))
         let valueOutput = valueDense2(valueHidden).view([batchSize])
 
-        return GoModelOutput(policy: policyOutput, value: valueOutput, logits: logits)
+        return GoModelOutput(policy: policyOutput, value: valueOutput, logits=logits)
 
 
     @usableFromInline

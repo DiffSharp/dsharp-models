@@ -16,9 +16,9 @@
 // by Diederik P Kingma and Max Welling
 // Reference implementation: https://github.com/pytorch/examples/blob/master/vae/main.py
 
-#r @"..\..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 #r @"System.Runtime.Extensions.dll"
 
 open DiffSharp
@@ -69,8 +69,8 @@ type VAE() =
         output
 
 
-let vae = VAE()
-let optimizer = Adam(vae, lr = dsharp.scalar 1e-3)
+let model = VAE()
+let optimizer = Adam(model, learningRate = dsharp.scalar 1e-3)
 
 // Loss function: sum of the KL divergence of the embeddings and the cross entropy loss between the input and it's reconstruction. 
 let vaeLossFunction(input: Tensor, output: Tensor, mu: Tensor, logVar: Tensor) : Tensor =
@@ -81,22 +81,22 @@ let vaeLossFunction(input: Tensor, output: Tensor, mu: Tensor, logVar: Tensor) :
 
 // Training loop
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
-    vae.mode <- Mode.Train
+    model.mode <- Mode.Train
     for batch in epochBatches do
         let x = batch.data
-        vae.reverseDiff()
-        let output, mu, logVar = vae(x)
+        model.reverseDiff()
+        let output, mu, logVar = model(x)
         vaeLossFunction(x, output, mu, logVar)
 
-        optimizer.update(&vae, along=δmodel)
+        optimizer.update(&model, along=δmodel)
 
 
-    vae.mode <- Mode.Eval
+    model.mode <- Mode.Eval
     let mutable testLossSum: double = 0.0
     let mutable testBatchCount = 0
     for batch in dataset.validation do
         let sampleImages = batch.data
-        let testImages, testMus, testLogVars = vae.call(sampleImages)
+        let testImages, testMus, testLogVars = model.call(sampleImages)
         //if epoch = 0 || (epoch + 1) % 10 = 0 then
         //    try
         //        try saveImage(
@@ -106,15 +106,14 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         //            testImages.[0..0], shape=[imageWidth, imageHeight), format="grayscale",
         //            directory=outputFolder, name= $"epoch-{epoch}-output")
         //    with e ->
-        //        print("Could not save image with error: \(error)")
+        //        print($"Could not save image with error: {error}")
 
         //testLossSum <- testLossSum + vaeLossFunction(
-        //    input: sampleImages, output: testImages, mu: testMus, logVar: testLogVars).scalarized() / double(batchSize)
+        //    input: sampleImages, output: testImages, mu: testMus, logVar: testLogVars).toScalar() / double(batchSize)
         testBatchCount <- testBatchCount + 1
 
-    print(
-        """
-        [Epoch \(epoch)] \
+    print($"""
+        [Epoch {epoch}] \
         Loss: \(testLossSum / double(testBatchCount))
         """
     )

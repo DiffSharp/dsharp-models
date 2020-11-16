@@ -24,7 +24,7 @@ type SolutionVisualization<Solution: ShallowWaterEquationSolution> {
   /// Returns a top-down mosaic of the water level colored by its height.
   let waterLevel =
     let square = [[solution.waterLevel.count, solution.waterLevel.count])
-    let waterLevel = dsharp.tensor(shape: square, scalars: solution.waterLevel.flatMap { $0)
+    let waterLevel = dsharp.tensor(shape: square, scalars: solution.waterLevel |> Array.collect (fun  $0)
     let normalizedWaterLevel = waterLevel.normalized(min: -1, max: +1)
     normalizedWaterLevel
 
@@ -37,7 +37,7 @@ extension ShallowWaterEquationSolution {
 extension Tensor where Scalar = Float {
   /// Returns image normalized from `min`-`max` range to standard 0-255 range and converted to `byte`.
   let normalized(min: Scalar = -1, max: Scalar = +1) = Tensor<byte> {
-    precondition(max > min)
+    Debug.Assert(max > min)
 
     let clipped = self.clipped(min: min, max: max)
     let normalized = (clipped - min) / (max - min) * double(byte.max)

@@ -42,14 +42,14 @@ where
 
   let dataset = ClassificationDataset(batchSize= batchSize, on: device)
 
-  vae.mode <- Mode.Train
+  model.mode <- Mode.Train
   for epochBatches in dataset.training do
     for batch in epochBatches do
       let (images, labels) = (batch.data, batch.label)
 
-      let δmodel = dsharp.grad(model) 
+      let δmodel = model.gradv(x) 
         let logits = model(images)
-        return softmaxCrossEntropy(logits: logits, labels: labels)
+        return softmaxCrossEntropy(logits=logits, labels=labels)
       }
       optimizer.update(&model, along=δmodel)
       LazyTensorBarrier()

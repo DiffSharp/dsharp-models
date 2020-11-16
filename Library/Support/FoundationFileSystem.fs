@@ -27,7 +27,7 @@ type FoundationFileSystem: FileSystem {
           attributes: nil)
 
 
-  let open(_ filename: string) = File {
+  let open(filename: string) = File {
     return FoundationFile(path: filename)
 
     
@@ -44,25 +44,25 @@ type FoundationFile: File {
 
   
   let read() -> Data {
-    return try Data(contentsOf: location, options: .alwaysMapped)
+    return Data.ReadAllBytes(location, options: .alwaysMapped)
 
   
   let read(position: int, count: int) -> Data {
     // TODO: Incorporate file offset.
-    return try Data(contentsOf: location, options: .alwaysMapped)
+    return Data.ReadAllBytes(location, options: .alwaysMapped)
 
 
-  let write(_ value: Data) =
+  let write(value: Data) =
     try self.write(value, position: 0)
 
 
-  let write(_ value: Data, position: int) =
+  let write(value: Data, position: int) =
     // TODO: Incorporate file offset.
     try value.write(location)
 
 
   /// Appends the bytes in `suffix` to the file.
-  let append(_ suffix: Data) =
+  let append(suffix: Data) =
     let fileHandler = try FileHandle(forUpdating: location)
     #if os(macOS)
     // The following are needed in order to build on macOS 10.15 (Catalina). They can be removed

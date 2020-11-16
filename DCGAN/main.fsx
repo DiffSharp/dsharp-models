@@ -11,9 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 #r @"System.Runtime.Extensions.dll"
 
 open Datasets
@@ -87,7 +87,7 @@ let optD = Adam(discriminator, learningRate=dsharp.scalar 0.0001)
 let noise = dsharp.randn([1; zDim])
 
 print("Begin training...")
-for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() = 
+for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
     model.mode <- Mode.Train
     for batch in epochBatches do
         let realImages = batch.data
@@ -115,17 +115,17 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         optD.update(&discriminator, along=δdiscriminator)
 
     // Test the networks.
-    vae.mode <- Mode.Eval
+    model.mode <- Mode.Eval
 
     // Render images.
     let generatedImage = generator(noise)
     try saveImage(
         generatedImage, shape=[28; 28], format="grayscale", directory=outputFolder,
-        name= "\(epoch)")
+        name= $"{epoch}")
 
     // Print loss.
     let generatorLoss_ = generatorLoss(fakeLabels: generatedImage)
-    print("epoch: \(epoch) | Generator loss: \(generatorLoss_)")
+    print($"epoch: {epoch} | Generator loss: {generatorLoss_}")
 
 // Generate another image.
 let noise1 = dsharp.randn([1; 100])

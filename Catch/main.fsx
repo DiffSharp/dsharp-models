@@ -11,9 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r "System.Runtime.Extensions.dll"
 
 open DiffSharp
 open DiffSharp.Model
@@ -26,7 +27,6 @@ open DiffSharp.Util
 // - Adopt a more principled reinforcement learning algorithm (e.g. policy
 //   gradients). The algorithm should perform some tensor computation (not a
 //   purely table-based approach).
-
 
 type Observation = Tensor
 type Reward = float32
@@ -55,7 +55,7 @@ type CatchAgent(learningRate, initialReward) =
 
         let x = dsharp.tensor(observation).rankLifted()
         let (ŷ, backprop) = model.appliedForBackpropagation(x)
-        let maxIndex = ŷ.argmax().scalarized()
+        let maxIndex = ŷ.argmax().toScalar()
 
         let δloss = -log(dsharp.tensor(ŷ.max(), dtype=Dtype.Float32)).expand(like: ŷ) * previousReward
         let (δmodel, _) = backprop(δloss)
@@ -164,14 +164,14 @@ while gameCount < maxIterations do
 
         if gameCount % 20 = 0 then
             print("Win rate (last 20 games): \(double(winCount) / 20)")
-            print("""
+            print($"""
                   Win rate (total): \
                   \(double(totalWinCount) / double(gameCount)) \
-                  [\(totalWinCount)/\(gameCount)]
+                  [{totalWinCount}/{gameCount}]
                   """)
             winCount = 0
 
-print("""
+print($"""
       Win rate (final): \(double(totalWinCount) / double(gameCount)) \
-      [\(totalWinCount)/\(gameCount)]
+      [{totalWinCount}/{gameCount}]
       """)

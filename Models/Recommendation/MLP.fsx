@@ -15,8 +15,9 @@
 open DiffSharp
 
 /// MLP is a multi-layer perceptron and is used as a component of the DLRM model
-type MLP: Layer {
-    let blocks: [Dense] = []
+type MLP() =
+    inherit Model()
+    let blocks: Dense[] = [| |]
 
     /// Randomly initializes a new multilayer perceptron from the given hyperparameters.
     ///
@@ -24,12 +25,12 @@ type MLP: Layer {
     ///   multi-layer perceptron.
     /// - Parameter sigmoidLastLayer: if `true`, use a `sigmoid` activation function for the last layer,
     ///   `relu` otherwise.
-    init(dims: [Int], sigmoidLastLayer: bool = false) = 
+    init(dims: int[], sigmoidLastLayer: bool = false) = 
         for i in 0..<(dims.count-1) = 
             if sigmoidLastLayer && i = dims.count - 2 then
                 blocks.append(Linear(inFeatures=dims[i], outFeatures=dims[i+1], activation= sigmoid))
             else
-                blocks.append(Linear(inFeatures=dims[i], outFeatures=dims[i+1], activation= relu))
+                blocks.append(Linear(inFeatures=dims[i], outFeatures=dims[i+1], activation= dsharp.relu))
 
 
 

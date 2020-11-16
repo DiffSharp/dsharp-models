@@ -73,7 +73,7 @@ type COCODataset {
 
 
 
-  public static let identity(_ example: ObjectDetectionExample) = [ObjectDetectionExample] {
+  public static let identity(example: ObjectDetectionExample) = [ObjectDetectionExample] {
     return [example]
 
 
@@ -99,7 +99,7 @@ let loadCOCOExamples(from coco: COCO, includeMasks: bool, batchSize: int)
     let batchCount: int = images.count / batchSize + 1
     let batches = Array(0..<batchCount)
     let examples: [[ObjectDetectionExample]] = batches.map { batchIdx in
-        let examples: [ObjectDetectionExample] = []
+        let examples: ObjectDetectionExample[] = [| |]
         for i in 0..<batchSize {
             let idx = batchSize * batchIdx + i
             if idx < images.count then
@@ -133,7 +133,7 @@ let loadCOCOExample(coco: COCO, image: COCO.Image, includeMasks: bool) = ObjectD
     else
         annotations = []
 
-    let objects: [LabeledObject] = []
+    let objects: LabeledObject[] = [| |]
     objects.reserveCapacity(annotations.count)
     for annotation in annotations do
         let bb = annotation["bbox"] :?> [Double]

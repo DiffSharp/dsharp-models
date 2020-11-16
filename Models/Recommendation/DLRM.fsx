@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
+
 open DiffSharp
 
 /// The DLRM model is parameterized to support multiple ways of combining the latent spaces of the inputs.
@@ -38,52 +44,40 @@ type InteractionType {
 /// "Deep Learning Recommendation Model for Personalization and Recommendation Systems"
 /// Maxim Naumov et al.
 /// https://arxiv.org/pdf/1906.00091.pdf
-type DLRM: Module {
-
-    let mlpBottom: MLP
-    let mlpTop: MLP
-    let latentFactors: [Embedding<Float>]
-    let nDense: int
-    let interaction: InteractionType
-
-    /// Randomly initialize a DLRM model from the given hyperparameters.
-    ///
-    /// - Parameters:
-    ///    - nDense: The number of continuous or dense inputs for each example.
-    ///    - mSpa: The "width" of all embedding tables.
-    ///    - lnEmb: Defines the "heights" of each of each embedding table.
-    ///    - lnBot: The size of the hidden layers in the bottom MLP.
-    ///    - lnTop: The size of the hidden layers in the top MLP.
-    ///    - interaction: The type of interactions between the hidden  features.
-    public init(nDense: int, mSpa: int, lnEmb: [Int], lnBot: [Int], lnTop: [Int],
+///
+/// Randomly initialize a DLRM model from the given hyperparameters.
+///
+/// - Parameters:
+///    - nDense: The number of continuous or dense inputs for each example.
+///    - mSpa: The "width" of all embedding tables.
+///    - lnEmb: Defines the "heights" of each of each embedding table.
+///    - lnBot: The size of the hidden layers in the bottom MLP.
+///    - lnTop: The size of the hidden layers in the top MLP.
+///    - interaction: The type of interactions between the hidden  features.
+type DLRM(nDense: int, mSpa: int, lnEmb: int[], lnBot: int[], lnTop: int[],
                 interaction: InteractionType = .concatenate) = 
-        self.nDense = nDense
-        mlpBottom = MLP(dims: [nDense] + lnBot)
-        let topInput = lnEmb.count * mSpa + lnBot.last!
-        mlpTop = MLP(dims: [topInput] + lnTop + [1], sigmoidLastLayer: true)
-        latentFactors = lnEmb.map { embeddingSize -> Embedding<Float> in
+    inherit Model() 
+    let mlpBottom = MLP(dims: nDense[] + lnBot)
+    let topInput = lnEmb.count * mSpa + lnBot |> Array.last
+    let mlpTop = MLP(dims: topInput[] + lnTop + [1], sigmoidLastLayer: true)
+    let latentFactors = 
+        lnEmb |> map (fun embeddingSize -> 
             // Use a random uniform initialization to match the reference implementation.
-            let weights = Tensor<Float>(
-                randomUniform: [embeddingSize, mSpa],
-                lowerBound: dsharp.tensor(double(-1.0)/double(embeddingSize)),
-                upperBound: dsharp.tensor(double(1.0)/double(embeddingSize)))
-            return Embedding(embeddings: weights)
+            let weights = 
+                dsharp.rand([| embeddingSize; mSpa |],
+                    lowerBound=dsharp.tensor(double(-1.0)/double(embeddingSize)),
+                    upperBound=dsharp.tensor(double(1.0)/double(embeddingSize)))
+            Embedding(embeddings=weights))
 
         self.interaction = interaction
 
-
-    
     override _.forward(input: DLRMInput) : Tensor =
         callAsFunction(denseInput: input.dense, sparseInput: input.sparse)
 
 
-    (wrt: self)
-    override _.forward(
-        denseInput: Tensor,
-        sparseInput: [Tensor (*<int32>*)]
-    ) : Tensor =
-        precondition(denseInput.shape.last! = nDense)
-        precondition(sparseInput.count = latentFactors.count)
+    override _.forward(denseInput: Tensor, sparseInput: [Tensor (*<int32>*)]) : Tensor =
+        Debug.Assert(denseInput.shape |> Array.last = nDense)
+        Debug.Assert(sparseInput.count = latentFactors.count)
         let denseEmbVec = mlpBottom(denseInput)
         let sparseEmbVecs = computeEmbeddings(sparseInputs: sparseInput,
                                               latentFactors: latentFactors)
@@ -170,7 +164,7 @@ let computeEmbeddingsVJP(
     return (
         value: sparseEmbVecs,
         pullback: { v in
-            let arr = zip(v, pullbacks).map { $0.1($0.0)
+            let arr = zip(v, pullbacks).map (fun x -> x.1($0.0))
             return Array.DifferentiableView(arr)
 
     )

@@ -33,9 +33,9 @@ public class MiniGoCheckpointReader: CheckpointReader {
 
 
 
-let checkShapes(_ tensor1: Tensor, _ tensor2: Tensor) = 
+let checkShapes(tensor1: Tensor, _ tensor2: Tensor) = 
     guard tensor1.shape = tensor2.shape else {
-        print("Shape mismatch: \(tensor1.shape) <> \(tensor2.shape)")
+        print($"Shape mismatch: {tensor1.shape} <> {tensor2.shape}")
         fatalError()
 
 

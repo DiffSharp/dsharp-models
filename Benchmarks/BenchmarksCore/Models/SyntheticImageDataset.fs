@@ -40,36 +40,36 @@ public class SyntheticImageDataset {
   ///     will be stored in `self`, so if it is only pseudorandom and has value
   ///     semantics, the sequence of epochs is deterministic and not dependent
   ///     on other operations.
-  ///   - labels: the number of output labels in the classification dataset.
+  ///   - labels=the number of output labels in the classification dataset.
   ///   - dimensions: the height x width x depth dimensions of the generated images.
 
   public init(
     batchSize: int,
-    labels: int,
-    dimensions: [Int],
+    labels=int,
+    dimensions: int[],
     entropy: Entropy,
     device: Device
   ) = 
-    precondition(labels > 0)
-    precondition(dimensions.count = 3)
+    Debug.Assert(labels > 0)
+    Debug.Assert(dimensions.count = 3)
 
     // Training data
     training = TrainingEpochs(samples: (0..batchSize-1), batchSize= batchSize, entropy: entropy)
        |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
         return batches |> Seq.map {
-          makeSyntheticBatch(samples: $0, dimensions: dimensions, labels: labels, device=device)
+          makeSyntheticBatch(samples: $0, dimensions: dimensions, labels=labels, device=device)
         }
       }
 
     // Validation data
     validation = (0..batchSize-1).inBatches(of: batchSize) |> Seq.map {
-      makeSyntheticBatch(samples: $0, dimensions: dimensions, labels: labels, device=device)
+      makeSyntheticBatch(samples: $0, dimensions: dimensions, labels=labels, device=device)
     }
   }
 }
 
 let makeSyntheticBatch<BatchSamples: Collection>(
-  samples: BatchSamples, dimensions: [Int], labels: int, device: Device
+  samples: BatchSamples, dimensions: int[], labels=int, device: Device
 ) = LabeledImage where BatchSamples.Element = Int {
   let syntheticImageBatch = Tensor<Float>(
     glorotUniform: [[samples.count] + dimensions], on: device)

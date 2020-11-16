@@ -1,10 +1,12 @@
 ﻿namespace DiffSharp
 
+open System
+open System.Collections.Generic
 open System.IO
 open DiffSharp.Model
+open DiffSharp.Optim
 open DiffSharp.Util
 open DiffSharp.ShapeChecking
-open System
 
 [<AutoOpen>]
 module DiffSharpExtensions =
@@ -19,11 +21,12 @@ module DiffSharpExtensions =
         member x.sqr() = x * x
         member x.toInt32() = x.toScalar() |> Convert.ToInt32
         member x.toFloat32() = x.toScalar() |> Convert.ToSingle
+        member x.gelu() : Tensor = failwith "TBD"
 
     type dsharp with 
         static member scalar(x: scalar, ?dtype, ?device, ?backend) = dsharp.full(1, x, ?dtype=dtype, ?device=device, ?backend=backend)
         static member randn(shape: seq<int>, stddev: scalar, ?mean: scalar) = dsharp.randn(shape=shape)
-        static member sigmoidCrossEntropy(logits: Tensor, labels: Tensor, ?reduction: string) = logits.oneLike()
+        static member sigmoidCrossEntropy(logits:Tensor, labels:Tensor, ?reduction:string) = logits.oneLike()
 
     type Sequential([<ParamArray>] models: Model[]) =
         inherit Model()
@@ -49,6 +52,8 @@ module DiffSharpExtensions =
         
     type Tensor with 
         member t.rsqrt() = 1.0 / t.sqrt()
+
+        member t.argmax(dim: int) : Tensor = failwith "tbd"
 
         member t.unsqueeze (dims: seq<int>) =
             let dims = dims |> Seq.toArrayQuick
@@ -85,6 +90,8 @@ module DiffSharpExtensions =
 
 
     type dsharp with 
+        static member gelu(input: Tensor) = input.gelu()
+
         static member rsqrt(input: Tensor) = input.rsqrt()
 
         static member squeeze (input: Tensor, dims: seq<int>) = input.squeeze(dims)
@@ -111,9 +118,63 @@ module DiffSharpExtensions =
             input.conv2d(filters, ?stride=stride, ?strides=strides, ?padding=padding, ?paddings=paddings, ?dilation=dilation, ?dilations=dilations)
 
     type Model with 
-        member m.grad(f) = 
+        member m.grad(input, loss) = 
             m.reverseDiff()
-            dsharp.grad(f m.forward) 
-        member m.gradv(f) = 
+            dsharp.grad (fun x -> loss (m.forward x)) input
+        member m.gradv(input, loss) = 
             m.reverseDiff()
-            dsharp.gradv(f m.forward) 
+            dsharp.gradv (fun x -> loss (m.forward x)) input
+
+    type ZeroPadding2D(padding: (int*int) * (int * int)) =
+       inherit Model()
+       override m.forward(value) = value // TBD
+
+    type UpSampling2D(size: int) =
+       inherit Model()
+       override m.forward(value) = value // TBD
+
+    type LayerNorm(featureCount: int, axis: int) =
+       inherit Model()
+       let p_offset = Parameter(dsharp.zero())
+       let p_scale = Parameter(dsharp.zero())
+       member _.offset = p_offset
+       member _.scale = p_scale
+       override m.forward(value) = value // TBD
+
+    type MaxPool2d(kernelSize: int, stride: int) =
+       inherit Model()
+       override m.forward(value) = value // TBD
+
+    type RMSProp(model: Model, ?learningRate: Tensor, ?decay: double) =
+        inherit ModelOptimizer(model)
+        let learningRate = defaultArg learningRate (dsharp.tensor(1e-3))
+        /// <summary>TBD</summary>
+        override o.updateRule name t = failwith "tbd"
+
+    type AdaDelta(model: Model) =
+        inherit ModelOptimizer(model)
+        /// <summary>TBD</summary>
+        override o.updateRule name t = failwith "tbd"
+
+    type ParameterGroupOptimizer() =
+        inherit Optimizer()
+        /// <summary>TBD</summary>
+        override o.updateRule name t = failwith "tbd"
+
+    let scalar (x: scalar) : scalar = x
+
+    type Embedding(vocabularySize: int, embeddingSize: int, embeddingsInitializer: Shape -> Tensor) =
+        let mutable t = Dictionary<Tensor, Tensor>()
+        member _.Item with get (v: Tensor) = t.[v]
+        member _.embeddings 
+             with get() = 
+                 t |> Seq.map (fun (KeyValue(a,b)) -> dsharp.stack [a;b]) |> dsharp.stack
+             and set(vs: Tensor) = 
+                 t <- 
+                     vs.unstack() 
+                     |> Array.map (fun ab -> match ab.unstack() with [| a; b |] -> KeyValuePair(a,b) | _ -> failwith "expected pair")
+                     |> Dictionary
+
+    let truncatedNormalInitializer(standardDeviation: Tensor) : Shape -> Tensor = failwith "truncatedNormalInitializer"
+
+    type TangentVector(x:obj) = class end

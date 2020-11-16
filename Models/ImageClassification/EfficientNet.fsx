@@ -43,14 +43,15 @@ let makeDivisible(filter: int, width: double, divisor: double = 8.0) = Int {
     return int(newFilterCount)
 
 
-let roundFilterPair(filters: (Int, Int), width: double) = (Int, Int) = 
+let roundFilterPair(filters: (int * int), width: double) = (int * int) = 
     return (
         makeDivisible(filter: filters.0, width: width),
         makeDivisible(filter: filters.1, width: width)
     )
 
 
-type InitialMBConvBlock: Layer {
+type InitialMBConvBlock() =
+    inherit Model()
     let hiddenDimension: int
     let dConv: DepthwiseConv2D<Float>
     let batchNormDConv: BatchNorm<Float>
@@ -60,7 +61,7 @@ type InitialMBConvBlock: Layer {
     let conv2: Conv2D<Float>
     let batchNormConv2: BatchNorm<Float>
 
-    init(filters: (Int, Int), width: double) = 
+    init(filters: (int * int), width: double) = 
         let filterMult = roundFilterPair(filters: filters, width: width)
         self.hiddenDimension = filterMult.0
         dConv = DepthwiseConv2D<Float>(
@@ -95,7 +96,8 @@ type InitialMBConvBlock: Layer {
 
 
 
-type MBConvBlock: Layer {
+type MBConvBlock() =
+    inherit Model()
     let addResLayer: bool
     let strides = [Int, Int)
     let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
@@ -112,11 +114,11 @@ type MBConvBlock: Layer {
     let batchNormConv2: BatchNorm<Float>
 
     init(
-        filters: (Int, Int),
+        filters: (int * int),
         width: double,
         depthMultiplier: int = 6,
         strides = [Int, Int) = (1, 1),
-        kernel: (Int, Int) = (3, 3)
+        kernel: (int * int) = (3, 3)
     ) = 
         self.strides = strides
         self.addResLayer = filters.0 = filters.1 && strides = (1, 1)
@@ -173,14 +175,15 @@ type MBConvBlock: Layer {
 
 
 
-type MBConvBlockStack: Layer {
-    let blocks: [MBConvBlock] = []
+type MBConvBlockStack() =
+    inherit Model()
+    let blocks: MBConvBlock[] = [| |]
 
     init(
-        filters: (Int, Int),
+        filters: (int * int),
         width: double,
-        initialStrides: (Int, Int) = (2, 2),
-        kernel: (Int, Int) = (3, 3),
+        initialStrides: (int * int) = (2, 2),
+        kernel: (int * int) = (3, 3),
         blockCount: int,
         depth: double
     ) = 
@@ -204,7 +207,8 @@ type MBConvBlockStack: Layer {
 
 
 
-type EfficientNet: Layer {
+type EfficientNet() =
+    inherit Model()
     let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>

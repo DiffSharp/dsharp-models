@@ -18,7 +18,8 @@ open DiffSharp
 ///
 /// Actor-Critic methods has an actor network and a critic network. The actor network is the policy
 /// of the agent: it is used to select actions.
-type ActorNetwork: Layer {
+type ActorNetwork() =
+    inherit Model()
     type Input = Tensor<Float>
     type Output = Tensor<Float>
 
@@ -29,24 +30,24 @@ type ActorNetwork: Layer {
             inputSize= observationSize,
             outputSize=hiddenSize,
             activation= tanh,
-            weightInitializer: heNormal()
+            weightInitializer=heNormal()
         )
         l2 = Linear(
             inputSize= hiddenSize,
             outputSize=hiddenSize,
             activation= tanh,
-            weightInitializer: heNormal()
+            weightInitializer=heNormal()
         )
         l3 = Linear(
             inputSize= hiddenSize,
             outputSize=actionCount,
             activation= softmax,
-            weightInitializer: heNormal()
+            weightInitializer=heNormal()
         )
 
 
     
-    override _.forward(input: Input) = Output {
+    override _.forward(input: Tensor) =
         return input |> l1, l2, l3)
 
 
@@ -56,7 +57,8 @@ type ActorNetwork: Layer {
 /// Actor-Critic methods has an actor network and a critic network. The critic network is used to
 /// estimate the value of the state-action pair. With these value functions, the critic can evaluate
 /// the actions made by the actor.
-type CriticNetwork: Layer {
+type CriticNetwork() =
+    inherit Model()
     type Input = Tensor<Float>
     type Output = Tensor<Float>
 
@@ -66,24 +68,24 @@ type CriticNetwork: Layer {
         l1 = Linear(
             inputSize= observationSize,
             outputSize=hiddenSize,
-            activation= relu,
-            weightInitializer: heNormal()
+            activation= dsharp.relu,
+            weightInitializer=heNormal()
         )
         l2 = Linear(
             inputSize= hiddenSize,
             outputSize=hiddenSize,
-            activation= relu,
-            weightInitializer: heNormal()
+            activation= dsharp.relu,
+            weightInitializer=heNormal()
         )
         l3 = Linear(
             inputSize= hiddenSize,
             outputSize=1,
-            weightInitializer: heNormal()
+            weightInitializer=heNormal()
         )
 
 
     
-    override _.forward(input: Input) = Output {
+    override _.forward(input: Tensor) =
         return input |> l1, l2, l3)
 
 
@@ -92,7 +94,8 @@ type CriticNetwork: Layer {
 ///
 /// Weight are often shared between the actor network and the critic network, but in this example,
 /// they are separated networks.
-type ActorCritic: Layer {
+type ActorCritic() =
+    inherit Model()
     let actorNetwork: ActorNetwork
     let criticNetwork: CriticNetwork
 
@@ -109,8 +112,8 @@ type ActorCritic: Layer {
 
 
     
-    override _.forward(_ state: Tensor) = Categorical<int32> {
-        precondition(state.rank = 2, "The input must be 2-D ([batch size, state size]).")
+    override _.forward(state: Tensor) = Categorical<int32> {
+        Debug.Assert(state.rank = 2, "The input must be 2-D ([batch size, state size]).")
         let actionProbs = self.actorNetwork(state).flattened()
         let dist = Categorical<int32>(probabilities: actionProbs)
         return dist

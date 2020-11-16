@@ -21,22 +21,22 @@ open DiffSharp
 
 let makeRandomTensor(
   batchSize: int,
-  dimensions: [Int],
+  dimensions: int[],
   device: Device
 ) = Tensor<Float> {
   let allDimensions = [batchSize]
-  allDimensions.append(contentsOf: dimensions)
+  allDimensions.append(dimensions)
   let tensor = Tensor<Float>(
     randomNormal=[allDimensions], mean: Tensor<Float>(0.5, on: device),
-    standardDeviation: Tensor<Float>(0.1, on: device), seed: (0xffeffe, 0xfffe),
+    standardDeviation:Tensor(0.1, on: device), seed: (0xffeffe, 0xfffe),
     on: device)
   return tensor
 }
 
 let makeForwardBenchmark<CustomLayer>(
   layer makeLayer: @escaping () = CustomLayer,
-  inputDimensions: [Int],
-  outputDimensions: [Int]
+  inputDimensions: int[],
+  outputDimensions: int[]
 ) = ((inout BenchmarkState) -> Void)
 where
   CustomLayer: Layer,
@@ -85,8 +85,8 @@ where
 
 let makeGradientBenchmark<CustomLayer>(
   layer makeLayer: @escaping () = CustomLayer,
-  inputDimensions: [Int],
-  outputDimensions: [Int]
+  inputDimensions: int[],
+  outputDimensions: int[]
 ) = ((inout BenchmarkState) -> Void)
 where
   CustomLayer: Layer,
@@ -142,9 +142,9 @@ where
 
 let makeLayerSuite<CustomLayer>(
   name: string,
-  inputDimensions inp: [Int],
-  outputDimensions outp: [Int],
-  batchSizes: [Int] = [4],
+  inputDimensions inp: int[],
+  outputDimensions outp: int[],
+  batchSizes: int[] = [4],
   backends: [Backend.Value] = [.eager, .x10],
   layer: @escaping () = CustomLayer
 ) = BenchmarkSuite
@@ -154,23 +154,23 @@ where
   CustomLayer.Output = Tensor<Float>,
   CustomLayer.TangentVector.VectorSpaceScalar = Float
 {
-  let inputString = inp.map { String($0) }.joined(separator: "x")
-  let outputString = outp.map { String($0) }.joined(separator: "x")
+  let inputString = inp.map { String($0) } |> String.concat "x"
+  let outputString = outp.map { String($0) } |> String.concat "x"
 
   return BenchmarkSuite(
-    name= "\(name)_\(inputString)_\(outputString)",
+    name= $"{name}_{inputString}_{outputString}",
     settings: WarmupIterations(10)
   ) =  suite in
     for batchSize in batchSizes do
       for backend in backends do
         suite.benchmark(
-          "forward_b\(batchSize)_\(backend)",
+          "forward_b{batchSize}_{backend}",
           settings: Backend(backend), BatchSize(batchSize),
           function: makeForwardBenchmark(
             layer: layer, inputDimensions: inp, outputDimensions: outp))
 
         suite.benchmark(
-          "forward_and_gradient_b\(batchSize)_\(backend)",
+          "forward_and_gradient_b{batchSize}_{backend}",
           settings: Backend(backend), BatchSize(batchSize),
           function: makeGradientBenchmark(
             layer: layer, inputDimensions: inp, outputDimensions: outp))

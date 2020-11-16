@@ -50,7 +50,7 @@ type TextBatch(tokenIds: Tensor (*<int32>*), tokenTypeIds: Tensor (*<int32>*), m
 //  /// Returns the elements of `self`, padded to `maxLength` if specified
 //  /// or the maximum length of the elements in `self` otherwise.
 //  let paddedAndCollated(to maxLength: int? = nil, on device: Device = .default) = TextBatch {
-//    let maxLength = maxLength ?? self.map { $0.tokenIds.shape.[1].max()!
+//    let maxLength = maxLength ?? self.map (fun x -> x.tokenIds.shape.[1].max()!)
 //    let paddedTexts = self.map { text -> TextBatch in
 //      let paddingSize = maxLength - text.tokenIds.shape.[1]
 //      return TextBatch(

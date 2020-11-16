@@ -52,7 +52,7 @@ type Solver {
     let playerActionCount = 2 // hit / stay
 
     init() = 
-        Q = Array(repeating: Array(repeating: Array(repeating: Array(repeating: 0.0,
+        Q = Array.replicate Array.replicate Array.replicate Array.replicate 0.0,
                                                                      count: playerActionCount),
                                                     count: aceStateCount),
                                    count: dealerVisibleStateCount),
@@ -158,7 +158,7 @@ for solver in SolverType.allCases do
         let isDone = false
         environment.reset()
 
-        while !isDone {
+        while not isDone {
             let priorState = BlackjackState(pythonState: environment._get_obs())
             let action: int = learner.strategy(observation: priorState,
                                                solver: solver,
@@ -180,5 +180,5 @@ for solver in SolverType.allCases do
 
 
 
-    print("Solver: \(solver), Total reward: \(totalReward) / \(iterationCount) trials")
+    print($"Solver: {solver}, Total reward: {totalReward} / {iterationCount} trials")
 

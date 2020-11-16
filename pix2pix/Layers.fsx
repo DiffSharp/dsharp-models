@@ -11,113 +11,90 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 open DiffSharp
+open DiffSharp.Model
 
-
-type Identity: ParameterlessLayer {
-    type TangentVector = EmptyTangentVector
-
-    
+type Identity() =
+    inherit Model()
     override _.forward(input) =
         input
 
+type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
+    inherit Model()
 
-
-/// 2-D layer applying instance normalization over a mini-batch of inputs.
-///
-/// Reference: [Instance Normalization](https://arxiv.org/abs/1607.08022)
-type InstanceNorm2D<Scalar: TensorFlowFloatingPoint>: Layer {
-    /// Learnable parameter scale for affine transformation.
-    let scale: Tensor<Scalar>
-    /// Learnable parameter offset for affine transformation.
-    let offset: Tensor<Scalar>
     /// Small value added in denominator for numerical stability.
-    let epsilon: Tensor<Scalar>
+    let epsilon = defaultArg epsilon (dsharp.scalar 1e-5)
 
-    /// Creates a instance normalization 2D Layer.
-    ///
-    /// - Parameters:
-    ///   - featureCount: Size of the channel axis in the expected input.
-    ///   - epsilon: Small scalar added for numerical stability.
-    public init(featureCount=int, epsilon: Tensor<Scalar> = dsharp.tensor(1e-5)) = 
-        self.epsilon = epsilon
-        scale = Tensor<Scalar>(ones: [featureCount])
-        offset = Tensor<Scalar>(zeros: [featureCount])
+    /// Learnable parameter scale for affine transformation.
+    let scale = dsharp.ones [featureCount] |> Parameter
 
+    /// Learnable parameter offset for affine transformation.
+    let offset = dsharp.zeros [featureCount] |> Parameter
 
-    /// Returns the output obtained from applying the layer to the given input.
-    ///
-    /// - Parameter input: The input to the layer. Expected input layout is BxHxWxC.
-    /// - Returns: The output.
-    
-    override _.forward(input: Tensor<Scalar>) : Tensor =
+    do base.add([scale; offset])
+
+    //[<ShapeCheck("N,100,H,W")>]
+    override _.forward(input: Tensor) =
+
         // Calculate mean & variance along H,W axes.
-        let mean = input.mean(dim=[1; 2])
-        let variance = input.variance(dim=[1; 2])
-        let norm = (input - mean) * rsqrt(variance + epsilon)
-        return norm * scale + offset
+        let mean = input.mean(dims=[2; 3])
+        let variance = input.variance(dims=[2; 3])
+        let norm = (input - mean) * dsharp.rsqrt(variance + epsilon)
+        let res = norm * scale.value.view([featureCount;1;1]) + offset.value.view([featureCount;1;1])
+        res
+
+    override _.ToString() = sprintf "InstanceNorm2D(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon
 
 
+/// Creates 2D convolution with padding layer.
+///
+/// - Parameters:
+///   - inChannels=Number of input channels in convolution kernel.
+///   - outChannels: Number of output channels in convolution kernel.
+///   - kernelSize: Convolution kernel size (both width and height).
+///   - stride: Stride size (both width and height).
+type ConvLayer(inChannels: int, outChannels: int, kernelSize: int, stride: int, ?padding: int) = 
+    inherit Model()
 
-type ConvLayer: Layer {
-    type Input = Tensor<Float>
-    type Output = Tensor<Float>
-
+    let _padding = defaultArg padding (kernelSize / 2)
     /// Padding layer.
-    let pad: ZeroPadding2D<Float>
+    let pad = ZeroPadding2D(padding=((_padding, _padding), (_padding, _padding)))
     /// Convolution layer.
-    let conv2d: Conv2D<Float>
-
-    /// Creates 2D convolution with padding layer.
-    ///
-    /// - Parameters:
-    ///   - inChannels=Number of input channels in convolution kernel.
-    ///   - outChannels: Number of output channels in convolution kernel.
-    ///   - kernelSize: Convolution kernel size (both width and height).
-    ///   - stride: Stride size (both width and height).
-    public init(inChannels=int, outChannels: int, kernelSize: int, stride: int, padding: int? = nil) = 
-        let _padding =  padding ?? int(kernelSize / 2)
-        pad = ZeroPadding2D(padding: ((_padding, _padding), (_padding, _padding)))
-    
-        conv2d = Conv2d(filterShape=(kernelSize, kernelSize, inChannels, outChannels),
-                        strides = [stride, stride),
-                        filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.scalar(0.02)))
-
+    let conv2d = Conv2d(inChannels, outChannels, kernelSize,strides = [stride; stride])
 
     /// Returns the output obtained from applying the layer to the given input.
     ///
     /// - Parameter input: The input to the layer.
     /// - Returns: The output.
-    
-    override _.forward(input: Input) = Output {
-        return input |> pad, conv2d)
+    override _.forward(input: Tensor) : Tensor =
+        input |> pad.forward |> conv2d.forward
 
 
-
-type UNetSkipConnectionInnermost: Layer {
+type UNetSkipConnectionInnermost() = 
+    inherit Model()
     let downConv: Conv2D<Float>
     let upConv: ConvTranspose2d
     let upNorm: BatchNorm<Float>
     
-    public init(inChannels=int,
+    public init(inChannels: int,
                 innerChannels: int,
                 outChannels: int) = 
         self.downConv = Conv2d(filterShape=(4, 4, inChannels, innerChannels),
                                stride=2,
                                padding="same",
                                filterInitializer: { dsharp.randn($0,
-                                                            standardDeviation: dsharp.scalar(0.02)))
+                                                            standardDeviation=dsharp.scalar(0.02)))
         self.upNorm = BatchNorm(featureCount=outChannels)
         
         self.upConv = ConvTranspose2d(filterShape=(4, 4, innerChannels, outChannels),
                                        stride=2,
                                        padding="same",
                                        filterInitializer: { dsharp.randn($0,
-                                                                    standardDeviation: dsharp.scalar(0.02)))
+                                                                    standardDeviation=dsharp.scalar(0.02)))
 
     
     
@@ -142,7 +119,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
     
     let submodule: Sublayer
     
-    public init(inChannels=int,
+    public init(inChannels: int,
                 innerChannels: int,
                 outChannels: int,
                 submodule: Sublayer,
@@ -150,7 +127,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
         self.downConv = Conv2d(filterShape=(4, 4, inChannels, innerChannels),
                                stride=2,
                                padding="same",
-                               filterInitializer: { dsharp.randn($0, standardDeviation: dsharp.scalar(0.02)))
+                               filterInitializer: { dsharp.randn($0, standardDeviation=dsharp.scalar(0.02)))
         self.downNorm = BatchNorm(featureCount=innerChannels)
         self.upNorm = BatchNorm(featureCount=outChannels)
         
@@ -158,7 +135,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
                                        stride=2,
                                        padding="same",
                                        filterInitializer: { dsharp.randn($0,
-                                                                    standardDeviation: dsharp.scalar(0.02)))
+                                                                    standardDeviation=dsharp.scalar(0.02)))
     
         self.submodule = submodule
         
@@ -186,7 +163,7 @@ type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentV
     
     let submodule: Sublayer
     
-    public init(inChannels=int,
+    public init(inChannels: int,
                 innerChannels: int,
                 outChannels: int,
                 submodule: Sublayer) = 
@@ -194,13 +171,13 @@ type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentV
                                stride=2,
                                padding="same",
                                filterInitializer: { dsharp.randn($0,
-                                                            standardDeviation: dsharp.scalar(0.02)))
+                                                            standardDeviation=dsharp.scalar(0.02)))
         self.upConv = ConvTranspose2d(filterShape=(4, 4, outChannels, innerChannels * 2),
                                        stride=2,
                                        padding="same",
                                        activation= tanh,
                                        filterInitializer: { dsharp.randn($0,
-                                                                    standardDeviation: dsharp.scalar(0.02)))
+                                                                    standardDeviation=dsharp.scalar(0.02)))
     
         self.submodule = submodule
 

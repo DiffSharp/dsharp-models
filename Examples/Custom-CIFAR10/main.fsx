@@ -12,55 +12,60 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
+#load "Models.fsx"
+
 open Datasets
 open DiffSharp
+open DiffSharp.Model
+open DiffSharp.Util
+open Models
 
 let batchSize = 100
 
 let dataset = CIFAR10(batchSize= batchSize)
 let model = KerasModel()
-let optimizer = RMSProp(model, learningRate=0.0001, decay: 1e-6)
+let optimizer = RMSProp(model, learningRate=0.0001, decay=1e-6)
 
 print("Starting training...")
 
-for (epoch, epochBatches) in dataset.training.prefix(100).enumerated() = 
-    vae.mode <- Mode.Train
-    let trainingLossSum: double = 0
-    let trainingBatchCount = 0
+for (epoch, epochBatches) in dataset.training.prefix(100).enumerated() do
+    model.mode <- Mode.Train
+    let mutable trainingLossSum: double = 0.0
+    let mutable trainingBatchCount = 0
     for batch in epochBatches do
         let (images, labels) = (batch.data, batch.label)
-        let (loss, gradients) = valueWithGradient(at: model) 
+        let (loss, gradients) = 
+           valueWithGradient<| fun model -> 
             let logits = model(images)
-            return softmaxCrossEntropy(logits: logits, labels: labels)
+            softmaxCrossEntropy(logits=logits, labels=labels)
 
-        trainingLossSum <- trainingLossSum + loss.scalarized()
+        trainingLossSum <- trainingLossSum + loss.toScalar()
         trainingBatchCount <- trainingBatchCount + 1
         optimizer.update(&model, along=gradients)
 
-
-    vae.mode <- Mode.Eval
-    let testLossSum: double = 0
-    let testBatchCount = 0
-    let correctGuessCount = 0
-    let totalGuessCount = 0
+    model.mode <- Mode.Eval
+    let mutable testLossSum: double = 0.0
+    let mutable testBatchCount = 0
+    let mutable correctGuessCount = 0
+    let mutable totalGuessCount = 0
     for batch in dataset.validation do
         let (images, labels) = (batch.data, batch.label)
-        let logits = model(images)
-        testLossSum <- testLossSum + softmaxCrossEntropy(logits: logits, labels: labels).scalarized()
+        let logits = model.forward(images)
+        testLossSum <- testLossSum + softmaxCrossEntropy(logits=logits, labels=labels).toScalar()
         testBatchCount <- testBatchCount + 1
 
-        let correctPredictions = logits.argmax(squeezingAxis: 1) .== labels
-        correctGuessCount = correctGuessCount
-            + int(
-                Tensor (*<int32>*)(correctPredictions).sum().scalarized())
-        totalGuessCount = totalGuessCount + batchSize
-
+        let correctPredictions = logits.argmax(dim=1) .== labels
+        correctGuessCount <- correctGuessCount + int(dsharp.tensor(correctPredictions).sum().toScalar())
+        totalGuessCount <- totalGuessCount + batchSize
 
     let accuracy = double(correctGuessCount) / double(totalGuessCount)
-    print(
-        """
-        [Epoch \(epoch)] \
-        Accuracy: \(correctGuessCount)/\(totalGuessCount) (\(accuracy)) \
-        Loss: \(testLossSum / double(testBatchCount))
+    print($"""
+        [Epoch {epoch}] \
+        Accuracy: {correctGuessCount}/{totalGuessCount} ({accuracy}) \
+        Loss: {testLossSum / double(testBatchCount)}
         """
     )

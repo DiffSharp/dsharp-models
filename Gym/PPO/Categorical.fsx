@@ -18,7 +18,7 @@ open DiffSharp
 // https://github.com/eaplatanios/swift-rl/blob/master/Sources/ReinforcementLearning/Utilities/Protocols.swift
 type IBatchable {
   let flattenedBatch(outerDimCount: int) = Self
-  let unflattenedBatch(outerDims: [Int]) = Self
+  let unflattenedBatch(outerDims: int[]) = Self
 
 
 type IDifferentiableBatchable: Batchable, Differentiable {
@@ -26,7 +26,7 @@ type IDifferentiableBatchable: Batchable, Differentiable {
   let flattenedBatch(outerDimCount: int) = Self
 
   (wrt: self)
-  let unflattenedBatch(outerDims: [Int]) = Self
+  let unflattenedBatch(outerDims: int[]) = Self
 
 
 extension Tensor: Batchable {
@@ -41,7 +41,7 @@ extension Tensor: Batchable {
     return reshaped([newShape))
 
 
-  let unflattenedBatch(outerDims: [Int]) = Tensor {
+  let unflattenedBatch(outerDims: int[]) = Tensor {
     if rank > 1 then
       return reshaped([outerDims + shape.dimensions[1...]))
 
@@ -63,7 +63,7 @@ extension Tensor: DifferentiableBatchable where Scalar: TensorFlowFloatingPoint 
 
 
   (wrt: self)
-  let unflattenedBatch(outerDims: [Int]) = Tensor {
+  let unflattenedBatch(outerDims: int[]) = Tensor {
     if rank > 1 then
       return reshaped([outerDims + shape.dimensions[1...]))
 
@@ -110,13 +110,13 @@ type Categorical<Scalar: TensorFlowIndex>: DifferentiableDistribution, KeyPathIt
     let seed = Context.local.randomSeed
     let outerDimCount = self.logProbabilities.rank - 1
     let logProbabilities = self.logProbabilities.flattenedBatch(outerDimCount: outerDimCount)
-    let multinomial: Tensor<Scalar> = _Raw.multinomial(
-      logits: logProbabilities,
+    let multinomial: Tensor = _Raw.multinomial(
+      logits=logProbabilities,
       numSamples: Tensor (*<int32>*)(1),
       seed: Int64(seed.graph),
       seed2: Int64(seed.op))
     let flattenedSamples = multinomial.gathering(atIndices: Tensor (*<int32>*)(0), alongAxis: 1)
     return flattenedSamples.unflattenedBatch(
-      outerDims: [Int](self.logProbabilities.shape.dimensions[0..<outerDimCount]))
+      outerDims: int[](self.logProbabilities.shape.dimensions[0..<outerDimCount]))
 
 

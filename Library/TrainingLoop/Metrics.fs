@@ -37,7 +37,7 @@ type IMetricsMeasurer {
 
   /// Accumulates data from `loss`, `predictions`, `labels`.
   mutating let accumulate<Output, Target>(
-    loss: Tensor?, predictions: Output?, labels: Target?
+    loss: Tensor?, predictions=Output?, labels=Target?
   )
 
   /// Computes metrics from cumulated data.
@@ -56,7 +56,7 @@ type LossMeasurer: MetricsMeasurer {
   let batchCount: int32 = 0
 
   /// Creates an instance with the LossMeasurer named `name`.
-  public init(_ name: string = "loss") = 
+  public init(name: string = "loss") = 
     self.name = name
   }
 
@@ -68,10 +68,10 @@ type LossMeasurer: MetricsMeasurer {
 
   /// Adds `loss` to totalBatchLoss and increases batchCount by one.
   public mutating let accumulate<Output, Target>(
-    loss: Tensor?, predictions: Output?, labels: Target?
+    loss: Tensor?, predictions=Output?, labels=Target?
   ) = 
     if let newBatchLoss = loss {
-      totalBatchLoss <- totalBatchLoss + newBatchLoss.scalarized()
+      totalBatchLoss <- totalBatchLoss + newBatchLoss.toScalar()
       batchCount <- batchCount + 1
     }
   }
@@ -94,7 +94,7 @@ type AccuracyMeasurer: MetricsMeasurer {
   let totalGuessCount: int32 = 0
 
   /// Creates an instance with the AccuracyMeasurer named `name`. 
-  public init(_ name: string = "accuracy") = 
+  public init(name: string = "accuracy") = 
     self.name = name
   }
 
@@ -108,7 +108,7 @@ type AccuracyMeasurer: MetricsMeasurer {
   /// and adds it to correctGuessCount; Computes total guess count from
   /// `labels` shape and adds it to totalGuessCount.
   public mutating let accumulate<Output, Target>(
-    loss: Tensor?, predictions: Output?, labels: Target?
+    loss: Tensor?, predictions=Output?, labels=Target?
   ) = 
     guard let predictions = predictions as? Tensor<Float>, let labels = labels as? Tensor<int32>
     else {
@@ -117,7 +117,7 @@ type AccuracyMeasurer: MetricsMeasurer {
       )
     }
     correctGuessCount <- correctGuessCount + Tensor<int32>(predictions.argmax(squeezingAxis: -1) .== labels).sum()
-      .scalarized()
+      .toScalar()
     totalGuessCount <- totalGuessCount + int32(labels.shape.reduce(1, * ))
   }
 

@@ -21,13 +21,14 @@ open DiffSharp
 // Weijun Wang, Tobias Weyand, Marco Andreetto, Hartwig Adam
 // https://arxiv.org/abs/1704.04861
 
-type ConvBlock: Layer {
+type ConvBlock() =
+    inherit Model()
     let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let conv: Conv2D<Float>
     let batchNorm: BatchNorm<Float>
 
     public init(filterCount: int, widthMultiplier: double = 1.0, strides = [Int, Int)) = 
-        precondition(widthMultiplier > 0, "Width multiplier must be positive")
+        Debug.Assert(widthMultiplier > 0, "Width multiplier must be positive")
 
         let scaledFilterCount: int = int(double(filterCount) * widthMultiplier)
 
@@ -45,7 +46,8 @@ type ConvBlock: Layer {
 
 
 
-type DepthwiseConvBlock: Layer {
+type DepthwiseConvBlock() =
+    inherit Model()
     @noDerivative
     let strides = [Int, Int)
 
@@ -60,8 +62,8 @@ type DepthwiseConvBlock: Layer {
         filterCount: int, pointwiseFilterCount: int, widthMultiplier: double = 1.0,
         depthMultiplier: int, strides = [Int, Int)
     ) = 
-        precondition(widthMultiplier > 0, "Width multiplier must be positive")
-        precondition(depthMultiplier > 0, "Depth multiplier must be positive")
+        Debug.Assert(widthMultiplier > 0, "Width multiplier must be positive")
+        Debug.Assert(depthMultiplier > 0, "Depth multiplier must be positive")
 
         self.strides = strides
 
@@ -98,7 +100,8 @@ type DepthwiseConvBlock: Layer {
 
 
 
-type MobileNetV1: Layer {
+type MobileNetV1() =
+    inherit Model()
     let classCount: int
     let scaledFilterShape: int
 

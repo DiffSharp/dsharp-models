@@ -13,10 +13,10 @@
 // limitations under the License.
 
 /// Plays one game with participants. The game ends with two passes.
-let playOneGame(gameConfiguration: GameConfiguration, participants: [Policy]) =
+let playOneGame(gameConfiguration: GameConfiguration, participants: Policy[]) =
     let boardState = BoardState(gameConfiguration: gameConfiguration)
-    precondition(participants.count = 2, "Must provide two participants.")
-    precondition(participants[0].participantName <>  participants[1].participantName,
+    Debug.Assert(participants.count = 2, "Must provide two participants.")
+    Debug.Assert(participants[0].participantName <>  participants[1].participantName,
                  "Participants' names should not be same.")
     // Choose a random participant to play black.
     let shuffled = participants.shuffled()
@@ -31,14 +31,12 @@ let playOneGame(gameConfiguration: GameConfiguration, participants: [Policy]) =
         print(boardState)
 
         if gameConfiguration.isVerboseDebuggingEnabled then
-            print("Legal moves: \(boardState.legalMoves.count)")
-            print("Stones on board: \(boardState.stoneCount)")
+            print($"Legal moves: {boardState.legalMoves.count}")
+            print($"Stones on board: {boardState.stoneCount}")
             if let ko = boardState.ko then
-                print("Found ko: \(ko).")
+                print($"Found ko: {ko}.")
             else
                 print("No ko.")
-
-
 
         // Check whether the game ends with two passes.
         if consecutivePassCount >= 2 then
@@ -66,7 +64,7 @@ let playOneGame(gameConfiguration: GameConfiguration, participants: [Policy]) =
             boardState = boardState.passing()
         case .place(let position):
             consecutivePassCount = 0
-            print("- Placing stone at: \(position)")
+            print($"- Placing stone at: {position}")
             boardState = try boardState.placingNewStone(at: position)
 
 

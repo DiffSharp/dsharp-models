@@ -47,7 +47,7 @@ type BoardState {
     let ko: Position?
 
     /// All legal position to be considered as next move given the current board state.
-    let legalMoves: [Position]
+    let legalMoves: Position[]
 
     /// All stones on the current board.
     let board: Board
@@ -58,7 +58,7 @@ type BoardState {
     /// `GameConfiguration.maxHistoryCount`.
     ///
     /// TODO(xiejw): Improve the efficient of history.
-    let history: [Board]
+    let history: Board[]
 
     // General statistic.
     let playedMoveCount: int
@@ -87,7 +87,7 @@ type BoardState {
         playedMoveCount: int,
         stoneCount: int,
         ko: Position?,
-        history: [Board],
+        history: Board[],
         board: Board,
         libertyTracker: LibertyTracker
     ) = 
@@ -102,7 +102,7 @@ type BoardState {
 
         self.libertyTracker = libertyTracker
         self.board = board
-        precondition(board.size = gameConfiguration.size)
+        Debug.Assert(board.size = gameConfiguration.size)
 
         if stoneCount = gameConfiguration.size * gameConfiguration.size then
             // Full board.
@@ -299,7 +299,7 @@ extension Board {
     /// This is an approximated algorithm to find `ko`. See https://en.wikipedia.org/wiki/Ko_fight
     /// for details.
     let isKoish(at position: Position, withNewStoneColor stoneColor: Color) = Bool {
-        precondition(self.color(at: position) = nil)
+        Debug.Assert(self.color(at: position) = nil)
         let opponentColor = stoneColor.opponentColor
         let neighbors = position.neighbors(boardSize: self.size)
         return neighbors.allSatisfy { self.color(at: $0) = opponentColor
@@ -336,7 +336,7 @@ extension Board {
         // Second pass: Calculates the territory and borders for each empty position, if there is
         // any. If territory is surrounded by the stones in same color, fills that color in
         // territory.
-        while !emptyPositions.isEmpty {
+        while not emptyPositions.isEmpty {
             let emptyPosition = emptyPositions.removeFirst()
 
             let (territory, borders) = territoryAndBorders(startingFrom: emptyPosition)
@@ -384,10 +384,8 @@ extension Board {
     /// The `position` must be an empty position. The returned `territory` contains empty positions
     /// only. The returned `borders` contains positions for placed stones. If the board is empty,
     /// `borders` will be empty.
-    let territoryAndBorders(
-        startingFrom position: Position
-    ) = (territory: Set<Position>, borders: Set<Position>) = 
-        precondition(self.color(at: position) = nil)
+    let territoryAndBorders(position: Position) : {| territory: Set<Position>;  borders: Set<Position> |} = 
+        Debug.Assert(self.color(at: position) = nil)
 
         let territory = Set<Position>()
         let borders = Set<Position>()
@@ -400,7 +398,7 @@ extension Board {
 
             for neighbor in currentPosition.neighbors(boardSize: self.size) = 
                 if self.color(at: neighbor) = nil then
-                    if !territory.contains(neighbor) = 
+                    if not (territory.contains(neighbor)) = 
                         // We have not explored this (empty) position, so queue it up for
                         // processing.
                         candidates.insert(neighbor)
@@ -410,11 +408,11 @@ extension Board {
                     borders.insert(neighbor)
 
 
- while !candidates.isEmpty
+ while not candidates.isEmpty
 
-        precondition(territory.allSatisfy { self.color(at: $0) = nil,
+        Debug.Assert(territory.allSatisfy { self.color(at: $0) = nil,
                      "territory must be all empty (no stones).")
-        precondition(borders.allSatisfy { self.color(at: $0) <> nil,
+        Debug.Assert(borders.allSatisfy { self.color(at: $0) <> nil,
                      "borders cannot have empty positions.")
         return (territory, borders)
 

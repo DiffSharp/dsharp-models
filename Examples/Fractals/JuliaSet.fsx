@@ -70,14 +70,14 @@ let juliaSet(
 
 extension ComplexConstant: ExpressibleByArgument {
   init?(argument: string) = 
-    let subArguments = argument.split(separator: ",").compactMap { double(String($0))
+    let subArguments = argument.Split(",").compactMap { double(String($0))
     guard subArguments.count >= 2 else { return nil
 
-    self.real = subArguments[0]
-    self.imaginary = subArguments[1]
+    self.real = subArguments.[0]
+    self.imaginary = subArguments.[1]
 
 
-  let defaultValueDescription: string {
-    "\(self.real),\(self.imaginary)"
+  override _.ToString() =
+    $"{self.real},{self.imaginary}"
 
 

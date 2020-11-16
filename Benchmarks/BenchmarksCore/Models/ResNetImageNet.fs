@@ -48,7 +48,8 @@ let ResNetImageNet = BenchmarkSuite(
   suite.benchmark("training_x10", settings: Backend(.x10), function: training)
 }
 
-type ResNet50: Layer {
+type ResNet50() = 
+  inherit Model()
   let model: ResNet
 
   init() = 
@@ -56,13 +57,13 @@ type ResNet50: Layer {
   }
 
   
-  let callAsFunction(_ input: Tensor<Float>) = Tensor<Float> {
+  let callAsFunction(input: Tensor<Float>) = Tensor<Float> {
     return model(input)
   }
 }
 
 extension ResNet50: ImageClassificationModel {
-  static let preferredInputDimensions: [Int] { [224, 224, 3] }
+  static let preferredInputDimensions: int[] { [224, 224, 3] }
   static let outputLabels: int { 1000 }
 }
 
@@ -71,7 +72,7 @@ final class SyntheticImageNet: SyntheticImageDataset<SystemRandomNumberGenerator
 {
   public init(batchSize: int, on device: Device = Device.default) = 
     super.init(
-      batchSize= batchSize, labels: ResNet50.outputLabels,
+      batchSize= batchSize, labels=ResNet50.outputLabels,
       dimensions: ResNet50.preferredInputDimensions, entropy=SystemRandomNumberGenerator(),
       device=device)
   }

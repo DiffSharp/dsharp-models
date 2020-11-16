@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 
 open DiffSharp
@@ -181,20 +181,17 @@ type PoseDecoder {
               )
             )
 
+    sortedLocallyMaximumKeypoints.sort (fun x y -> x.score > y.score)
+    sortedLocallyMaximumKeypoints
 
 
-
-    sortedLocallyMaximumKeypoints.sort { $0.score > $1.score
-    return sortedLocallyMaximumKeypoints
-
-
-  let getPoseScore(for pose: Pose, considering poses: [Pose]) =
-    let notOverlappedKeypointScoreAccumulator: double = 0
+  let getPoseScore(for pose: Pose, considering poses: Pose[]) =
+    let mutable notOverlappedKeypointScoreAccumulator: double = 0
     for keypoint in pose.keypoints do
-      if !keypoint!.isWithinRadiusOfCorrespondingKeypoints(in: poses, radius: config.nmsRadius) = 
-        notOverlappedKeypointScoreAccumulator <- notOverlappedKeypointScoreAccumulator + keypoint!.score
+      if not keypoint.isWithinRadiusOfCorrespondingKeypoints(in: poses, radius: config.nmsRadius) = 
+        notOverlappedKeypointScoreAccumulator <- notOverlappedKeypointScoreAccumulator + keypoint.score
 
 
-    return notOverlappedKeypointScoreAccumulator / double(KeypointIndex.allCases.count)
+    notOverlappedKeypointScoreAccumulator / double(KeypointIndex.allCases.count)
 
 

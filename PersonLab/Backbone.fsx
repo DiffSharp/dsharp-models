@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 open Checkpoints
 open DiffSharp
 
-type DepthwiseSeparableConvBlock: Layer {
+type DepthwiseSeparableConvBlock() =
+  inherit Model()
   let dConv: DepthwiseConv2D<Float>
   let conv: Conv2D<Float>
 
@@ -34,7 +35,7 @@ type DepthwiseSeparableConvBlock: Layer {
     dConv = DepthwiseConv2D<Float>(
       filter: depthWiseFilter,
       bias: depthWiseBias,
-      activation= relu6,
+      activation= dsharp.relu6,
       strides: strides,
       padding="same"
     )
@@ -42,7 +43,7 @@ type DepthwiseSeparableConvBlock: Layer {
     conv = Conv2d(
       filter: pointWiseFilter,
       bias: pointWiseBias,
-      activation= relu6,
+      activation= dsharp.relu6,
       padding="same"
     )
 
@@ -53,7 +54,8 @@ type DepthwiseSeparableConvBlock: Layer {
 
 
 
-type MobileNetLikeBackbone: Layer {
+type MobileNetLikeBackbone() =
+  inherit Model()
   let ckpt: CheckpointReader
 
   let convBlock0: Conv2D<Float>
@@ -77,7 +79,7 @@ type MobileNetLikeBackbone: Layer {
     self.convBlock0 = Conv2d(
       filter: ckpt.load("Conv2d_0/weights"),
       bias: ckpt.load("Conv2d_0/biases"),
-      activation= relu6,
+      activation= dsharp.relu6,
       stride=2,
       padding="same"
     )

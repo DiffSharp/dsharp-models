@@ -51,17 +51,17 @@ open class CheckpointWriter {
         try fileSystem.createDirectoryIfMissing(at: directory.path)
         let indexWriter = CheckpointIndexWriter(tensors: tensors)
         let indexHeader = indexWriter.serializedHeader()
-        let headerLocation = directory </> ("\(name).index")
+        let headerLocation = directory </> ($"{name}.index")
         let headerFile = fileSystem.open(headerLocation.path)
         try headerFile.write(indexHeader)
 
         // TODO: Handle splitting into multiple shards.
         try writeShard(
-            directory </> ("\(name)"), shard: 0, numShards: 1,
+            directory </> ($"{name}"), shard: 0, numShards: 1,
             tensorList: indexWriter.orderedTensors)
 
 
-    let writeShard(to location: Uri, shard: int, numShards: int, tensorList: [String]) =
+    let writeShard(to location: Uri, shard: int, numShards: int, tensorList: string[]) =
         let shardFile = CheckpointReader.shardFile(
             location: location, shard: shard, totalShards: numShards)
 
@@ -69,7 +69,7 @@ open class CheckpointWriter {
         // TODO: Write this directly to disk, rather than accumulating it in memory.
         for tensorName in tensorList do
             guard let tensor = tensors[tensorName] else {
-                fatalError("Mismatch in sorted tensors at name= \(tensorName).")
+                fatalError("Mismatch in sorted tensors at name= {tensorName}.")
 
             let scalars = tensor.array.scalars
             scalars.withUnsafeBufferPointer { (ptr) in

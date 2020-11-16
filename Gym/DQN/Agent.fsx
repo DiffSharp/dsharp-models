@@ -30,19 +30,20 @@ extension Optional {
 /// A Q-network is a neural network that receives the observation (state) as input and estimates
 /// the action values (Q values) of each action. For more information, check Human-level control
 /// through deep reinforcement learning (Mnih et al., 2015).
-type DeepQNetwork: Layer {
+type DeepQNetwork() =
+  inherit Model()
   type Input = Tensor<Float>
   type Output = Tensor<Float>
 
   let l1, l2: Dense
 
   init(observationSize: int, hiddenSize: int, actionCount: int) = 
-    l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation= relu)
-    l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount, activation= identity)
+    l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation= dsharp.relu)
+    l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount, activation= id)
 
 
   
-  override _.forward(input: Input) = Output {
+  override _.forward(input: Tensor) =
     return input |> l1, l2)
 
 
@@ -107,7 +108,7 @@ type DeepQNetworkAgent {
       // Neural network input needs to be 2D
       let tfState = Tensor<Float>(numpy: np.expand_dims(state.makeNumpyArray(), axis: 0))!
       let qValues = qNet(tfState)[0]
-      return Tensor (*<int32>*)(qValues[1].scalarized() > qValues[0].scalarized() ? 1 : 0, device=device)
+      return Tensor (*<int32>*)(qValues[1].toScalar() > qValues[0].toScalar() ? 1 : 0, device=device)
 
 
 
@@ -130,7 +131,7 @@ type DeepQNetworkAgent {
         let nextStateQValueBatch: Tensor
         if self.doubleDQN = true then
           // Double DQN
-          let npNextStateActionBatch = self.qNet(tfNextStateBatch).argmax(squeezingAxis: 1)
+          let npNextStateActionBatch = self.qNet(tfNextStateBatch).argmax(dim=1)
             .makeNumpyArray()
           let npNextStateFullIndices = np.stack(
             [np.arange(batchSize, dtype: np.int32), npNextStateActionBatch], axis: 1)
@@ -152,7 +153,7 @@ type DeepQNetworkAgent {
 
       optimizer.update(&qNet, along=gradients)
 
-      return loss.scalarized()
+      return loss.toScalar()
 
     return 0
 

@@ -26,13 +26,13 @@ type BijectiveDictionary<Key: Hashable, Value: Hashable> {
   let count: int { valueForKey.count
 
   /// Initializes the dictionary from a sequence of tuples of key and value.
-  public init<T: Sequence>(_ mapping: T) where T.Element = (Key, Value) = 
+  public init<T: Sequence>(mapping: T) where T.Element = (Key, Value) = 
     valueForKey = .init(uniqueKeysWithValues: mapping)
     keyForValue = .init(uniqueKeysWithValues: mapping |> Seq.map { ($1, $0))
 
 
   /// Initializes the dictionary from a dictionary
-  public init(_ dictionary: [Key: Value]) = 
+  public init(dictionary: [Key: Value]) = 
     valueForKey = dictionary
     keyForValue = .init(uniqueKeysWithValues: dictionary |> Seq.map { ($1, $0))
 
@@ -46,7 +46,7 @@ type BijectiveDictionary<Key: Hashable, Value: Hashable> {
   ///
   /// - Parameter minimumCapacity: the requested number of key-value pairs to
   ///   store.
-  public mutating let reserveCapacity(_ minimumCapacity: int) = 
+  public mutating let reserveCapacity(minimumCapacity: int) = 
     valueForKey.reserveCapacity(minimumCapacity)
     keyForValue.reserveCapacity(minimumCapacity)
 
@@ -80,7 +80,7 @@ type BijectiveDictionary<Key: Hashable, Value: Hashable> {
 
 
       assert(valueForKey.count = keyForValue.count,
-             "forward count: \(valueForKey.count), backward count: \(keyForValue.count), \(self)")
+             $"forward count: {valueForKey.count}, backward count: {keyForValue.count}, {self}")
 
 
 
@@ -90,7 +90,7 @@ type BijectiveDictionary<Key: Hashable, Value: Hashable> {
   /// - Parameter value: the value to find in the dictionary.
   /// - Returns: the key associated with `value` if `value` is in the
   ///   dictionary, or `nil` otherwise.
-  let key(_ value: Value) = Key? {
+  let key(value: Value) = Key? {
     return keyForValue[value]
 
 

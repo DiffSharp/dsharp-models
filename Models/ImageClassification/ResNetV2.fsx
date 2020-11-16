@@ -24,7 +24,8 @@ open DiffSharp
 // https://arxiv.org/abs/1812.01187
 
 // A convolution and batchnorm layer
-type ConvBNV2: Layer {
+type ConvBNV2() =
+    inherit Model()
     let conv: Conv2D<Float>
     let norm: BatchNorm<Float>
     let isLast: bool
@@ -46,7 +47,7 @@ type ConvBNV2: Layer {
         if isLast then
             //Initialize the last BatchNorm layer to scale zero
             self.norm = BatchNorm(
-                 axis: -1, 
+                 axis = -1, 
                  momentum: 0.9, 
                  offset: dsharp.zeros([outFilters]),
                  scale: dsharp.zeros([outFilters]),
@@ -68,7 +69,8 @@ type ConvBNV2: Layer {
 // The shortcut in a Residual Block
 // Workaround optionals not being differentiable, can be simplified when it's the case
 // Resnet-D trick: use average pooling instead of stride 2 conv for the shortcut
-type Shortcut: Layer {
+type Shortcut() =
+    inherit Model()
     let projection: ConvBNV2
     let avgPool: AvgPool2D<Float>
     let needsProjection: bool
@@ -95,9 +97,10 @@ type Shortcut: Layer {
 
 // Residual block for a ResNet V2
 // Resnet-B trick: stride on the inside conv
-type ResidualBlockV2: Layer {
+type ResidualBlockV2() =
+    inherit Model()
     let shortcut: Shortcut
-    let convs: [ConvBNV2]
+    let convs: ConvBNV2[]
 
     public init(inFilters: int, outFilters: int, stride: int, expansion: int){
         if expansion = 1 then
@@ -123,10 +126,11 @@ type ResidualBlockV2: Layer {
 
 
 /// An implementation of the ResNet v2 architectures, at various depths.
-type ResNetV2: Layer {
-    let inputStem: [ConvBNV2]
+type ResNetV2() =
+    inherit Model()
+    let inputStem: ConvBNV2[]
     let maxPool: MaxPool2d
-    let residualBlocks: [ResidualBlockV2] = []
+    let residualBlocks: ResidualBlockV2[] = [| |]
     let avgPool = GlobalAvgPool2D<Float>()
     let flatten = Flatten()
     let classifier: Dense
@@ -144,7 +148,7 @@ type ResNetV2: Layer {
         classCount: int, 
         depth: Depth, 
         inputChannels: int = 3, 
-        stemFilters: [Int] = [32, 32, 64]
+        stemFilters: int[] = [32, 32, 64]
     ) = 
         let filters = [inputChannels] + stemFilters
         inputStem = Array(0..<3).map { i in
@@ -152,7 +156,7 @@ type ResNetV2: Layer {
 
         maxPool = MaxPool2D(poolSize: (3, 3), stride=2, padding="same")
         let sizes = [64 / depth.expansion, 64, 128, 256, 512]
-        for (iBlock, nBlocks) in depth.layerBlockSizes.enumerated() = 
+        for (iBlock, nBlocks) in depth.layerBlockSizes.enumerated() do
             let (nIn, nOut) = (sizes[iBlock] * depth.expansion, sizes[iBlock+1] * depth.expansion)
             for j in 0..<nBlocks {
                 residualBlocks.append(ResidualBlockV2(
@@ -184,12 +188,12 @@ extension ResNetV2 {
 
         let expansion: int {
             match self with
-            case .resNet18, .resNet34: return 1
+            case .resNet18, .resNet34 -> 1
             | _ -> return 4
 
 
 
-        let layerBlockSizes: [Int] {
+        let layerBlockSizes: int[] {
             match self with
             | .resNet18 ->  return [2, 2, 2,  2]
             | .resNet34 ->  return [3, 4, 6,  3]

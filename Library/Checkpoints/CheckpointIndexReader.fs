@@ -75,7 +75,7 @@ extension CheckpointIndexReader {
         let valueLength = binaryData.readVarint32(at: &index)
         let value = binaryData.readDataBlock(at: &index, size: valueLength)
 
-        let tempHeader = try Tensorflow_BundleHeaderProto(serializedData: value)
+        let tempHeader = try Tensorflow_BundleHeaderProto( value)
         return tempHeader
 
 
@@ -95,12 +95,12 @@ extension CheckpointIndexReader {
         let newBytes = binaryData.readDataBlock(at: &index, size: unsharedBytes)
         guard sharedBytes <= currentPrefix.count else {
             fatalError(
-                $"Shared bytes of {sharedBytes} exceeded stored prefix size of \(currentPrefix.count)."
+                $"Shared bytes of {sharedBytes} exceeded stored prefix size of {currentPrefix.count}."
             )
 
         let keyData = currentPrefix[0..<sharedBytes] + newBytes
         currentPrefix = keyData
-        return String(bytes: keyData, encoding: .utf8)!
+        return String(bytes: keyData)!
 
 
     let readKeyAndValue() -> (String, Tensorflow_BundleEntryProto)? {
@@ -117,7 +117,7 @@ extension CheckpointIndexReader {
         // the footer, when it is complete, but this should be viable for known checkpoints.
         if (sharedKeyBytes + unsharedKeyBytes + valueLength) = 0 then return nil
 
-        let bundleEntry = try Tensorflow_BundleEntryProto(serializedData: value)
+        let bundleEntry = try Tensorflow_BundleEntryProto( value)
 
         return (key, bundleEntry)
 

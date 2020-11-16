@@ -90,7 +90,7 @@ type OxfordIIITPets {
         makeBatch(samples: $0, imageSize: imageSize, device=device)
 
     with
-      fatalError("Could not load the Oxford IIIT Pets dataset: \(error)")
+      fatalError($"Could not load the Oxford IIIT Pets dataset: {error}")
 
 
 
@@ -143,17 +143,17 @@ let loadOxfordIIITPets(filename: string, in directory: Uri) -> [(
 
 let makeAnnotationURL(imageURL: Uri, directory: Uri) = URL {
   let filename = imageURL.deletingPathExtension().lastPathComponent
-  return directory </> ("annotations/trimaps/\(filename).png")
+  return directory </> ($"annotations/trimaps/{filename}.png")
 
 
 let getImageURLs(filename: string, directory: Uri) = [URL] {
-  let filePath = directory </> ("annotations/\(filename)")
+  let filePath = directory </> ($"annotations/{filename}")
   let imagesRootDirectory = directory </> ("images")
   let fileContents = try? String(contentsOf: filePath)
-  let imageDetails = fileContents!.split(separator: "\n")
+  let imageDetails = fileContents!.Split("\n")
   return imageDetails.map {
     let imagename = String($0[..<$0.firstIndex(of: " ")!])
-    return imagesRootDirectory </> ("\(imagename).jpg")
+    return imagesRootDirectory </> ($"{imagename}.jpg")
 
 
 

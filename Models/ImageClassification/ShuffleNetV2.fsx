@@ -40,7 +40,8 @@ type ChannelShuffle: ParameterlessLayer {
 
 
 
-type InvertedResidual: Layer {
+type InvertedResidual() =
+    inherit Model()
     let includeBranch: bool = true
     let zeropad: ZeroPadding2D = ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
     
@@ -53,7 +54,7 @@ type InvertedResidual: Layer {
     let conv2: Conv2D<Float>
     let batchNorm3: BatchNorm<Float>
     
-    public init(filters: (Int, Int), stride: int) = 
+    public init(filters: (int * int), stride: int) = 
         if stride=1 then
             includeBranch = false
 
@@ -91,7 +92,7 @@ type InvertedResidual: Layer {
     
     
     override _.forward(input) =
-        if !includeBranch then
+        if not includeBranch then
             let splitInput = input.split(count: 2, alongAxis: 3)
             let input1 = splitInput[0]
             let input2 = splitInput[1]
@@ -111,15 +112,16 @@ type InvertedResidual: Layer {
 
 
 
-type ShuffleNetV2: Layer {
+type ShuffleNetV2() =
+    inherit Model()
     let zeroPad: ZeroPadding2D<Float> = ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
     
     let conv1: Conv2D<Float>
     let batchNorm1: BatchNorm<Float>
     let maxPool: MaxPool2d
-    let invertedResidualBlocksStage1: [InvertedResidual]
-    let invertedResidualBlocksStage2: [InvertedResidual]
-    let invertedResidualBlocksStage3: [InvertedResidual]
+    let invertedResidualBlocksStage1: InvertedResidual[]
+    let invertedResidualBlocksStage2: InvertedResidual[]
+    let invertedResidualBlocksStage3: InvertedResidual[]
     let conv2: Conv2D<Float>
     let globalPool: GlobalAvgPool2D<Float> = GlobalAvgPool2D()
     let dense: Dense

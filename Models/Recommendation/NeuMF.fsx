@@ -28,8 +28,8 @@ type NeuMF: Module {
     let numItems: int
     let numLatentFeatures: int
     let matrixRegularization: Scalar
-    let mlpLayerSizes: [Int] = [64, 32, 16, 8]
-    let mlpRegularizations: [Scalar] = [0, 0, 0, 0]
+    let mlpLayerSizes: int[] = [64, 32, 16, 8]
+    let mlpRegularizations: Scalar[] = [0, 0, 0, 0]
 
     let mfUserEmbedding: Embedding<Scalar>
     let mfItemEmbedding: Embedding<Scalar>
@@ -56,12 +56,12 @@ type NeuMF: Module {
         numItems : int,
         numLatentFeatures : int,
         matrixRegularization : double,
-        mlpLayerSizes : [Int],
+        mlpLayerSizes : int[],
         mlpRegularizations : double[]
     ) = 
 
-        precondition(mlpLayerSizes[0] % 2 = 0, "Input of first MLP layers must be multiple of 2")
-        precondition(
+        Debug.Assert(mlpLayerSizes[0] % 2 = 0, "Input of first MLP layers must be multiple of 2")
+        Debug.Assert(
             mlpLayerSizes.count = mlpRegularizations.count,
             "Size of MLP layers and MLP regularization must be equal")
 
@@ -76,19 +76,19 @@ type NeuMF: Module {
         // TODO: regularization
         // Embedding Layer
         mfUserEmbedding = Embedding<Scalar>(
-            vocabularySize: self.numUsers, embeddingSize: self.numLatentFeatures)
+            vocabularySize=self.numUsers, embeddingSize=self.numLatentFeatures)
         mfItemEmbedding = Embedding<Scalar>(
-            vocabularySize: self.numItems, embeddingSize: self.numLatentFeatures)
+            vocabularySize=self.numItems, embeddingSize=self.numLatentFeatures)
         mlpUserEmbedding = Embedding<Scalar>(
-            vocabularySize: self.numUsers, embeddingSize: self.mlpLayerSizes[0] / 2)
+            vocabularySize=self.numUsers, embeddingSize=self.mlpLayerSizes[0] / 2)
         mlpItemEmbedding = Embedding<Scalar>(
-            vocabularySize: self.numItems, embeddingSize: self.mlpLayerSizes[0] / 2)
+            vocabularySize=self.numItems, embeddingSize=self.mlpLayerSizes[0] / 2)
 
         for (inputSize, outputSize) in zip(mlpLayerSizes, mlpLayerSizes[1...]) = 
-            mlpLayers.append(Linear(inFeatures=inputSize, outFeatures=outputSize, activation= relu))
+            mlpLayers.append(Linear(inFeatures=inputSize, outFeatures=outputSize, activation= dsharp.relu))
 
 
-        neuMFLayer = Linear(inFeatures=(self.mlpLayerSizes.last! + self.numLatentFeatures), outFeatures=1)
+        neuMFLayer = Linear(inFeatures=(self.mlpLayerSizes |> Array.last + self.numLatentFeatures), outFeatures=1)
 
 
     

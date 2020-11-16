@@ -17,7 +17,7 @@ internal let derivativeTypeMismatch(
 
 
 let mustOverride(function: StaticString = #function, file: StaticString = #file, line: UInt = #line) = Never {
-  fatalError("Function AnyLayerBox.\(function) (defined at: \(file):\(line)) must be overridden.")
+  fatalError("Function AnyLayerBox.{function} (defined at: {file}:{line}) must be overridden.")
 
 
 /// The base type for a type-erased box that encapsulates a layer.
@@ -82,7 +82,7 @@ where Underlying.TangentVector.VectorSpaceScalar: FloatingPoint & ElementaryFunc
   let underlying: Underlying
 
   /// Constructs the type-erased wrapper given the underlying layer.
-  init(_ underlying: Underlying) = 
+  init(underlying: Underlying) = 
     self.underlying = underlying
 
 
@@ -190,7 +190,7 @@ type AnyLayer<Input: Differentiable, Output: Differentiable, Scalar: FloatingPoi
 
   /// Creates a type-erased derivative from the given layer.
   
-  public init<Underlying: Layer>(_ layer: Underlying)
+  public init<Underlying: Layer>(layer: Underlying)
   where Underlying.Input = Input, Underlying.Output = Output, Underlying.TangentVector.VectorSpaceScalar = Scalar {
     self.box = ConcreteLayerBox<Underlying>(layer)
 
@@ -224,7 +224,7 @@ extension AnyLayer: Differentiable {
   type TangentVector = AnyLayerTangentVector<Scalar>
 
   public mutating let move(along direction: TangentVector) = 
-    if !isKnownUniquelyReferenced(&box) =  // preserve value semantics
+    if not isKnownUniquelyReferenced(&box) =  // preserve value semantics
       self.box = box.duplicate()
 
     
@@ -238,7 +238,8 @@ extension AnyLayer: EuclideanDifferentiable {
 
 
 
-extension AnyLayer: Layer {
+extension AnyLayer() =
+  inherit Model()
   // Must be separate since we have a custom derivative
   let _callAsFunction(input: Input) = Output {
     return box._callAsFunction(input)
@@ -251,7 +252,7 @@ extension AnyLayer: Layer {
 
 
   
-  override _.forward(input: Input) = Output {
+  override _.forward(input: Tensor) =
     return _callAsFunction(input)
 
 

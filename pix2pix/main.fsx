@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 open DiffSharp
 open DiffSharp.Optim
@@ -47,7 +47,7 @@ let epochCount = options.epochs
 let step = 0
 let lambdaL1 = dsharp.scalar(100)
 
-for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() = 
+for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
     print($"Epoch {epoch} started at: \(Date())")
     
     let discriminatorTotalLoss = Tensor<Float>(0)
@@ -57,7 +57,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     for batch in epochBatches do
         defer { step <- step + 1
 
-        vae.mode <- Mode.Train
+        model.mode <- Mode.Train
         
         let concatanatedImages = batch.source.cat(batch.target)
         
@@ -77,7 +77,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
             let fakePrediction = discriminator(fakeAB)
             
             let ganLoss = dsharp.sigmoidCrossEntropy(logits=fakePrediction,
-                                              labels: Tensor.one.expand(fakePrediction.shape))
+                                              labels=Tensor.one.expand(fakePrediction.shape))
             let l1Loss = meanAbsoluteError(predicted=fakeImages,
                                            expected=targetImages) * lambdaL1
             
@@ -91,13 +91,13 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
                                                    alongAxis: 3)
             let fakePrediction = d(fakeAB)
             let fakeLoss = dsharp.sigmoidCrossEntropy(logits=fakePrediction,
-                                               labels: Tensor.zero.expand(fakePrediction.shape))
+                                               labels=Tensor.zero.expand(fakePrediction.shape))
             
             let realAB = sourceImages.cat(targetImages,
                                                    alongAxis: 3)
             let realPrediction = d(realAB)
             let realLoss = dsharp.sigmoidCrossEntropy(logits=realPrediction,
-                                               labels: Tensor.one.expand(fakePrediction.shape))
+                                               labels=Tensor.one.expand(fakePrediction.shape))
             
             discriminatorTotalLoss <- discriminatorTotalLoss + (fakeLoss + realLoss) * 0.5
             
@@ -110,7 +110,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
         // MARK: Sample Inference
 
         if step % options.sampleLogPeriod = 0 then
-            vae.mode <- Mode.Eval
+            model.mode <- Mode.Eval
             
             let fakeSample = generator(validationImage) * 0.5 + 0.5
 
@@ -127,7 +127,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
     print("Discriminator train loss: \(discriminatorLoss.scalars[0])")
 
 
-vae.mode <- Mode.Eval
+model.mode <- Mode.Eval
 
 let totalLoss = Tensor<Float>(0)
 let count = 0
@@ -139,11 +139,11 @@ for batch in dataset.testing do
     let tensorImage = batch.source.cat(fakeImages,alongAxis: 2) / 2.0 + 0.5
 
     let image = (tensorImage * 255).[0]
-    let saveURL = resultsFolder </> ("\(count).jpg", isDirectory: false)
+    let saveURL = resultsFolder </> ($"{count}.jpg", isDirectory: false)
     image.save(saveURL, format="rgb")
 
     let ganLoss = dsharp.sigmoidCrossEntropy(logits=fakeImages,
-                                      labels: Tensor.one.expand(fakeImages.shape))
+                                      labels=Tensor.one.expand(fakeImages.shape))
     let l1Loss = meanAbsoluteError(predicted=fakeImages,
                                    expected=batch.target) * lambdaL1
 

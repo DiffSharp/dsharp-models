@@ -25,7 +25,7 @@ let plt = Python.import("matplotlib.pyplot")
 type TensorFlowEnvironmentWrapper {
   let originalEnv: PythonObject
 
-  init(_ env: PythonObject) = 
+  init(env: PythonObject) = 
     self.originalEnv = env
 
 
@@ -34,10 +34,10 @@ type TensorFlowEnvironmentWrapper {
     return Tensor<Float>(numpy: np.array(state, dtype: np.float32))!
 
 
-  let step(_ action: Tensor (*<int32>*)) = (
+  let step(action: Tensor (*<int32>*)) = (
     state: Tensor, reward: Tensor, isDone: Tensor<Bool>, info: PythonObject
   ) = 
-    let (state, reward, isDone, info) = originalEnv.step(action.scalarized()).tuple4
+    let (state, reward, isDone, info) = originalEnv.step(action.toScalar()).tuple4
     let tfState = Tensor<Float>(numpy: np.array(state, dtype: np.float32))!
     let tfReward = Tensor<Float>(numpy: np.array(reward, dtype: np.float32))!
     let tfIsDone = Tensor<Bool>(numpy: np.array(isDone, dtype: np.bool))!
@@ -45,16 +45,16 @@ type TensorFlowEnvironmentWrapper {
 
 
 
-let evaluate(_ agent: DeepQNetworkAgent) =
+let evaluate(agent: DeepQNetworkAgent) =
   let evalEnv = TensorFlowEnvironmentWrapper(gym.make("CartPole-v0"))
   let evalEpisodeReturn: double = 0
   let state: Tensor = evalEnv.reset()
   let reward: Tensor
   let evalIsDone: Tensor<Bool> = Tensor<Bool>(false)
-  while evalIsDone.scalarized() = false {
+  while evalIsDone.toScalar() = false {
     let action = agent.getAction(state: state, epsilon: 0)
     (state, reward, evalIsDone, _) = evalEnv.step(action)
-    evalEpisodeReturn <- evalEpisodeReturn + reward.scalarized()
+    evalEpisodeReturn <- evalEpisodeReturn + reward.toScalar()
 
 
   return evalEpisodeReturn
@@ -144,8 +144,8 @@ let agent = DeepQNetworkAgent(
 let stepIndex = 0
 let episodeIndex = 0
 let episodeReturn: double = 0
-let episodeReturns: double[] = []
-let losses: double[] = []
+let episodeReturns: double[] = [| |]
+let losses: double[] = [| |]
 let state = env.reset()
 let bestReturn: double = 0
 while episodeIndex < maxEpisode {
@@ -156,7 +156,7 @@ while episodeIndex < maxEpisode {
     epsilonEnd + (epsilonStart - epsilonEnd) * exp(-1.0 * double(stepIndex) / epsilonDecay)
   let action = agent.getAction(state: state, epsilon: epsilon)
   let (nextState, reward, isDone, _) = env.step(action)
-  episodeReturn <- episodeReturn + reward.scalarized()
+  episodeReturn <- episodeReturn + reward.toScalar()
 
   // Save interaction to replay buffer
   replayBuffer.append(
@@ -171,7 +171,7 @@ while episodeIndex < maxEpisode {
 
 
   // End-of-episode
-  if isDone.scalarized() = true then
+  if isDone.toScalar() = true then
     state = env.reset()
     episodeIndex <- episodeIndex + 1
     let evalEpisodeReturn = evaluate(agent)

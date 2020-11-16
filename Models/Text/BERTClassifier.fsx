@@ -19,7 +19,8 @@ open Datasets
 
 open DiffSharp
 
-type BERTClassifier: Module, Regularizable {
+type BERTClassifier(bert: BERT, classCount: int) = 
+  inherit Model() //: Module, Regularizable {
   let bert: BERT
   let dense: Dense
 
@@ -29,7 +30,7 @@ type BERTClassifier: Module, Regularizable {
       dense: dense.regularizationValue)
 
 
-  public init(bert: BERT, classCount: int) = 
+  public init
     self.bert = bert
     self.dense = Linear(inFeatures=bert.hiddenSize, outFeatures=classCount)
 

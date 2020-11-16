@@ -19,16 +19,17 @@ open DiffSharp
 // Du Tran, Lubomir Bourdev, Rob Fergus, Lorenzo Torresani, Manohar Paluri
 // https://arxiv.org/pdf/1412.0767.pdf
 
-type C3D: Layer {
+type C3D() =
+    inherit Model()
     
     // Model presumes input of [[1, 12, 256, 256, 3])
     
-    let conv1 = Conv3D<Float>(filterShape=(3, 3, 3, 3, 32), activation= relu)
-    let conv2 = Conv3D<Float>(filterShape=(3, 3, 3, 32, 64), activation= relu)
-    let conv3 = Conv3D<Float>(filterShape=(3, 3, 3, 64, 128), activation= relu)
-    let conv4 = Conv3D<Float>(filterShape=(3, 3, 3, 128, 128), activation= relu)
-    let conv5 = Conv3D<Float>(filterShape=(2, 2, 2, 128, 256), activation= relu)
-    let conv6 = Conv3D<Float>(filterShape=(2, 2, 2, 256, 256), activation= relu)
+    let conv1 = Conv3D<Float>(filterShape=(3, 3, 3, 3, 32), activation= dsharp.relu)
+    let conv2 = Conv3D<Float>(filterShape=(3, 3, 3, 32, 64), activation= dsharp.relu)
+    let conv3 = Conv3D<Float>(filterShape=(3, 3, 3, 64, 128), activation= dsharp.relu)
+    let conv4 = Conv3D<Float>(filterShape=(3, 3, 3, 128, 128), activation= dsharp.relu)
+    let conv5 = Conv3D<Float>(filterShape=(2, 2, 2, 128, 256), activation= dsharp.relu)
+    let conv6 = Conv3D<Float>(filterShape=(2, 2, 2, 256, 256), activation= dsharp.relu)
     
     let pool = MaxPool3D<Float>(poolSize: (1, 2, 2), strides = [1, 2, 2))
     let flatten = Flatten()

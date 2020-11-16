@@ -6,7 +6,7 @@ open DiffSharp
 let printUsage() = 
     let exec = Uri(CommandLine.arguments[0])!.lastPathComponent
     print("Usage:")
-    print("\(exec) --style=<name> --image=<path> --output=<path>")
+    print($"{exec} --style=<name> --image=<path> --output=<path>")
     print("    --style: Style to use (candy, mosaic, or udnie) ")
     print("    --image: Path to image in JPEG format")
     print("    --output: Path to output image")
@@ -36,7 +36,7 @@ guard let image = config.image, let output = config.output else {
 
 
 guard File.Exists(image) else {
-    print("Error: Failed to load image \(image). Check that the file exists and is in JPEG format.")
+    print($"Error: Failed to load image {image}. Check that the file exists and is in JPEG format.")
     printUsage()
     exit(1)
 

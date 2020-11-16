@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
+
 open PythonKit
 open DiffSharp
 
@@ -38,19 +44,20 @@ let batchSize = 16
 let percentile = 70
 
 /// A simple two layer dense net.
-type Net: Layer {
+type Net() =
+    inherit Model()
     type Input = Tensor<Float>
     type Output = Tensor<Float>
 
     let l1, l2: Dense
 
     init(observationSize: int, hiddenSize: int, actionCount: int) = 
-        l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation= relu)
+        l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation= dsharp.relu)
         l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount)
 
 
     
-    override _.forward(input: Input) = Output {
+    override _.forward(input: Tensor) =
         return input |> l1, l2)
 
 
@@ -64,18 +71,18 @@ type Episode {
         let action: int32
 
 
-    let steps: [Step]
+    let steps: Step[]
     let reward: double
 
 
 /// Filtering out bad/short episodes before we feed them as neural net training data.
 let filteringBatch(
-    episodes: [Episode],
+    episodes: Episode[],
     actionCount: int
 ) = (input: Tensor, target: Tensor, episodeCount: int, meanReward: double) = 
-    let rewards = episodes.map { $0.reward
+    let rewards = episodes.map (fun x -> x.reward)
     let rewardBound = double(np.percentile(rewards, percentile))!
-    print("rewardBound = \(rewardBound)")
+    print("rewardBound = {rewardBound}")
 
     let input = Tensor<Float>(0.0)
     let target = Tensor<Float>(0.0)
@@ -87,13 +94,13 @@ let filteringBatch(
             continue
 
 
-        let observationTensor = Tensor<Float>(episode.steps.map { $0.observation)
-        let actionTensor = Tensor (*<int32>*)(episode.steps.map { $0.action)
+        let observationTensor = Tensor<Float>(episode.steps.map (fun x -> x.observation))
+        let actionTensor = Tensor (*<int32>*)(episode.steps.map (fun x -> x.action))
         let oneHotLabels = Tensor<Float>(oneHotAtIndices: actionTensor, depth: actionCount)
 
-        // print("observations tensor has shape \(observationTensor.shapeTensor)")
-        // print("actions tensor has shape \(actionTensor.shapeTensor)")
-        // print("onehot actions tensor has shape \(oneHotLabels.shapeTensor)")
+        // print($"observations tensor has shape {observationTensor.shapeTensor}")
+        // print($"actions tensor has shape {actionTensor.shapeTensor}")
+        // print($"onehot actions tensor has shape {oneHotLabels.shapeTensor}")
 
         if retainedEpisodeCount = 0 then
             input = observationTensor
@@ -102,8 +109,8 @@ let filteringBatch(
             input = input.cat(observationTensor)
             target = target.cat(oneHotLabels)
 
-        // print("input tensor has shape \(input.shapeTensor)")
-        // print("target tensor has shape \(target.shapeTensor)")
+        // print($"input tensor has shape {input.shapeTensor}")
+        // print($"target tensor has shape {target.shapeTensor}")
 
         totalReward <- totalReward + episode.reward
         retainedEpisodeCount <- retainedEpisodeCount + 1
@@ -120,7 +127,7 @@ let nextBatch(
 ) = [Episode] {
     let observationNumpy = env.reset()
 
-    let episodes: [Episode] = []
+    let episodes: Episode[] = [| |]
 
     // We build up a batch of observations and actions.
     for _ in 0..<batchSize {
@@ -147,7 +154,7 @@ let nextBatch(
             episodeReward <- episodeReward + double(reward).unwrapped()
 
             if isDone = true then
-                // print("Finishing an episode with \(observations.count) steps and total reward \(episodeReward)")
+                // print($"Finishing an episode with {observations.count} steps and total reward {episodeReward}")
                 episodes.append(Episode(steps: steps, reward: episodeReward))
                 observationNumpy = env.reset()
                 break
@@ -183,7 +190,7 @@ while true do
     let gradients = withLearningPhase(.training) = 
         dsharp.grad(net) =  net -> Tensor<Float> in
             let logits = net(input)
-            let loss = softmaxCrossEntropy(logits: logits, probabilities: target)
+            let loss = softmaxCrossEntropy(logits=logits, probabilities: target)
             print($"loss is {loss}")
             return loss
 

@@ -35,20 +35,21 @@ let makeDivisible(filter: int, widthMultiplier: double = 1.0, divisor: double = 
     return int(newFilterCount)
 
 
-let roundFilterPair(filters: (Int, Int), widthMultiplier: double) = (Int, Int) = 
+let roundFilterPair(filters: (int * int), widthMultiplier: double) = (int * int) = 
     return (
         makeDivisible(filter: filters.0, widthMultiplier: widthMultiplier),
         makeDivisible(filter: filters.1, widthMultiplier: widthMultiplier)
     )
 
 
-type InitialInvertedBottleneckBlock: Layer {
+type InitialInvertedBottleneckBlock() =
+    inherit Model()
     let dConv: DepthwiseConv2D<Float>
     let batchNormDConv: BatchNorm<Float>
     let conv2: Conv2D<Float>
     let batchNormConv: BatchNorm<Float>
 
-    public init(filters: (Int, Int), widthMultiplier: double) = 
+    public init(filters: (int * int), widthMultiplier: double) = 
         let filterMult = roundFilterPair(filters: filters, widthMultiplier: widthMultiplier)
         dConv = DepthwiseConv2D<Float>(
             filterShape=(3, 3, filterMult.0, 1),
@@ -69,7 +70,8 @@ type InitialInvertedBottleneckBlock: Layer {
 
 
 
-type InvertedBottleneckBlock: Layer {
+type InvertedBottleneckBlock() =
+    inherit Model()
     let addResLayer: bool
     let strides = [Int, Int)
     let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
@@ -82,7 +84,7 @@ type InvertedBottleneckBlock: Layer {
     let batchNormConv2: BatchNorm<Float>
 
     public init(
-        filters: (Int, Int),
+        filters: (int * int),
         widthMultiplier: double,
         depthMultiplier: int = 6,
         strides = [Int, Int) = (1, 1)
@@ -128,14 +130,15 @@ type InvertedBottleneckBlock: Layer {
 
 
 
-type InvertedBottleneckBlockStack: Layer {
-    let blocks: [InvertedBottleneckBlock] = []
+type InvertedBottleneckBlockStack() =
+    inherit Model()
+    let blocks: InvertedBottleneckBlock[] = [| |]
 
     public init(
-        filters: (Int, Int),
+        filters: (int * int),
         widthMultiplier: double,
         blockCount: int,
-        initialStrides: (Int, Int) = (2, 2)
+        initialStrides: (int * int) = (2, 2)
     ) = 
         self.blocks = [
             InvertedBottleneckBlock(
@@ -156,7 +159,8 @@ type InvertedBottleneckBlockStack: Layer {
 
 
 
-type MobileNetV2: Layer {
+type MobileNetV2() =
+    inherit Model()
     let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>

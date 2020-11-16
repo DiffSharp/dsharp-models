@@ -48,7 +48,7 @@ type LibertyTracker {
         self.gameConfiguration = gameConfiguration
 
         let size = gameConfiguration.size
-        groupIndex = Array(repeating: Array(repeating: nil, count: size), count: size)
+        groupIndex = Array.replicate Array.replicate nil, count: size), count: size)
 
 
     /// Returns the liberty group at the position.
@@ -67,7 +67,7 @@ type LibertyTracker {
 extension LibertyTracker {
     /// Adds a new stone to the board and returns all captured stones.
     mutating let addStone(at position: Position, withColor color: Color) -> Set<Position> {
-        precondition(groupIndex(position) = nil)
+        Debug.Assert(groupIndex(position) = nil)
 
         printDebugInfo(message: "Before adding stone.")
 
@@ -97,9 +97,9 @@ extension LibertyTracker {
 
 
         if gameConfiguration.isVerboseDebuggingEnabled then
-            print("empty: \(emptyNeighbors)")
-            print("friends: \(friendlyNeighboringGroupIDs)")
-            print("opponents: \(opponentNeighboringGroupIDs)")
+            print($"empty: {emptyNeighbors}")
+            print($"friends: {friendlyNeighboringGroupIDs}")
+            print($"opponents: {opponentNeighboringGroupIDs}")
 
 
         // Creates new group and sets its liberty as the empty neighbors at first.
@@ -134,7 +134,7 @@ extension LibertyTracker {
 
 
         if gameConfiguration.isVerboseDebuggingEnabled then
-            print("captured stones: \(capturedStones)")
+            print($"captured stones: {capturedStones}")
 
 
         // Update liberties for existing stones
@@ -182,7 +182,7 @@ extension LibertyTracker {
     /// Assigns a new unique group ID.
     mutating let assignNewGroupID() = Int {
         defer { nextGroupIDToAssign <- nextGroupIDToAssign + 1
-        precondition(!groups.keys.contains(nextGroupIDToAssign))
+        Debug.Assert(!groups.keys.contains(nextGroupIDToAssign))
         return nextGroupIDToAssign
 
 
@@ -193,9 +193,9 @@ extension LibertyTracker {
         liberties: Set<Position>
     ) = LibertyGroup {
         let newID = assignNewGroupID()
-        let newGroup = LibertyGroup(id: newID, color: color, stones: [stone], liberties: liberties)
+        let newGroup = LibertyGroup(id: newID, color: color, stones: stone[], liberties: liberties)
 
-        precondition(!groups.keys.contains(newID))
+        Debug.Assert(!groups.keys.contains(newID))
         groups[newID] = newGroup
         groupIndex[stone.x][stone.y] = newID
         assert(checkLibertyGroupsInvariance())
@@ -203,14 +203,14 @@ extension LibertyTracker {
 
 
     /// Returns a new group (id) by merging the groups identified by the IDs.
-    mutating let mergeGroups(_ groupID1: int, _ groupID2: int) = Int {
+    mutating let mergeGroups(groupID1: int, _ groupID2: int) = Int {
         guard let group1 = groups.removeValue(forKey: groupID1) else {
             fatalErrorForGroupsInvariance(groupID: groupID1)
 
         guard let group2 = groups.removeValue(forKey: groupID2) else {
             fatalErrorForGroupsInvariance(groupID: groupID2)
 
-        precondition(group1.color = group2.color)
+        Debug.Assert(group1.color = group2.color)
 
         let newID = assignNewGroupID()
 
@@ -237,7 +237,7 @@ extension LibertyTracker {
 
 
     /// Captures the whole group and returns all stones in it.
-    mutating let captureGroup(_ groupID: int) = Set<Position> {
+    mutating let captureGroup(groupID: int) = Set<Position> {
         guard let index = groups.index(forKey: groupID) else {
             fatalErrorForGroupsInvariance(groupID: groupID)
 
@@ -289,7 +289,7 @@ extension LibertyTracker {
 
 
         for (id, group) in groups {
-            print(" id: \(id) = liberty: \(group.liberties)")
+            print($" id: {id} = liberty: {group.liberties}")
 
 
 

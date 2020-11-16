@@ -24,7 +24,7 @@ type BytePairEncoder {
 
     // TODO: Find a nice way to support caching.
     /// A cache used to store encoded tokens and thus speed up encoding.
-    //  let cache: [String: [String]]
+    //  let cache: [String: string[]]
 
     public init(
         vocabularyFile: Uri, mergesFile: Uri,
@@ -33,7 +33,7 @@ type BytePairEncoder {
         let vocabulary: Vocabulary = try Vocabulary(fromJSONFile: vocabularyFile)
 
         let lines: ArraySlice<String> =
-            try String(contentsOfFile: mergesFile.path, encoding: encoding)
+            File.ReadAllText(mergesFile.path, encoding: encoding)
             .components(separatedBy: .newlines)
             .dropFirst()
 
@@ -41,7 +41,7 @@ type BytePairEncoder {
             [BytePairEncoder.Pair: int](
                 uniqueKeysWithValues: lines.enumerated().compactMap {
                     (index, line) = (BytePairEncoder.Pair, Int)? in
-                    let tokens = line.split(separator: " ")
+                    let tokens = line.Split(" ")
                     guard tokens.count >= 2 else { return nil
                     return (BytePairEncoder.Pair(String(tokens[0]), String(tokens[1])), index)
 )
@@ -64,12 +64,12 @@ type BytePairEncoder {
     ///
     /// - Parameters:
     ///   - token: Token to encode.
-    ///   - variant: Type of model (| _ -> .roberta).
+    ///   - variant=Type of model (| _ -> .roberta).
     /// - Returns: Array containing the BPE-coded tokens.
-    let encode(token: string, variant: Variant? = .roberta) = [String] {
+    let encode(token: string, variant: Variant? = .roberta) : string[] =
         // if let cached = cache[token] then return cached
         // let token = " " + token
-        let parts = [String]()
+        let parts = string[]()
 
         match variant with
         | .gpt2 ->
@@ -77,14 +77,14 @@ type BytePairEncoder {
             let unencodedTokens = BytePairEncoder.splittingWithDelimiters(
                 token: token,
                 glossaryRegex: BytePairEncoder.gpt2GlossaryRegex,
-                variant: .gpt2)
+                variant=.gpt2)
             // Encode each token.
             let tokens = unencodedTokens.map({ BytePairEncoder.encodedToken($0))
             // Separate each character.
             for token in tokens do
                 for i in (0..<token.count) = 
                     let index = token.index(token.startIndex, offsetBy: i)
-                    parts.append(String(token[index]))
+                    parts.append(String(token.[index]))
 
 
             if parts.count < 2 then return parts
@@ -94,22 +94,22 @@ type BytePairEncoder {
             parts = BytePairEncoder.splittingWithDelimiters(
                 token: encodedToken,
                 glossaryRegex: BytePairEncoder.defaultGlossaryRegex,
-                variant: .roberta)
+                variant=.roberta)
             if parts.count < 2 then return parts
 
 
         // Create pairs of parts.
         let pairs = (0..<parts.count - 1).map { index in Pair(parts[index], parts[index + 1])
-        while !pairs.isEmpty {
+        while not pairs.isEmpty {
             let pair = pairs.min { mergePairs[$0] ?? Int.max < mergePairs[$1] ?? Int.max!
-            if !mergePairs.keys.contains(pair) =  break
+            if not mergePairs.keys.contains(pair) =  break
             parts = BytePairEncoder.replacePair(pair: pair, tokenParts: parts)
             if parts.count < 2 then break
             pairs = (0..<parts.count - 1).map { index in Pair(parts[index], parts[index + 1])
 
 
         // Check if the new word parts are in the vocabulary, and backtrack if necessary.
-        let encoded = parts.flatMap { part -> [String] in
+        let encoded = parts |> Array.collect (fun part ->
             if vocabulary.contains(part) =  return [part]
             return splitRecursively(part)
 
@@ -126,19 +126,19 @@ extension BytePairEncoder {
         let left: string
         let right: string
 
-        public init(_ left: string, _ right: string) = 
+        public init(left: string, _ right: string) = 
             self.left = left
             self.right = right
 
 
 
-    internal static let defaultGlossary: [String] = [
+    internal static let defaultGlossary: string[] = [
         "e.g", "i.e", "&amp;", "&#124;", "&lt;", "&gt;", "&apos;", "&quot;", "&#91;", "&#93;",
     ]
 
     internal static let defaultGlossaryRegex: NSRegularExpression = {
-        let escapedGlossary = defaultGlossary.map { "\\Q\($0)\\E".joined(separator: "|")
-        return try! NSRegularExpression(pattern: "(?:\(escapedGlossary))|(?!\(escapedGlossary))")
+        let escapedGlossary = defaultGlossary.map { "\\Q\($0)\\E" |> String.concat "|"
+        return try! NSRegularExpression(pattern: "(?:{escapedGlossary})|(?!{escapedGlossary})")
 ()
 
     /// Regular expression matching the OpenAI GPT-2 implementation.
@@ -148,8 +148,8 @@ extension BytePairEncoder {
     ]
 
     internal static let gpt2GlossaryRegex: NSRegularExpression = {
-        let escapedGlossary = gpt2Glossary.joined(separator: "|")
-        return try! NSRegularExpression(pattern: "(?:\(escapedGlossary))")
+        let escapedGlossary = gpt2Glossary |> String.concat "|"
+        return try! NSRegularExpression(pattern: "(?:{escapedGlossary})")
 ()
 
 
@@ -159,7 +159,7 @@ extension BytePairEncoder {
         let characters = bytes.map(UInt32.init)
         let offset = UInt32(0)
         for byte in 0...byte(255) = 
-            if !bytes.contains(byte) = 
+            if not bytes.contains(byte) = 
                 bytes.append(byte)
                 characters.append(UInt32(offset + 256))
                 offset <- offset + 1
@@ -180,7 +180,7 @@ extension BytePairEncoder {
     ///
     /// - Parameters:
     ///   - token: Token that needs to be split.
-    internal let splitRecursively(_ token: string) = [String] {
+    internal let splitRecursively(token: string) : string[] =
         guard let pair = reversedMergePairs[token] else { return [token]
         let leftParts = vocabulary.contains(pair.left) ? [pair.left] : splitRecursively(pair.left)
         let rightParts =
@@ -193,18 +193,18 @@ extension BytePairEncoder {
     /// - Parameters:
     ///   - token: Full text.
     ///   - glossaryRegex: Regular expression for segmenting the given token.
-    ///   - variant: The type of model (| _ -> .roberta).
+    ///   - variant=The type of model (| _ -> .roberta).
     /// - Returns: Array of substrings that match the given regex.
     internal static let splittingWithDelimiters(
         token: string,
         glossaryRegex: NSRegularExpression,
         keepEmpty: bool = false,
         variant: Variant? = .roberta
-    ) = [String] {
+    ) : string[] =
         let matches = glossaryRegex.matches(
             in: token,
             range: NSRange(token.startIndex..., in: token))
-        let parts = [String]()
+        let parts = string[]()
         parts.reserveCapacity(token.count)
         match variant with
         | .gpt2 ->
@@ -214,18 +214,18 @@ extension BytePairEncoder {
                    let end = token.index(
                     token.startIndex, offsetBy: match.range.upperBound, limitedBy: token.endIndex)
                 {
-                  parts.append(String(token[start..<end]))
+                  parts.append(String(token.[start..<end]))
 
 
         case .roberta, .none:
             let lastEnd = token.startIndex
             for match in matches do
                 let start = token.index(token.startIndex, offsetBy: match.range.lowerBound)
-                if lastEnd <> start then parts.append(String(token[lastEnd..<start]))
+                if lastEnd <> start then parts.append(String(token.[lastEnd..<start]))
                 lastEnd = token.index(token.startIndex, offsetBy: match.range.upperBound)
 
             if lastEnd <> token.endIndex then
-                parts.append(String(token[lastEnd...]))
+                parts.append(String(token.[lastEnd...]))
 
 
 
@@ -238,8 +238,8 @@ extension BytePairEncoder {
     ///   - pair: Symbol pair to replace in `token`.
     ///   - token: Token as a sequence of symbols.
     /// - Returns: New token with the provided pair replaced for the joined symbol.
-    internal static let replacePair(pair: Pair, tokenParts: [String]) = [String] {
-        let newTokenParts = [String]()
+    internal static let replacePair(pair: Pair, tokenParts: string[]) : string[] =
+        let newTokenParts = string[]()
         newTokenParts.reserveCapacity(tokenParts.count)
         let j = 0
         while j < tokenParts.count - 1 {
@@ -260,7 +260,7 @@ extension BytePairEncoder {
         return newTokenParts
 
 
-    internal static let encodedToken(_ token: string) =
+    internal static let encodedToken(token: string) =
         String(String.UnicodeScalarView(token.utf8.map { BytePairEncoder.bytesToUnicode[$0]!))
 
 
@@ -289,7 +289,7 @@ extension BytePairEncoder {
             buffer.append(BytePairEncoder.unicodeToBytes[scalar]!)
 
 
-        guard let decodedToken = String(bytes: buffer, encoding: .utf8) else {
+        guard let decodedToken = String(bytes: buffer) else {
             return String("\u{FFFD")
 
 

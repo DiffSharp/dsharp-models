@@ -8,8 +8,8 @@ extension TransformerNet: ImportableLayer {
 /// Updates `obj` with values from command line arguments according to `params` map.
 let parseArguments<T>(into obj: inout T, with params: [String: WritableKeyPath<T, String?>]) = 
     for arg in CommandLine.arguments.dropFirst() = 
-        if !arg.starts("--") =  continue
-        let parts = arg.split(separator: "=", maxSplits: 2)
+        if not arg.starts("--") =  continue
+        let parts = arg.Split("=", maxSplits: 2)
         let name = String(parts[0][parts[0].index(parts[0].startIndex, offsetBy: 2)...])
         if let path = params[name], parts.count = 2 then
             obj[keyPath: path] = String(parts[1])
@@ -22,7 +22,7 @@ type FileError: Error {
 
 
 /// Updates `model` with parameters from a checkpoint for a matching style.
-let importWeights(_ model: inout TransformerNet, for style: string) =
+let importWeights(model: inout TransformerNet, for style: string) =
     let remoteCheckpoint: Uri
     let modelName: string
     match style with

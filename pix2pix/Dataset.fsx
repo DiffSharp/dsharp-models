@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 open System
 open Datasets
@@ -25,14 +25,14 @@ type Pix2PixDatasetVariant =
     member t.url = Uri "https://people.eecs.berkeley.edu/~taesung_park/CycleGAN/datasets/facades.zip"
 
 type Pix2PixDataset(?rootDirPath: string,
-        ?variant: Pix2PixDatasetVariant, 
+        ?variant=Pix2PixDatasetVariant, 
         ?trainBatchSize: int,
         ?testBatchSize: int,
         ?entropy: Entropy) =
     let trainBatchSize = defaultArg trainBatchSize 1
     let testBatchSize = defaultArg testBatchSize 1
     let rootDirPath = rootDirPath ?? Pix2PixDataset.downloadIfNotPresent(
-        variant: variant ?? .facades,
+        variant=variant ?? .facades,
         Path.Combine(DatasetUtilities.defaultDirectory, "pix2pix"))
     let rootDirURL = Uri(fileURLWithPath= rootDirPath)
         
@@ -59,7 +59,7 @@ type Pix2PixDataset(?rootDirPath: string,
                                  dsharp.tensor(batch |> Array.map (fun x -> x.target)))
 
     static member downloadIfNotPresent(
-            variant: Pix2PixDatasetVariant,
+            variant=Pix2PixDatasetVariant,
             directory: FilePath) =
         let rootDirPath = directory </> (variant.rawValue).path
 
@@ -73,7 +73,7 @@ type Pix2PixDataset(?rootDirPath: string,
             fileExtension="zip",
             remoteRoot: variant.url.deletingLastPathComponent(), 
             localStorageDirectory: directory)
-        print("\(rootDirPath) downloaded.")
+        print($"{rootDirPath} downloaded.")
 
         return rootDirPath
 

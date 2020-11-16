@@ -19,9 +19,9 @@ open DiffSharp
 // This is a convenience function to provide a two-argument version of softmaxCrossEntropy()
 // for common image-based training loops.
 
-let softmaxCrossEntropy<Scalar>(logits: Tensor<Scalar>, labels: Tensor<int32>) = Tensor<
+let softmaxCrossEntropy<Scalar>(logits=Tensor, labels=Tensor<int32>) = Tensor<
   Scalar
 > where Scalar: TensorFlowFloatingPoint {
-  return softmaxCrossEntropy(logits: logits, labels: labels, reduction: _mean)
+  return softmaxCrossEntropy(logits=logits, labels=labels, reduction=_mean)
 }
 *)

@@ -13,6 +13,8 @@
 // limitations under the License.
 
 namespace Datasets
+
+
 (*
 
 
@@ -27,7 +29,7 @@ type IFileSystem {
   ///
   /// - Parameters:
   ///   - path: The path of the file to be opened.
-  let open(_ path: string) = File
+  let open(path: string) = File
     
   /// Copies a file
   /// - Parameters
@@ -39,8 +41,8 @@ type IFileSystem {
 type IFile {
   let read() -> Data
   let read(position: int, count: int) -> Data
-  let write(_ value: Data)
-  let write(_ value: Data, position: int)
-  let append(_ value: Data)
+  let write(value: Data)
+  let write(value: Data, position: int)
+  let append(value: Data)
 
 *)

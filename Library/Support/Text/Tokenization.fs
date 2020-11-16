@@ -14,10 +14,27 @@
 
 namespace Support
 
+open System
+open System.IO
+open System.Text
+open System.Text.Json
+open System.Text.RegularExpressions
 open DiffSharp
+
+type Data(bytes: byte[]) =
+
+    static member ReadAllBytes(file) = Data(File.ReadAllBytes(file))
+
 
 [<AutoOpen>]
 module Tokenization =
+
+    type String with
+
+        member t.ReplaceRegexp(regexp: string, replacement: string) : string =
+            failwith "tbd - check syntax of all regexps"
+            Regex.Replace(t, regexp, replacement)
+
     /// Returns a 3-D attention mask that correspond to the 2-D mask of the provided text batch.
     ///
     /// - Parameters:
@@ -38,6 +55,44 @@ module Tokenization =
         // We broadcast along two dimensions to create the mask.
         broadcastOnes * reshapedMask
 
+    /// Returns a cleaned version of the provided string. Cleaning in this case consists of normalizing
+    /// whitespaces, removing control characters and adding whitespaces around CJK characters.
+    ///
+    /// - Parameters:
+    ///   - text: string to clean.
+    ///
+    /// - Returns: Cleaned version of `text`.
+    let clean(text: string) : string =
+        // Normalize whitespaces.
+        let afterWhitespace : string = text.ReplaceRegexp(@"\s+"," ")
+
+        // Remove control characters.
+        let afterControl : string = afterWhitespace.ReplaceRegexp(@"[\x{0000}\x{fffd}\p{C]}]", "")
+
+        // Add whitespace around CJK characters.
+        //
+        // The regular expression that we use defines a "chinese character" as anything in the
+        // [CJK Unicode block](https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)).
+        //
+        // Note that the CJK Unicode block is not all Japanese and Korean characters, despite its name.
+        // The modern Korean Hangul alphabet is a different block, as is Japanese Hiragana and
+        // Katakana. Those alphabets are used to write space-separated words, and so they are not
+        // treated specially and are instead handled like all of the other languages.
+        let afterCJK : string = 
+            afterControl.ReplaceRegexp(
+                @"([\p{InCJK_Unified_Ideographs}" +
+                @"\p{InCJK_Unified_Ideographs_Extension_A}" +
+                @"\p{InCJK_Compatibility_Ideographs}" +
+                @"\x{20000}-\x{2a6df}" +
+                @"\x{2a700-\x{2b73f}" +
+                @"\x{2b740-\x{2b81f}" +
+                @"\x{2b820-\x{2ceaf}" +
+                @"\x{2f800-\x{2fa1f])",
+                " $1 ")
+
+        afterCJK
+
+
 /// Vocabulary that can be used for tokenizing strings.
 type Vocabulary(tokensToIds: Map<string, int>) =
     let idsToTokens = Map<int, string>(tokensToIds |> Seq.map (fun (KeyValue(a,b)) -> (b,a)))
@@ -45,7 +100,7 @@ type Vocabulary(tokensToIds: Map<string, int>) =
     member _.count = tokensToIds.Count
 
     new (idsToTokens: Map<int, string>) = 
-        Vocabulary(Map<string, int>(idsToTokens |> Seq.map (fun (KeyValue(a,b)) -> (b,a))))
+        Vocabulary(idsToTokens |> Seq.map (fun (KeyValue(a,b)) -> (b,a)) |> Map.ofSeq)
 
     member _.contains(token: string) =
         tokensToIds.ContainsKey(token)
@@ -55,187 +110,129 @@ type Vocabulary(tokensToIds: Map<string, int>) =
 
     member _.token(id: int) = 
         idsToTokens.[id]
-(*
-    static member FromFile (fileURL: Uri) =
-        Vocabulary (
-            (try String(contentsOfFile: fileURL.path, encoding: .utf8))
-                .components(separatedBy: .newlines)
-                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines)
-                .filter (fun x -> x..count > 0
-                .enumerated().map { ($0.element, $0.offset),
-            uniquingKeysWith: { (v1, v2) in max(v1, v2)))
 
-    member _.save(toFile fileURL: Uri) =
-        try idsToTokens
-            .sorted { $0.key < $1.key
-            .map { $0.1
-            .joined(separator: "\n")
-            .write(fileURL, atomically: true, encoding: .utf8)
+    static member FromFile (fileURL: FilePath) =
+        File.ReadAllLines(fileURL)
+        |> Array.map (fun x -> x.Trim())
+        |> Array.filter (fun x -> x.Length > 0)
+        |> Array.mapi (fun x i -> x, i)
+        |> Map.ofSeq
+        |> Vocabulary
 
-    static member FromSentencePieceModel(fileURL: Uri) =
-            tokensToIds: Map<string, int>(
-                (try Sentencepiece_ModelProto(serializedData: Data(contentsOf: fileURL)))
-                    .pieces
-                    .map { $0.piece.replacingOccurrences(of: "▁", with: "##")
-                    .map { $0 = "<unk>" ? "[UNK]" : $0
-                    .enumerated().map { ($0.element, $0.offset),
-                uniquingKeysWith: { (v1, v2) in max(v1, v2)))
+    member _.save(fileURL: FilePath) =
+        idsToTokens
+        |> Seq.sortBy (fun x -> x.Key)
+        |> Seq.map (fun x -> x.Value)
+        |> String.concat "\n"
+        |> fun s -> File.WriteAllText(fileURL, s)
 
-    public init(fromJSONFile fileURL: Uri) =
-        let json = try String(contentsOfFile: fileURL.path)
-        let tokensToIds = try JSONDecoder().decode(
-            Map<string, int>.self,
-            from: json.data(using: .utf8)!)
-        self.init(tokensToIds: tokensToIds)
+    //static member FromSentencePieceModel(fileURL: FilePath) =
+    //    let data = Data.ReadAllBytes(fileURL)
+    //    Vocabulary(
+    //        (Sentencepiece_ModelProto(data))
+    //            .pieces
+    //            .map(fun x -> x.piece.Replace("▁", "@"))
+    //            .map(fun x -> if x = "<unk>" then "[UNK]" else x)
+    //            |> Seq.map(fun x -> (x.element, x.offset)),
+    //        uniquingKeysWith=(fun (v1, v2) -> max(v1, v2)))
+
+    static member FromJsonFile(fileURL: FilePath) =
+        let json = File.ReadAllText(fileURL)
+        let j = Json.JsonDocument.Parse(json)
+        //let tokensToIds =  JSONDecoder().decode(Map<string, int>.self, from: json.data(using: .utf8)!)
+        //Vocabulary(tokensToIds)
+        failwith "tbd"
 
 /// Text tokenizer which is used to split strings into arrays of tokens.
-type Tokenizer =
-    abstract tokenize: _ text: string -> string[]
+[<AbstractClass>]
+type Tokenizer() =
+    abstract tokenize: text: string -> string[]
 
 /// Basic text tokenizer that performs some simple preprocessing to clean the provided text and
 /// then performs tokenization based on whitespaces.
-type BasicTokenizer() = 
-    let caseSensitive: bool
+///
+/// Creates a basic text tokenizer.
+///
+/// Arguments:
+///   - caseSensitive: Specifies whether or not to ignore case.
+type BasicTokenizer(?caseSensitive: bool) = 
+    inherit Tokenizer()
+    
+    let caseSensitive = defaultArg caseSensitive false
 
-    /// Creates a basic text tokenizer.
-    ///
-    /// Arguments:
-    ///   - caseSensitive: Specifies whether or not to ignore case.
-    public init(caseSensitive: bool = false) = 
-        self.caseSensitive = caseSensitive
-
-
-    let tokenize(_ text: string) = [String] {
-        clean(text).split(separator: " ").flatMap { token -> [String] in
-            let processed = String(token)
-            if !caseSensitive then
-                processed = processed.lowercased()
+    override _.tokenize(text: string) : string[] =
+        clean(text).Split(" ") |> Array.collect (fun token ->
+            let mutable processed = token
+            if not caseSensitive then
+                processed <- processed.ToLower()
 
                 // Normalize unicode characters.
-                processed = processed.decomposedStringWithCanonicalMapping
+                processed <- processed.Normalize(NormalizationForm.FormD)
 
                 // Strip accents.
-                processed = processed.replacingOccurrences(
-                    of: #"\p{Mn"#,
-                    with e ->: "",
-                    options: .regularExpression)
-
+                processed <- processed.ReplaceRegexp(@"\p{Mn}", "")
 
             // Split punctuation. We treat all non-letter/number ASCII as punctuation. Characters
             // such as "$" are not in the Unicode Punctuation class but we treat them as
             // punctuation anyways for consistency.
-            processed = processed.replacingOccurrences(
-                of: #"([\p{P!-/:-@\[-`{-~])"#,
-                with e ->: " $1 ",
-                options: .regularExpression)
+            processed <- processed.ReplaceRegexp(@"([\p{P}!-/:-@\[-`{-~])"," $1 ")
 
-            return processed.split(separator: " ").map(String.init)
-
-
-
+            processed.Split(" "))
 
 /// Greedy subword tokenizer.
 ///
 /// This tokenizer uses a greedy longest-match-first algorithm to perform tokenization using the
 /// provided vocabulary. For example, `"unaffable"` could be tokenized as
-/// `["un", "##aff", "##able"]`.
-type GreedySubwordTokenizer: Tokenizer {
-    let vocabulary: Vocabulary
-    let unknownToken: string
-    let maxTokenLength: int?
-
-    /// Creates a subword tokenizer.
-    ///
-    /// - Parameters:
-    ///   - vocabulary: Vocabulary containing all supported tokens.
-    ///   - unknownToken: Token used to represent unknown tokens (i.e., tokens that are not in the
-    ///     provided vocabulary or whose length is longer than `maxTokenLength`).
-    ///   - maxTokenLength: Maximum allowed token length.
-    public init(vocabulary: Vocabulary, unknownToken: string = "[UNK]", maxTokenLength: int?) = 
-        self.vocabulary = vocabulary
-        self.unknownToken = unknownToken
-        self.maxTokenLength = maxTokenLength
-
-
-    let tokenize(_ text: string) = [String] {
-        clean(text).split(separator: " ").flatMap { token -> [String] in
-            if let maxLength = maxTokenLength, token.count > maxLength then return [unknownToken]
-            let isBad = false
-            let start = token.startIndex
-            let subTokens = [String]()
-            while start < token.endIndex {
-                // Find the longest matching substring.
-                let end = token.endIndex
-                let currentSubstring = ""
-                while start < end {
-                    let substring = String(token[start..<end])
-                    if start > token.startIndex then
-                        substring = "##" + substring
-
-                    if vocabulary.contains(substring) = 
-                        currentSubstring = substring
-                        start = end
-                    else
-                        end = token.index(end, offsetBy: -1)
-
-
-
-                // Check if the substring is good.
-                if currentSubstring.isEmpty then
-                    isBad = true
-                    start = token.endIndex
-                else
-                    subTokens.append(currentSubstring)
-                    start = end
-
-
-            return isBad ? [unknownToken] : subTokens
-
-
-
-
-/// Returns a cleaned version of the provided string. Cleaning in this case consists of normalizing
-/// whitespaces, removing control characters and adding whitespaces around CJK characters.
+/// `["un", "#aff", "#able"]`.
+///
+/// Creates a subword tokenizer.
 ///
 /// - Parameters:
-///   - text: string to clean.
-///
-/// - Returns: Cleaned version of `text`.
-internal let clean(_ text: string) =
-    // Normalize whitespaces.
-    let afterWhitespace = text.replacingOccurrences(
-        of: #"\s+"#,
-        with e ->: " ",
-        options: .regularExpression)
+///   - vocabulary: Vocabulary containing all supported tokens.
+///   - unknownToken: Token used to represent unknown tokens (i.e., tokens that are not in the
+///     provided vocabulary or whose length is longer than `maxTokenLength`).
+///   - maxTokenLength: Maximum allowed token length.
+type GreedySubwordTokenizer(vocabulary: Vocabulary, ?unknownToken: string , ?maxTokenLength: int) =
+    inherit Tokenizer() 
+    let unknownToken = defaultArg unknownToken "[UNK]"
+    override _.tokenize(text) =
+        [| for token in clean(text).Split(" ") do 
+            let maxLength = defaultArg maxTokenLength token.Length
+            if token.Length > maxLength then 
+                yield unknownToken
+            else
+                let mutable isBad = false
+                let mutable start = 0
+                let subTokens = ResizeArray()
+                while start < token.Length do
+                    // Find the longest matching substring.
+                    let mutable fin = token.Length
+                    let mutable currentSubstring = ""
+                    while start < fin do
+                        let mutable substring = token.[start..fin-1]
+                        if start > 0 then
+                            substring <- "@" + substring
 
-    // Remove control characters.
-    let afterControl = afterWhitespace.replacingOccurrences(
-        of: #"[\x{0000\x{fffd\p{C]"#,
-        with e ->: "",
-        options: .regularExpression)
+                        if vocabulary.contains(substring) then
+                            currentSubstring <- substring
+                            start <- fin
+                        else
+                            failwith "tbd"
+                            //fin <- token.Length //???? was end = token.index(end, offsetBy: -1)
 
-    // Add whitespace around CJK characters.
-    //
-    // The regular expression that we use defines a "chinese character" as anything in the
-    // [CJK Unicode block](https://en.wikipedia.org/wiki/CJK_Unified_Ideographs_(Unicode_block)).
-    //
-    // Note that the CJK Unicode block is not all Japanese and Korean characters, despite its name.
-    // The modern Korean Hangul alphabet is a different block, as is Japanese Hiragana and
-    // Katakana. Those alphabets are used to write space-separated words, and so they are not
-    // treated specially and are instead handled like all of the other languages.
-    let afterCJK = afterControl.replacingOccurrences(
-        of: #"([\p{InCJK_Unified_Ideographs"# +
-            #"\p{InCJK_Unified_Ideographs_Extension_A"# +
-            #"\p{InCJK_Compatibility_Ideographs"# +
-            #"\x{20000-\x{2a6df"# +
-            #"\x{2a700-\x{2b73f"# +
-            #"\x{2b740-\x{2b81f"# +
-            #"\x{2b820-\x{2ceaf"# +
-            #"\x{2f800-\x{2fa1f])"#,
-        with e ->: " $1 ",
-        options: .regularExpression)
+                    // Check if the substring is good.
+                    if String.IsNullOrEmpty currentSubstring then
+                        isBad <- true
+                        start <- token.Length
+                    else
+                        subTokens.Add(currentSubstring)
+                        start <- fin
 
-    return afterCJK
+                if isBad then 
+                    yield unknownToken 
+                else 
+                    yield! subTokens |]
 
 
-*)
+
+

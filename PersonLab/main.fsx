@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 
 open DiffSharp
@@ -37,7 +37,7 @@ type Inference: ParsableCommand {
   let profiling: bool
 
   let run() = 
-    vae.mode <- Mode.Eval
+    model.mode <- Mode.Eval
     let config = Config(printProfilingData: profiling)
     if checkpointPath <> nil then
       config.checkpointPath = Uri(fileURLWithPath= checkpointPath!)
@@ -45,8 +45,8 @@ type Inference: ParsableCommand {
     let model = PersonLab(config)
 
     let fileManager = FileManager()
-    if !fileManager.Exists(imagePath) = 
-      print("No image found at path: \(imagePath)")
+    if not (fileManager.Exists(imagePath)) then
+      print($"No image found at path: {imagePath}")
       return
 
     let image = Image(jpeg: Uri(fileURLWithPath= imagePath))

@@ -32,7 +32,7 @@ type TextUnsupervisedVariant: string {
 
 
 private type ITextUnsupervisedVariantDetails {
-  let variant: TextUnsupervisedVariant { get set
+  let variant=TextUnsupervisedVariant { get set
   let location: Uri { get set
   let trainingDirectoryName: string { get set
   let validationDirectoryName: string { get set
@@ -85,13 +85,13 @@ type TextUnsupervised {
   let trainingDataset: Samples
   let validationDataset: Samples
   let bpe: BytePairEncoder?
-  let variant: TextUnsupervisedVariant
+  let variant=TextUnsupervisedVariant
   let variantDetails: TextUnsupervisedVariantDetails
 
   public init(
     bpe: BytePairEncoder? = nil,
-    variant: TextUnsupervisedVariant = TextUnsupervisedVariant.wikiText2,
-    trainingbatchSize: int = 8, validationbatchSize: int = 4, sequenceLength: int = 1024,
+    variant=TextUnsupervisedVariant = TextUnsupervisedVariant.wikiText2,
+    trainingbatchSize: int = 8, validationbatchSize: int = 4, sequenceLength=int = 1024,
     trainingDocumentCount: int = 4, validationDocumentCount: int = 4,
     entropy: Entropy,
     on device: Device = Device.defaultTFEager
@@ -115,11 +115,11 @@ type TextUnsupervised {
       self.trainingDataset = try TextUnsupervised.loadTraining(
         localStorageDirectory=localStorageDirectory, bpe: bpe,
         variantDetails: variantDetails, batchSize= trainingBatchSize,
-        sequenceLength: sequenceLength, documentCount: trainingDocumentCount)
+        sequenceLength=sequenceLength, documentCount: trainingDocumentCount)
       self.validationDataset = try TextUnsupervised.loadValidation(
         localStorageDirectory=localStorageDirectory, bpe: bpe,
         variantDetails: variantDetails, batchSize= validationBatchSize,
-        sequenceLength: sequenceLength, documentCount: validationDocumentCount)
+        sequenceLength=sequenceLength, documentCount: validationDocumentCount)
 
       training = TrainingEpochs(
         samples: trainingDataset, 
@@ -142,7 +142,7 @@ type TextUnsupervised {
 
 
     with
-      fatalError($"Could not load dataset for {variant}: \(error)")
+      fatalError($"Could not load dataset for {variant}: {error}")
 
 
 
@@ -163,18 +163,18 @@ type TextUnsupervised {
       remoteRoot: variantDetails.location, localStorageDirectory: directory, extract: true)
 
 
-  static member readCSV(in file: Uri) -> [String] {
-    let rawText = try! String(contentsOf: file, encoding: .utf8)
+  static member readCSV(in file: Uri) -> string[] {
+    let rawText = try! String(contentsOf: file)
     let rows = rawText.components(separatedBy: "\"\n\"")
     rows[0] = String(rows[0].dropFirst())
-    rows[rows.indices.last!] = String(rows.last!.dropLast(2))
+    rows[rows.indices |> Array.last] = String(rows |> Array.last.dropLast(2))
     return rows
 
 
   static member readEncoded(in file: Uri) -> [Int] {
-    let rawText = try! String(contentsOf: file, encoding: .utf8)
+    let rawText = try! String(contentsOf: file)
     let rows = rawText.components(separatedBy: "\n")
-    let tokens: [Int] = Array()
+    let tokens: int[] = Array()
     for row in rows do
       guard let encoded = int(row) else { continue
       tokens.append(encoded)
@@ -183,7 +183,7 @@ type TextUnsupervised {
 
 
   static member embedding(for string: string, bpe: BytePairEncoder) = [Int] {
-    let tokens = bpe.encode(token: string, variant: .gpt2)
+    let tokens = bpe.encode(token: string, variant=.gpt2)
     // TODO(michellecasbon): Decide how to prevent OOV or choose a better ID (probably not 0).
     let ids = tokens.map { bpe.vocabulary.id(forToken: $0) ?? 0
     return ids
@@ -200,15 +200,15 @@ type TextUnsupervised {
   /// - Parameter bpe: byte pair encoder used for encoding text.
   /// - Parameter variantDetails: an object containing information of filename, location, etc.
   /// - Parameter batchSize= number of sequences in a batch.
-  /// - Parameter sequenceLength: number of characters in a sequence.
+  /// - Parameter sequenceLength=number of characters in a sequence.
   /// - Parameter documentCount: number of documents to proceed. (Refer let readCSV() to see how
   ///   a text file is chunked into documents.)
   static member loadDirectory(
     named name: string, in directory: Uri, bpe: BytePairEncoder?,
-    variantDetails: TextUnsupervisedVariantDetails, batchSize: int, sequenceLength: int,
+    variantDetails: TextUnsupervisedVariantDetails, batchSize: int, sequenceLength=int,
     documentCount: int = 4
   ) -> LanguageModelDataset<[[Int]]> {
-    precondition(
+    Debug.Assert(
       bpe <> nil || variantDetails.encodedFileName <> nil,
       "bpe must be provided when encodedFileName is nil.")
     downloadIfNotPresent(
@@ -216,30 +216,30 @@ type TextUnsupervised {
 
     let encodedDocs: [[Int]] = []
     if let bpe = bpe then
-      let path = directory </> ("\(variantDetails.filename)/\(name).csv")
+      let path = directory </> ($"{variantDetails.filename}/{name}.csv")
       let documentsFull = try readCSV(in: path)
       let documents = Array(documentsFull[0..<min(documentCount, documentsFull.count)])
       encodedDocs = documents.concurrentMap { embedding($0, bpe: bpe)
     else
       let pathPrefix = directory </> (
-        "\(variantDetails.encodedFileName!)/\(name)").path
-      encodedDocs = (0..<documentCount).map { Uri(fileURLWithPath= "\(pathPrefix)/doc_\($0).txt")
+        $"\(variantDetails.encodedFileName!)/{name}").path
+      encodedDocs = (0..<documentCount).map { Uri(fileURLWithPath= $"{pathPrefix}/doc_\($0).txt")
         .concurrentMap
       { try! readEncoded(in: $0)
 
 
     return LanguageModelDataset(
       batchSize= batchSize,
-      sequenceLength: sequenceLength,
+      sequenceLength=sequenceLength,
       numericalizedTexts: encodedDocs,
-      lengths: encodedDocs.map { $0.count,
+      lengths: encodedDocs.map (fun x -> x.count),
       dropLast: true
     )
 
 
   static member loadTraining(
     localStorageDirectory: Uri, bpe: BytePairEncoder?,
-    variantDetails: TextUnsupervisedVariantDetails, batchSize: int, sequenceLength: int,
+    variantDetails: TextUnsupervisedVariantDetails, batchSize: int, sequenceLength=int,
     documentCount: int
   )
    
@@ -247,13 +247,13 @@ type TextUnsupervised {
   {
     return try loadDirectory(
       named: variantDetails.trainingDirectoryName, in: localStorageDirectory, bpe: bpe,
-      variantDetails: variantDetails, batchSize= batchSize, sequenceLength: sequenceLength,
+      variantDetails: variantDetails, batchSize= batchSize, sequenceLength=sequenceLength,
       documentCount: documentCount)
 
 
   static member loadValidation(
     localStorageDirectory: Uri, bpe: BytePairEncoder?,
-    variantDetails: TextUnsupervisedVariantDetails, batchSize: int, sequenceLength: int,
+    variantDetails: TextUnsupervisedVariantDetails, batchSize: int, sequenceLength=int,
     documentCount: int
   )
    
@@ -261,7 +261,7 @@ type TextUnsupervised {
   {
     return try loadDirectory(
       named: variantDetails.validationDirectoryName, in: localStorageDirectory, bpe: bpe,
-      variantDetails: variantDetails, batchSize= batchSize, sequenceLength: sequenceLength,
+      variantDetails: variantDetails, batchSize= batchSize, sequenceLength=sequenceLength,
       documentCount: documentCount)
 
 
@@ -269,17 +269,17 @@ type TextUnsupervised {
 extension TextUnsupervised where Entropy = SystemRandomNumberGenerator {
   public init(
     bpe: BytePairEncoder? = nil,
-    variant: TextUnsupervisedVariant = TextUnsupervisedVariant.wikiText2,
-    trainingbatchSize: int = 8, validationbatchSize: int = 4, sequenceLength: int = 1024,
+    variant=TextUnsupervisedVariant = TextUnsupervisedVariant.wikiText2,
+    trainingbatchSize: int = 8, validationbatchSize: int = 4, sequenceLength=int = 1024,
     trainingDocumentCount: int = 4, validationDocumentCount: int = 4,
     on device: Device = Device.defaultTFEager
   ) = 
     self.init(
       bpe: bpe,
-      variant: variant,
+      variant=variant,
       trainingbatchSize= trainingBatchSize,
       validationbatchSize= validationBatchSize,
-      sequenceLength: sequenceLength,
+      sequenceLength=sequenceLength,
       trainingDocumentCount: trainingDocumentCount,
       validationDocumentCount: validationDocumentCount,
       entropy=SystemRandomNumberGenerator(),
@@ -289,7 +289,7 @@ extension TextUnsupervised where Entropy = SystemRandomNumberGenerator {
 
 
 extension Array {
-  let concurrentMap<B>(_ transform: @escaping (Element) = B) = [B] {
+  let concurrentMap<B>(transform: @escaping (Element) = B) = [B] {
     let res = [B?](repeating: nil, count: count)
     let threadCount = min count 10
     let q = DispatchQueue(label: "sync queue")

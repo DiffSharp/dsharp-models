@@ -44,7 +44,7 @@ open DiffSharp
 ///
 type TensorLoopSolution: ShallowWaterEquationSolution {
   /// Water level height
-  let waterLevel: double[][] { u1.array.map { $0.scalars
+  let waterLevel: double[][] { u1.array.map (fun x -> x.scalars
   /// Solution time
   let time = t
 
@@ -124,7 +124,7 @@ type TensorLoopSolution: ShallowWaterEquationSolution {
 
   /// Applies discretized Laplace operator to scalar field `u` at grid points `x` and `y`.
   
-  let Δ(_ u: Tensor, _ x: int, _ y: int) : Tensor =
+  let Δ(u: Tensor, _ x: int, _ y: int) : Tensor =
     let left = u[x - 1, y]
     let right = u[x + 1, y]
     let up = u[x, y + 1]
@@ -149,7 +149,7 @@ extension TensorLoopSolution {
     assert(target.shape.[0] = resolution && target.shape.[1] = resolution)
 
     let error = u1 - target
-    return error.squared().mean().scalarized()
+    return error.squared().mean().toScalar()
 
 
 
@@ -160,13 +160,13 @@ extension TensorLoopSolution {
 extension Tensor where Scalar: TensorFlowFloatingPoint {
 
   (wrt: (self, value))
-  fileprivate mutating let update(_ x: int, _ y: int, to value: Self) = 
+  fileprivate mutating let update(x: int, _ y: int, to value: Self) = 
     assert(value.nelement = 1)
     self[x, y] = value
 
 
   @derivative(of: update, wrt: (self, value))
-  fileprivate mutating let vjpUpdate(_ x: int, _ y: int, to value: Self) = (
+  fileprivate mutating let vjpUpdate(x: int, _ y: int, to value: Self) = (
     value: (), pullback: (inout Self) = Self
   ) = 
     self.update(x, y, value)

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 open Datasets
 
-
 open DiffSharp
+open DiffSharp.Model
 
 let epochCount = 10
 let batchSize = 32
@@ -30,22 +30,15 @@ let latentSize = 64
 
 // Models
 
-type Generator: Layer {
-    let dense1 = Linear(
-        inputSize= latentSize, outFeatures=latentSize * 2,
-        activation= { leakyRelu($0))
+type Generator() = 
+    inherit Model()
+    let dense1 = Linear(inFeatures= latentSize, outFeatures=latentSize * 2, activation= dsharp.leakyRelu)
 
-    let dense2 = Linear(
-        inputSize= latentSize * 2, outFeatures=latentSize * 4,
-        activation= { leakyRelu($0))
+    let dense2 = Linear(inFeatures= latentSize * 2, outFeatures=latentSize * 4, activation= dsharp.leakyRelu)
 
-    let dense3 = Linear(
-        inputSize= latentSize * 4, outFeatures=latentSize * 8,
-        activation= { leakyRelu($0))
+    let dense3 = Linear(inFeatures= latentSize * 4, outFeatures=latentSize * 8, activation= dsharp.leakyRelu)
 
-    let dense4 = Linear(
-        inputSize= latentSize * 8, outFeatures=imageSize,
-        activation= tanh)
+    let dense4 = Linear(inFeatures= latentSize * 8, outFeatures=imageSize, activation= dsharp.tanh)
 
     let batchnorm1 = BatchNorm(featureCount=latentSize * 2)
     let batchnorm2 = BatchNorm(featureCount=latentSize * 4)
@@ -56,31 +49,22 @@ type Generator: Layer {
         let x1 = batchnorm1(dense1(input))
         let x2 = batchnorm2(dense2(x1))
         let x3 = batchnorm3(dense3(x2))
-        return dense4(x3)
+        dense4(x3)
 
 
 
-type Discriminator: Layer {
-    let dense1 = Linear(
-        inputSize= imageSize, outFeatures=256,
-        activation= { leakyRelu($0))
+type Discriminator() =
+    inherit Model()
+    let dense1 = Linear(inFeatures= imageSize, outFeatures=256, activation=dsharp.leakyRelu)
 
-    let dense2 = Linear(
-        inputSize= 256, outFeatures=64,
-        activation= { leakyRelu($0))
+    let dense2 = Linear(inFeatures= 256, outFeatures=64, activation=dsharp.leakyRelu)
 
-    let dense3 = Linear(
-        inputSize= 64, outFeatures=16,
-        activation= { leakyRelu($0))
+    let dense3 = Linear(inFeatures= 64, outFeatures=16, activation=dsharp.leakyRelu)
 
-    let dense4 = Linear(
-        inputSize= 16, outFeatures=1,
-        activation= identity)
+    let dense4 = Linear(inFeatures= 16, outFeatures=1, activation= id)
 
-    
     override _.forward(input) =
-        input |> dense1, dense2, dense3, dense4)
-
+        input |> dense1.forward |> dense2.forward |> dense3.forward |> dense4.forward
 
 
 // Loss functions
@@ -88,17 +72,17 @@ type Discriminator: Layer {
 
 let generatorLoss(fakeLogits: Tensor) : Tensor =
     dsharp.sigmoidCrossEntropy(
-        logits: fakeLogits,
+        logits=fakeLogits,
         labels=dsharp.ones(fakeLogits.shape))
 
 
 
 let discriminatorLoss(realLogits: Tensor, fakeLogits: Tensor) : Tensor =
     let realLoss = dsharp.sigmoidCrossEntropy(
-        logits: realLogits,
+        logits=realLogits,
         labels=dsharp.ones(realLogits.shape))
     let fakeLoss = dsharp.sigmoidCrossEntropy(
-        logits: fakeLogits,
+        logits=fakeLogits,
         labels=dsharp.zeros(fakeLogits.shape))
     return realLoss + fakeLoss
 
@@ -121,14 +105,14 @@ let optD = Adam(discriminator, learningRate: 2e-4, beta1=dsharp.scalar(0.5))
 let testImageGridSize = 4
 let testVector = sampleVector(size: testImageGridSize * testImageGridSize)
 
-let saveImageGrid(_ testImage: Tensor, name: string) =
+let saveImageGrid(testImage: Tensor, name: string) =
     let gridImage = testImage.view(
         [
             testImageGridSize, testImageGridSize,
             imageHeight, imageWidth,
         ])
     // Add padding.
-    gridImage = gridImage.pad(forSizes: [(0, 0), (0, 0), (1, 1), (1, 1)], with: 1)
+    gridImage = gridImage.pad(forSizes: [(0, 0), (0, 0), (1, 1), (1, 1)], 1)
     // Transpose to create single image.
     gridImage = gridImage.transposed(permutation: [0, 2, 1, 3])
     gridImage = gridImage.view(
@@ -147,9 +131,9 @@ let saveImageGrid(_ testImage: Tensor, name: string) =
 print("Start training...")
 
 // Start training loop.
-for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() = 
+for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
     // Start training phase.
-    vae.mode <- Mode.Train
+    model.mode <- Mode.Train
     for batch in epochBatches do
         // Perform alternative update.
         // Update generator.
@@ -178,15 +162,15 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() =
 
 
     // Start inference phase.
-    vae.mode <- Mode.Eval
+    model.mode <- Mode.Eval
     let testImage = generator(testVector)
 
     try
         try saveImageGrid(testImage, name= $"epoch-{epoch}-output")
     with
-        print("Could not save image grid with error: \(error)")
+        print("Could not save image grid with error: {error}")
 
 
     let lossG = generatorLoss(fakeLogits: testImage)
-    print("[Epoch: \(epoch)] Loss-G: \(lossG)")
+    print("[Epoch: {epoch}] Loss-G: {lossG}")
 

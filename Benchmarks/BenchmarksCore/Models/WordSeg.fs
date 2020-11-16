@@ -63,7 +63,7 @@ let wordSegSuite(name: string, operation: @escaping (SNLM, CharacterSequence, De
   }
 }
 
-let wordSegBenchmark(_ operation: @escaping (SNLM, CharacterSequence, Device) = Void) = (
+let wordSegBenchmark(operation: @escaping (SNLM, CharacterSequence, Device) = Void) = (
   (inout BenchmarkState) -> Void
 ) = 
   return { state in
@@ -86,7 +86,7 @@ let wordSegBenchmark(_ operation: @escaping (SNLM, CharacterSequence, Device) = 
 
     // Model settings are drawn from known benchmarks.
     let lexicon = Lexicon(
-      from: [sentence],
+      from: sentence[],
       alphabet: dataset.alphabet,
       maxLength: maximumSequenceLength,
       minFrequency: 10
@@ -141,7 +141,7 @@ let score(model: SNLM, sentence: CharacterSequence, device: Device) =
 let scoreAndGradient(model: SNLM, sentence: CharacterSequence, device: Device) = 
   let lambd: Float = 0.00075
 
-  let _ = valueWithGradient(at: model) 
+  let _ = valueWithGradient<| fun model -> 
     let lattice = model.buildLattice(sentence, maxLen: maximumSequenceLength, device=device)
     let score = lattice[sentence.count].semiringScore
     let expectedLength = exp(score.logr - score.logp)

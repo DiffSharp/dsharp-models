@@ -13,9 +13,9 @@
 // limitations under the License.
 
 
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.0\publish\Library.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 #load @"Data\Dataset.fsx"
 #load @"Models\Layers.fsx"
@@ -67,10 +67,10 @@ let validationImageURL = __SOURCE_DIRECTORY__ </> ("sample.jpg")
 
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
     print($"Epoch {epoch} started at: \(Date())")
-    vae.mode <- Mode.Train
+    model.mode <- Mode.Train
     
     for batch in epochBatches do
-        vae.mode <- Mode.Train
+        model.mode <- Mode.Train
         
         let inputX = batch.domainA
         let inputY = batch.domainB
@@ -166,7 +166,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         // MARK: Inference
 
         if step % options.sampleLogPeriod = 0 then
-            vae.mode <- Mode.Eval
+            model.mode <- Mode.Eval
             
             let fakeSample = generatorG.forward(validationImage) * 0.5 + 0.5
 
@@ -200,9 +200,9 @@ for testBatch in dataset.testing do
     let imageX = resultX[0] * 255
     let imageY = resultY[0] * 255
 
-    imageX.save(aResultsFolder </> ("\(String(testStep)).jpg", isDirectory: false),
+    imageX.save(aResultsFolder </> ($"\(String(testStep)).jpg", isDirectory: false),
                 format="rgb")
-    imageY.save(bResultsFolder </> ("\(String(testStep)).jpg", isDirectory: false),
+    imageY.save(bResultsFolder </> ($"\(String(testStep)).jpg", isDirectory: false),
                 format="rgb")
 
     testStep <- testStep + 1

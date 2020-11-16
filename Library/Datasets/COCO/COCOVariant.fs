@@ -63,7 +63,7 @@ type COCOVariant {
             remoteRoot: location.deletingLastPathComponent(), localStorageDirectory: directory)
 
 
-    static let loadJSON(_ directory: Uri, annotations: string, images: string?) = COCO {
+    static let loadJSON(directory: Uri, annotations: string, images: string?) = COCO {
         let jsonPath = directory </> (annotations).path
         let jsonURL = Uri(jsonPath)!
         let imagesDirectory: Uri? = nil

@@ -81,25 +81,20 @@ extension CoLA {
 
     if isTest then
       // The test data file has a header.
-      return lines.dropFirst().enumerated().map { (i, lineParts) in
+      return lines.dropFirst()|> Seq.map (fun (i, lineParts) ->
         CoLAExample(id: lineParts[0], sentence: lineParts[1], isAcceptable: nil)
 
 
 
-    return lines.enumerated().map { (i, lineParts) in
+    return lines|> Seq.map { (i, lineParts) in
       CoLAExample(id: lineParts[0], sentence: lineParts[3], isAcceptable: lineParts[1] = "1")
 
 
-
-
-internal let parse(tsvFileAt fileURL: Uri) -> [[String]] {
-    try Data(contentsOf: fileURL).withUnsafeBytes {
-        $0.split(separator: byte(ascii: "\n")).map {
-            $0.split(separator: byte(ascii: "\t"), omittingEmptySubsequences: false)
+internal let parse(tsvFileAt fileURL: Uri) -> [string[]] {
+    Data.ReadAllBytes(fileURL).withUnsafeBytes {
+        $0.Split(byte(ascii: "\n")).map {
+            $0.Split(byte(ascii: "\t"), omittingEmptySubsequences: false)
                 .map { String(decoding: UnsafeRawBufferPointer(rebasing: $0), as: UTF8.self)
-
-
-
 
 extension CoLA {
   /// Creates an instance in `taskDirectoryURL` with batches of size `batchSize`
@@ -128,7 +123,7 @@ extension CoLA {
 
     // Extract the data, if necessary.
     let extractedDirectoryURL = compressedDataURL.deletingPathExtension()
-    if !File.Exists(extractedDirectoryURL.path) = 
+    if not File.Exists(extractedDirectoryURL.path) = 
       try extract(zipFileAt: compressedDataURL, extractedDirectoryURL)
 
 
@@ -137,7 +132,7 @@ extension CoLA {
       // arbitrary full URLs instead of constructing full URL from filename and
       // file extension.
       DatasetUtilities.downloadResource(
-        filename: "\(subDirectory)", fileExtension="zip",
+        filename: $"{subDirectory}", fileExtension="zip",
         remoteRoot: url.deletingLastPathComponent(),
         localStorageDirectory: directory)
     #endif

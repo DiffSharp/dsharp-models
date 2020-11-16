@@ -73,7 +73,7 @@ extension Board: CustomStringConvertible {
             if y < 10 then
                 output.append($" {y}")
             else
-                output.append("\(y)")
+                output.append($"{y}")
 
 
         output.append("\n")

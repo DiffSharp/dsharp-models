@@ -18,8 +18,8 @@ type ImportMap = [String: (String, [Int]?)]
 public extension ImportableLayer {
     /// Returns list of names of all recursive properties of the specified `valueType`.
     /// Properties nesting is identified by `.`.
-    let getRecursiveProperties<T>(ofType valueType: T.Type) = [String] {
-        let _get(_ obj: Any, _ parent: string? = nil, out: inout [String]) = 
+    let getRecursiveProperties<T>(ofType valueType: T.Type) : string[] =
+        let _get(obj: Any, _ parent: string? = nil, out: inout string[]) = 
             let m = Mirror(reflecting: obj)
             for child in m.children do
                 let keypath = (parent <> nil ? parent! + "." : "") + child.label!
@@ -30,7 +30,7 @@ public extension ImportableLayer {
 
 
 
-        let labels = [String]()
+        let labels = string[]()
         _get(self, out: &labels)
         return labels
 
@@ -53,13 +53,13 @@ public extension ImportableLayer {
                     weights = weights.transposed(permutation: permutes)
 
                 if weights.shape <> shape then
-                    fatalError($"Shapes do not match for {label}: \(shape) vs. \(weights.shape)")
+                    fatalError($"Shapes do not match for {label}: {shape} vs. {weights.shape}")
 
                 self[keyPath: keyPath] = weights
-                // print("imported \(mapping.0) \(shape) = \(label) \(weights.shape)")
+                // print($"imported {mapping.0} {shape} = {label} {weights.shape}")
  else if let weights = parameters[label] then
                 self[keyPath: keyPath] = weights
-                // print($"imported {label} {shape} = \(label) \(weights.shape)")
+                // print($"imported {label} {shape} = {label} {weights.shape}")
 
 
 

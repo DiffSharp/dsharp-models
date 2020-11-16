@@ -25,15 +25,15 @@ open DiffSharp
 
 type CIFAR10 {
   /// Type of the collection of non-collated batches.
-  type Batches = Slices<Sampling<[(data: [byte], label: int32)], ArraySlice<Int>>>
+  type Batches = Slices<Sampling<[(data: byte[], label: int32)], ArraySlice<Int>>>
   /// The type of the training data, represented as a sequence of epochs, which
   /// are collection of batches.
   type Training = LazyMapSequence<
-    TrainingEpochs<[(data: [byte], label: int32)], Entropy>,
+    TrainingEpochs<[(data: byte[], label: int32)], Entropy>,
     LazyMapSequence<Batches, LabeledImage>
   >
   /// The type of the validation data, represented as a collection of batches.
-  type Validation = LazyMapSequence<Slices<[(data: [byte], label: int32)]>, LabeledImage>
+  type Validation = LazyMapSequence<Slices<[(data: byte[], label: int32)]>, LabeledImage>
   /// The training epochs.
   let training: Training
   /// The validation batches.
@@ -76,7 +76,7 @@ type CIFAR10 {
     downloadCIFAR10IfNotPresent(remoteBinaryArchiveLocation, localStorageDirectory)
     
     let mean: Tensor?
-    let standardDeviation: Tensor?
+    let standardDeviation=Tensor?
     if normalizing then
       mean = Tensor<Float>([0.4913996898, 0.4821584196, 0.4465309242], device=device)
       standardDeviation = Tensor<Float>([0.2470322324, 0.2434851280, 0.2615878417], device=device)
@@ -87,14 +87,14 @@ type CIFAR10 {
     training = TrainingEpochs(samples: trainingSamples, batchSize= batchSize, entropy: entropy)
        |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
         return batches |> Seq.map{
-          makeBatch(samples: $0, mean: mean, standardDeviation: standardDeviation, device=device)
+          makeBatch(samples: $0, mean: mean, standardDeviation=standardDeviation, device=device)
 
 
       
     // Validation data
     let validationSamples = loadCIFARTestFile(in: localStorageDirectory)
     validation = validationSamples.inBatches(of: batchSize) |> Seq.map {
-      makeBatch(samples: $0, mean: mean, standardDeviation: standardDeviation, device=device)
+      makeBatch(samples: $0, mean: mean, standardDeviation=standardDeviation, device=device)
 
 
 
@@ -119,21 +119,23 @@ let downloadCIFAR10IfNotPresent(from location: Uri, directory: FilePath) =
     remoteRoot: location.deletingLastPathComponent(), localStorageDirectory: directory)
 
 
-let loadCIFARFile(named name: string, in directory: Uri) = [(data: [byte], label: int32)] {
-  let path = directory </> ("cifar-10-batches-bin/\(name)").path
+let loadCIFARFile(named name: string, in directory: Uri) = [(data: byte[], label: int32)] {
+  let path = directory </> ("cifar-10-batches-bin/{name}").path
 
   let imageCount = 10000
-  guard let fileContents = try? Data(contentsOf: Uri(fileURLWithPath= path)) else {
-    printError("Could not read dataset file: \(name)")
-    exit(-1)
+  guard let fileContents = 
+      Data.ReadAllBytes(Uri(fileURLWithPath= path)) 
+      with _ -> 
+          printError("Could not read dataset file: {name}")
+          exit(-1)
 
   guard fileContents.count = 30_730_000 else {
     printError(
-      $"Dataset file {name} should have 30730000 bytes, instead had \(fileContents.count)")
+      $"Dataset file {name} should have 30730000 bytes, instead had {fileContents.count}")
     exit(-1)
 
 
-  let labeledImages: [(data: [byte], label: int32)] = []
+  let labeledImages: [(data: byte[], label: int32)] = []
 
   let imageByteSize = 3073
   for imageIndex in 0..<imageCount {
@@ -146,20 +148,20 @@ let loadCIFARFile(named name: string, in directory: Uri) = [(data: [byte], label
   return labeledImages
 
 
-let loadCIFARTrainingFiles(in localStorageDirectory: Uri) = [(data: [byte], label: int32)] {
+let loadCIFARTrainingFiles(in localStorageDirectory: Uri) = [(data: byte[], label: int32)] {
   let data = (1..<6).map {
     loadCIFARFile(named: "data_batch_\($0).bin", in: localStorageDirectory)
 
   return data.reduce([], +)
 
 
-let loadCIFARTestFile(in localStorageDirectory: Uri) = [(data: [byte], label: int32)] {
+let loadCIFARTestFile(in localStorageDirectory: Uri) = [(data: byte[], label: int32)] {
   return loadCIFARFile(named: "test_batch.bin", in: localStorageDirectory)
 
 
 let makeBatch<BatchSamples: Collection>(
-  samples: BatchSamples, mean: Tensor?, standardDeviation: Tensor?, device: Device
-) = LabeledImage where BatchSamples.Element = (data: [byte], label: int32) = 
+  samples: BatchSamples, mean: Tensor?, standardDeviation=Tensor?, device: Device
+) = LabeledImage where BatchSamples.Element = (data: byte[], label: int32) = 
   let bytes = samples |> Seq.map (fun x -> x.data).reduce(into: [], +=)
   let images = Tensor<byte>(shape=[samples.count, 3, 32, 32], scalars=bytes, device=device)
   
