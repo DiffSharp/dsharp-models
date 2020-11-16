@@ -28,7 +28,6 @@ open DiffSharp.ShapeChecking
 ///   - epsilon: Small scalar added for numerical stability.
 ///
 /// Reference: [Instance Normalization](https://arxiv.org/abs/1607.08022)
-//[<ShapeCheck(100)>]
 type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
     inherit Model()
 
@@ -55,8 +54,7 @@ type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
 
     override _.ToString() = sprintf "InstanceNorm2D(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon
 
-
-[<ShapeCheck(100)>]
+[<ShapeCheck>]
 type ResNetBlock(channels: int, ?useDropOut: bool) =
     inherit Model()
     let useDropOut = defaultArg useDropOut false
