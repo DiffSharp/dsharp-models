@@ -48,9 +48,9 @@ let meanAbsoluteError(predictions=Tensor, truths: Tensor) =
     return abs(Tensor<Float>(predictions - truths)).mean().toScalar()
 
 
-print("Starting training...")
+print("Starting training..")
 
-for epoch in 1...epochCount do
+for epoch in 1..epochCount do
     let epochLoss: double = 0
     let epochMAE: double = 0
     let batchCount: int = 0
@@ -87,7 +87,7 @@ for epoch in 1...epochCount do
 
 // Evaluate Model
 
-print("Evaluating model...")
+print("Evaluating model..")
 
 model.mode <- Mode.Eval
 

@@ -126,7 +126,7 @@ type Vocabulary(tokensToIds: Map<string, int>) =
         |> String.concat "\n"
         |> fun s -> File.WriteAllText(fileURL, s)
 
-    //static member FromSentencePieceModel(fileURL: FilePath) =
+    static member FromSentencePieceModel(fileURL: FilePath) : Vocabulary = failwith "tbd"
     //    let data = Data.ReadAllBytes(fileURL)
     //    Vocabulary(
     //        (Sentencepiece_ModelProto(data))

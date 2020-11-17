@@ -114,7 +114,7 @@ let saveImageGrid(testImage: Tensor, name: string) =
     // Add padding.
     gridImage = gridImage.pad(forSizes: [(0, 0), (0, 0), (1, 1), (1, 1)], 1)
     // Transpose to create single image.
-    gridImage = gridImage.transposed(permutation: [0, 2, 1, 3])
+    gridImage = gridImage.permute([0, 2, 1, 3])
     gridImage = gridImage.view(
         [
             (imageHeight + 2) * testImageGridSize,
@@ -128,7 +128,7 @@ let saveImageGrid(testImage: Tensor, name: string) =
         directory=outputFolder, name= name)
 
 
-print("Start training...")
+print("Start training..")
 
 // Start training loop.
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do

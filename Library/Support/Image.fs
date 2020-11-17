@@ -182,7 +182,7 @@ let drawLine(
 
   let error: double = 0
   let currentY = pt1.y
-  for currentX in pt1.x...pt2.x do
+  for currentX in pt1.x..pt2.x do
     let xIndex = steep ? currentY : currentX
     let yIndex = steep ? currentX : currentY
     if xIndex >= imageTensor.shape.[1] || yIndex >= imageTensor.shape.[0] then

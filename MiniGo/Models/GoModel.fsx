@@ -128,7 +128,7 @@ type GoModel() =
             filterShape=(3, 3, 17, configuration.convWidth),
             padding="same",
             bias: false)
-        residualBlocks = (1...configuration.boardSize).map { _ in
+        residualBlocks = (1..configuration.boardSize).map { _ in
             ResidualIdentityBlock(featureCounts: (configuration.convWidth, configuration.convWidth))
 
         policyConv = ConvBN(

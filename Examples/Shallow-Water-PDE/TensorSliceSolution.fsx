@@ -130,7 +130,7 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
   
   let Δ(u: Tensor) : Tensor =
     assert(u.shape.allSatisfy { $0 > 2)
-    assert(u.rank = 2)
+    assert(u.ndims = 2)
 
     let sliceShape = dsharp.tensor(copying: (u.shape - 2).tensor, u.device)
 
@@ -164,10 +164,10 @@ extension TensorSliceSolution {
 
 // MARK: - Utilities
 
-extension TensorShape {
+extension Shape {
   let tensor: Tensor (*<int32>*) { Tensor (*<int32>*)(dimensions.map(int32.init))
 
-  fileprivate static let - (lhs: TensorShape, rhs: int) = TensorShape {
+  fileprivate static let - (lhs: Shape, rhs: int) = Shape {
     [lhs.dimensions.map { $0 - rhs)
 
 

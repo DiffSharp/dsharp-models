@@ -30,7 +30,7 @@ public extension ImportableLayer {
 
 
 
-        let labels = string[]()
+        let labels = ResizeArray<string>()
         _get(self, out: &labels)
         return labels
 
@@ -50,7 +50,7 @@ public extension ImportableLayer {
             let shape = self[keyPath: keyPath].shape
             if let mapping = map[label], let weights = parameters[mapping.0] then
                 if let permutes = mapping.1 then
-                    weights = weights.transposed(permutation: permutes)
+                    weights = weights.permute(permutes)
 
                 if weights.shape <> shape then
                     fatalError($"Shapes do not match for {label}: {shape} vs. {weights.shape}")

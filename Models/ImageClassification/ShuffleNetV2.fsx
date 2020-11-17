@@ -34,7 +34,7 @@ type ChannelShuffle: ParameterlessLayer {
         let channelsPerGroup: int = channels / groups
         
         let output = input.view([batchSize, height, width, groups, channelsPerGroup])
-        output = output.transposed(permutation: [0, 1, 2, 4, 3])
+        output = output.permute([0, 1, 2, 4, 3])
         output = output.view([batchSize, height, width, channels])
         return output
 
@@ -144,7 +144,7 @@ type ShuffleNetV2() =
         outputChannels = stagesOutputChannels.1
         invertedResidualBlocksStage1 = [InvertedResidual(filters: (inputChannels, outputChannels),
                                                          stride: 2)]
-        for _ in 1...stagesRepeat.0 do
+        for _ in 1..stagesRepeat.0 do
             invertedResidualBlocksStage1.append(InvertedResidual(
                 filters: (outputChannels, outputChannels), stride=1)
             )
@@ -153,7 +153,7 @@ type ShuffleNetV2() =
         outputChannels = stagesOutputChannels.2
         invertedResidualBlocksStage2 = [InvertedResidual(filters: (inputChannels, outputChannels),
                                                          stride: 2)]
-        for _ in 1...stagesRepeat.1 do
+        for _ in 1..stagesRepeat.1 do
             invertedResidualBlocksStage2.append(InvertedResidual(
                 filters: (outputChannels, outputChannels), stride=1)
             )
@@ -163,7 +163,7 @@ type ShuffleNetV2() =
         outputChannels = stagesOutputChannels.3
         invertedResidualBlocksStage3 = [InvertedResidual(filters: (inputChannels, outputChannels),
                                                          stride: 2)]
-        for _ in 1...stagesRepeat.2 do
+        for _ in 1..stagesRepeat.2 do
             invertedResidualBlocksStage3.append(InvertedResidual(
                 filters: (outputChannels, outputChannels), stride=1)
             )

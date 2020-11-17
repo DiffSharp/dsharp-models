@@ -29,10 +29,10 @@ type IScheduledParameter {
 /// Dummy parameter schedule that represents no schedule being used. This is useful as a
 /// default value whenever a parameter schedule argument is used.
 type FixedParameter<Scalar: FloatingPoint>: ScheduledParameter {
-    let value: Scalar
+    let value: scalar
 
     @inlinable
-    public init(value: Scalar) = 
+    public init(value: scalar) = 
         self.value = value
 
 
@@ -46,7 +46,7 @@ extension FixedParameter: ExpressibleByFloatLiteral
 where Scalar: _ExpressibleByBuiltinFloatLiteral {
     type FloatLiteralType = Scalar
 
-    public init(floatLiteral value: Scalar) = 
+    public init(floatLiteral value: scalar) = 
         self.init(value)
 
 
@@ -63,8 +63,8 @@ type LinearlyDecayedParameter<BaseParameter: ScheduledParameter>: ScheduledParam
     type Scalar = BaseParameter.Scalar
 
     let baseParameter: BaseParameter
-    let slope: Scalar
-    let lowerBound: Scalar
+    let slope: scalar
+    let lowerBound: scalar
     let startStep: UInt64
 
     /// Creates a new linearly decayed parameter.
@@ -77,8 +77,8 @@ type LinearlyDecayedParameter<BaseParameter: ScheduledParameter>: ScheduledParam
     @inlinable
     public init(
         baseParameter: BaseParameter,
-        slope: Scalar,
-        lowerBound: Scalar = Scalar(0),
+        slope: scalar,
+        lowerBound: scalar = Scalar(0),
         startStep: UInt64 = 0
     ) = 
         self.baseParameter = baseParameter
@@ -112,10 +112,10 @@ where BaseParameter.Scalar: ElementaryFunctions {
     type Scalar = BaseParameter.Scalar
 
     let baseParameter: BaseParameter
-    let decayRate: Scalar
+    let decayRate: scalar
     let decayStepCount: UInt64
     let staircase: bool
-    let lowerBound: Scalar
+    let lowerBound: scalar
     let startStep: UInt64
 
     /// Creates a new exponentially decayed parameter.
@@ -130,10 +130,10 @@ where BaseParameter.Scalar: ElementaryFunctions {
     @inlinable
     public init(
         baseParameter: BaseParameter,
-        decayRate: Scalar,
+        decayRate: scalar,
         decayStepCount: UInt64,
         staircase: bool = false,
-        lowerBound: Scalar = Scalar(0),
+        lowerBound: scalar = Scalar(0),
         startStep: UInt64 = 0
     ) = 
         self.baseParameter = baseParameter
@@ -168,9 +168,9 @@ where BaseParameter.Scalar: ElementaryFunctions {
     type Scalar = BaseParameter.Scalar
 
     let baseParameter: BaseParameter
-    let decayFactor: Scalar
-    let decayThreshold: Scalar
-    let lowerBound: Scalar
+    let decayFactor: scalar
+    let decayThreshold: scalar
+    let lowerBound: scalar
     let startStep: UInt64
 
     /// Creates a new reciprocal square root decayed parameter.
@@ -184,9 +184,9 @@ where BaseParameter.Scalar: ElementaryFunctions {
     @inlinable
     public init(
         baseParameter: BaseParameter,
-        decayFactor: Scalar,
-        decayThreshold: Scalar,
-        lowerBound: Scalar = Scalar(0),
+        decayFactor: scalar,
+        decayThreshold: scalar,
+        lowerBound: scalar = Scalar(0),
         startStep: UInt64 = 0
     ) = 
         self.baseParameter = baseParameter
@@ -220,7 +220,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
 
     let baseParameter: BaseParameter
     let cycleStepCount: UInt64
-    let lowerBound: Scalar
+    let lowerBound: scalar
     let startStep: UInt64
 
     /// Creates a new cosine decayed parameter.
@@ -234,7 +234,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
     public init(
         baseParameter: BaseParameter,
         cycleStepCount: UInt64,
-        lowerBound: Scalar = Scalar(0),
+        lowerBound: scalar = Scalar(0),
         startStep: UInt64 = 0
     ) = 
         self.baseParameter = baseParameter
@@ -270,7 +270,7 @@ type CycleLinear10xDecayedParameter<
 
     let baseParameter: BaseParameter
     let cycleStepCount: UInt64
-    let lowerBound: Scalar
+    let lowerBound: scalar
     let startStep: UInt64
 
     /// Creates a new cycle-linear 10x decayed parameter.
@@ -284,7 +284,7 @@ type CycleLinear10xDecayedParameter<
     public init(
         baseParameter: BaseParameter,
         cycleStepCount: UInt64,
-        lowerBound: Scalar = Scalar(0),
+        lowerBound: scalar = Scalar(0),
         startStep: UInt64 = 0
     ) = 
         self.baseParameter = baseParameter
@@ -318,7 +318,7 @@ type LinearlyWarmedUpParameter<BaseParameter: ScheduledParameter>: ScheduledPara
 
     let baseParameter: BaseParameter
     let warmUpStepCount: UInt64
-    let warmUpOffset: Scalar
+    let warmUpOffset: scalar
 
     /// Creates a new linear parameter warm-up schedule.
     ///
@@ -330,7 +330,7 @@ type LinearlyWarmedUpParameter<BaseParameter: ScheduledParameter>: ScheduledPara
     public init(
         baseParameter: BaseParameter,
         warmUpStepCount: UInt64,
-        warmUpOffset: Scalar
+        warmUpOffset: scalar
     ) = 
         self.baseParameter = baseParameter
         self.warmUpStepCount = warmUpStepCount
@@ -360,7 +360,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
 
     let baseParameter: BaseParameter
     let warmUpStepCount: UInt64
-    let warmUpFactor: Scalar
+    let warmUpFactor: scalar
 
     /// Creates a new exponential parameter warm-up schedule.
     ///
@@ -372,7 +372,7 @@ where BaseParameter.Scalar: ElementaryFunctions {
     public init(
         baseParameter: BaseParameter,
         warmUpStepCount: UInt64,
-        warmUpFactor: Scalar
+        warmUpFactor: scalar
     ) = 
         self.baseParameter = baseParameter
         self.warmUpStepCount = warmUpStepCount

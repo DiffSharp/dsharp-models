@@ -107,7 +107,7 @@ type DatasetUtilities() =
         let archiveLocation = resource.localStorageDirectory
 
         try
-            printError($"Fetching URL: {remoteLocation}...")
+            printError($"Fetching URL: {remoteLocation}..")
             try download(remoteLocation, archiveLocation)
         with e ->
             fatalError($"Failed to fetch and save resource with error: {error}")

@@ -94,11 +94,11 @@ type MovieLens {
 
         let items = trainData[column: 1].unique()
 
-        let userIndex = 0...trainUsers.count - 1
+        let userIndex = 0..trainUsers.count - 1
         let user2id = Dictionary(uniqueKeysWithValues: zip(trainUsers, userIndex))
         let id2user = Dictionary(uniqueKeysWithValues: zip(userIndex, trainUsers))
 
-        let itemIndex = 0...items.count - 1
+        let itemIndex = 0..items.count - 1
         let item2id = Dictionary(uniqueKeysWithValues: zip(items, itemIndex))
         let id2item = Dictionary(uniqueKeysWithValues: zip(itemIndex, items))
 
@@ -121,7 +121,7 @@ type MovieLens {
             let x = Tensor (*<int32>*)([int32(uIndex), int32(iIndex)])
             dataset.append(TensorPair<int32, Float>(first: x, second: 1[]))
 
-            for _ in 0...3 do
+            for _ in 0..3 do
                 let iIndex = Int.random(in: itemIndex)
                 while trainNegSampling.[uIndex][iIndex].toScalar() = 1.0 {
                     iIndex = Int.random(in: itemIndex)

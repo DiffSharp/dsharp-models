@@ -17,16 +17,21 @@
 #r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
 #r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 #r @"System.Runtime.Extensions.dll"
+#load "Utilities.fsx"
+#load "TransformerBERT.fsx"
 
 //open Checkpoints
 open System
 open System.Diagnostics
+open System.IO
 open System.Text.RegularExpressions
 open Datasets
 open DiffSharp
 open DiffSharp.Util
 open DiffSharp.Model
 open Support
+open global.Utilities
+open global.TransformerBERT
 
 type Variant =
     /// - Source: [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](
@@ -77,18 +82,6 @@ type Vocabulary with
 *)
 
 
-type Linear with 
-    member m.regularizationValue = 
-        TangentVector {| weight = m.weight.value; bias = dsharp.tensor(0, device=m.bias.value.device) |}
-
-type LayerNorm with 
-    member m.regularizationValue = 
-        TangentVector {| offset= dsharp.tensor(0, device=m.offset.value.device), scale= dsharp.tensor(0, device=m.scale.value.device) |}
-
-type Embedding with 
-    member m.regularizationValue = 
-        TangentVector {| embeddings = m.embeddings |}
-
 
 // TODO: AD[] Avoid using token type embeddings for RoBERTa once optionals are supported in AD.
 // TODO: AD[] Similarly for the embedding projection used in ALBERT.
@@ -111,7 +104,7 @@ type Embedding with
 ///   - hiddenLayerCount: Number of hidden layers in the encoder.
 ///   - attentionHeadCount: Number of attention heads for each encoder attention layer.
 ///   - intermediateSize: Size of the encoder "intermediate" (i.e., feed-forward) layer.
-///   - intermediateactivation= Activation function used in the encoder and the pooling layers.
+///   - intermediateActivation= Activation function used in the encoder and the pooling layers.
 ///   - hiddenDropoutProbability: Dropout probability for all fully connected layers in the
 ///     embeddings, the encoder, and the pooling layers.
 ///   - attentionDropoutProbability: Dropout probability for the attention scores.
@@ -128,7 +121,7 @@ type BERT(variant: Variant,
           ?hiddenLayerCount: int,
           ?attentionHeadCount: int,
           ?intermediateSize: int,
-          ?intermediateactivation (* = @escaping Activation<Scalar> *),
+          ?intermediateActivation (* = @escaping Activation *),
           ?hiddenDropoutProbability: scalar,
           ?attentionDropoutProbability: scalar,
           ?maxSequenceLength: int,
@@ -141,7 +134,7 @@ type BERT(variant: Variant,
     let hiddenLayerCount = defaultArg hiddenLayerCount 12
     let attentionHeadCount = defaultArg attentionHeadCount 12
     let intermediateSize = defaultArg intermediateSize 3072
-    let intermediateactivation = (* @escaping Activation<Scalar> *) defaultArg intermediateactivation dsharp.gelu
+    let intermediateActivation = (* @escaping Activation *) defaultArg intermediateActivation dsharp.gelu
     let hiddenDropoutProbability = defaultArg hiddenDropoutProbability (scalar 0.1)
     let attentionDropoutProbability = defaultArg attentionDropoutProbability (scalar 0.1)
     let _maxSequenceLength = defaultArg maxSequenceLength 512
@@ -178,8 +171,8 @@ type BERT(variant: Variant,
     // sequence length, `maxSequenceLength`. The actual sequence length might be shorter than
     // this, for faster training of tasks that do not have long sequences. So,
     // `positionEmbedding` effectively contains an embedding table for positions
-    // [0, 1, 2, ..., maxPositionEmbeddings - 1], and the current sequence may have positions
-    // [0, 1, 2, ..., sequenceLength - 1], so we can just perform a slice.
+    // [0, 1, 2, .., maxPositionEmbeddings - 1], and the current sequence may have positions
+    // [0, 1, 2, .., sequenceLength - 1], so we can just perform a slice.
     let positionPaddingIndex =
         match variant with
         | Bert | Albert _ | Electra -> 0
@@ -217,11 +210,11 @@ type BERT(variant: Variant,
                 TransformerEncoderLayer(
                     hiddenSize=hiddenSize,
                     attentionHeadCount=attentionHeadCount,
-                    attentionQueryactivation= id,
-                    attentionKeyactivation= id,
-                    attentionValueactivation= id,
+                    attentionQueryActivation= id,
+                    attentionKeyActivation= id,
+                    attentionValueActivation= id,
                     intermediateSize=intermediateSize,
-                    ?intermediateactivation= intermediateActivation,
+                    intermediateActivation= intermediateActivation,
                     hiddenDropoutProbability=hiddenDropoutProbability,
                     attentionDropoutProbability=attentionDropoutProbability) |]
 
@@ -230,11 +223,11 @@ type BERT(variant: Variant,
                 TransformerEncoderLayer(
                     hiddenSize=hiddenSize,
                     attentionHeadCount=attentionHeadCount,
-                    attentionQueryactivation=id,
-                    attentionKeyactivation=id,
-                    attentionValueactivation=id,
+                    attentionQueryActivation=id,
+                    attentionKeyActivation=id,
+                    attentionValueActivation=id,
                     intermediateSize=intermediateSize,
-                    intermediateactivation= intermediateActivation,
+                    intermediateActivation= intermediateActivation,
                     hiddenDropoutProbability=hiddenDropoutProbability,
                     attentionDropoutProbability=attentionDropoutProbability) |]
 
@@ -349,7 +342,7 @@ type BERT(variant: Variant,
         embeddings <- embeddingDropout.forward(embeddings)
 
         match variant with
-        | Albert ->
+        | Albert _ ->
             embeddings <- embeddingProjection.[0].forward(embeddings)
         | _ -> ()
 
@@ -360,33 +353,121 @@ type BERT(variant: Variant,
         // We keep the representation as a 2-D tensor to avoid reshaping it back and forth from a
         // 3-D tensor to a 2-D tensor. Reshapes are normally free on GPUs/CPUs but may not be free
         // on TPUs, and so we want to minimize them to help the optimizer.
-        let transformerInput = embeddings.reshapedToMatrix()
+        let mutable transformerInput = embeddings.reshapedToMatrix()
         let batchSize = embeddings.shape.[0]
 
         // Run the stacked transformer.
         match variant with
         | Bert | Roberta | Electra ->
             for layerIndex in 0..encoderLayers.Length-1 do
-                transformerInput = 
-                    encoderLayers.[layerIndex](
+                transformerInput <-
+                    let layerInput = 
                         TransformerInput(
                             sequence=transformerInput,
                             attentionMask=attentionMask,
-                            batchSize= batchSize))
+                            batchSize= batchSize)
+                    encoderLayers.[layerIndex].forward(Unchecked.defaultof<Tensor> (* layerInput *))
 
         | Albert(_, hiddenGroupCount) ->
             let groupsPerLayer = double(hiddenGroupCount) / double(hiddenLayerCount)
             for layerIndex in 0..hiddenLayerCount-1 do
                 let groupIndex = int(double(layerIndex) * groupsPerLayer)
-                transformerInput =
-                    encoderLayers.[groupIndex](
+                transformerInput <-
+                    let layerInput = 
                         TransformerInput(
                             sequence=transformerInput,
                             attentionMask=attentionMask,
-                            batchSize=batchSize))
+                            batchSize= batchSize)
+                    encoderLayers.[layerIndex].forward(Unchecked.defaultof<Tensor> (* layerInput *))
 
         // Reshape back to the original tensor shape.
-        transformerInput.reshapedFromMatrix(originalShape: embeddings.shape)
+        transformerInput.reshapedFromMatrix(embeddings.shapex)
+
+    /// Loads a BERT model from the provided CheckpointReader into this BERT model.
+    ///
+    /// - Parameters:
+    ///   - reader: CheckpointReader object to load tensors from.
+    member self.loadTensors(reader: CheckpointReader) = 
+        match variant with
+        | Bert _
+        | Albert _
+        | Roberta ->
+            tokenEmbedding.embeddings <-
+                reader.readTensor(name= "bert/embeddings/word_embeddings")
+            positionEmbedding.embeddings <-
+                reader.readTensor(name= "bert/embeddings/position_embeddings")
+            embeddingLayerNorm.offset <-
+                reader.readTensor(name= "bert/embeddings/LayerNorm/beta")
+            embeddingLayerNorm.scale <-
+                reader.readTensor(name= "bert/embeddings/LayerNorm/gamma")
+        | Electra ->
+            tokenEmbedding.embeddings <-
+                reader.readTensor(name= "electra/embeddings/word_embeddings")
+            positionEmbedding.embeddings <-
+                reader.readTensor(name= "electra/embeddings/position_embeddings")
+            embeddingLayerNorm.offset <-
+                reader.readTensor(name= "electra/embeddings/LayerNorm/beta")
+            embeddingLayerNorm.scale <-
+                reader.readTensor(name= "electra/embeddings/LayerNorm/gamma")
+
+        match variant with
+        | Bert _ | Albert _ ->
+            tokenTypeEmbedding.embeddings <-
+                reader.readTensor(name= "bert/embeddings/token_type_embeddings")
+        | Roberta -> ()
+        | Electra ->
+            tokenTypeEmbedding.embeddings <-
+                reader.readTensor(name= "electra/embeddings/token_type_embeddings")    
+
+        match variant with
+        | Bert | Roberta ->
+            for layerIndex in encoderLayers.indices do
+                encoderLayers.[layerIndex].load((* bert: *) reader, prefix: "bert/encoder/layer_{layerIndex)")
+
+        | Albert ->
+            embeddingProjection.[0].weight <-
+                reader.readTensor(name= "bert/encoder/embedding_hidden_mapping_in/kernel")
+            embeddingProjection.[0].bias <-
+                reader.readTensor(name= "bert/encoder/embedding_hidden_mapping_in/bias")
+            for layerIndex in encoderLayers.indices do
+                let prefix = "bert/encoder/transformer/group_{layerIndex)/inner_group_0"
+                encoderLayers.[layerIndex].load((* albert: *) reader, prefix: prefix)
+
+        | Electra ->
+            for layerIndex in encoderLayers.indices do
+                let prefix = "electra/encoder/layer_{layerIndex)"
+                encoderLayers.[layerIndex].multiHeadAttention.queryWeight <-
+                    reader.readTensor(name=  $"{prefix}/attention/self/query/kernel")
+                encoderLayers.[layerIndex].multiHeadAttention.queryBias <-
+                    reader.readTensor(name=  $"{prefix}/attention/self/query/bias")
+                encoderLayers.[layerIndex].multiHeadAttention.keyWeight <-
+                    reader.readTensor(name=  $"{prefix}/attention/self/key/kernel")
+                encoderLayers.[layerIndex].multiHeadAttention.keyBias <-
+                    reader.readTensor(name=  $"{prefix}/attention/self/key/bias")
+                encoderLayers.[layerIndex].multiHeadAttention.valueWeight <-
+                    reader.readTensor(name=  $"{prefix}/attention/self/value/kernel")
+                encoderLayers.[layerIndex].multiHeadAttention.valueBias <-
+                    reader.readTensor(name=  $"{prefix}/attention/self/value/bias")
+                encoderLayers.[layerIndex].attentionWeight <-
+                    reader.readTensor(name=  $"{prefix}/attention/output/dense/kernel")
+                encoderLayers.[layerIndex].attentionBias <-
+                    reader.readTensor(name=  $"{prefix}/attention/output/dense/bias")
+                encoderLayers.[layerIndex].attentionLayerNorm.offset <-
+                    reader.readTensor(name=  $"{prefix}/attention/output/LayerNorm/beta")
+                encoderLayers.[layerIndex].attentionLayerNorm.scale <-
+                    reader.readTensor(name=  $"{prefix}/attention/output/LayerNorm/gamma")
+                encoderLayers.[layerIndex].intermediateWeight <-
+                    reader.readTensor(name=  $"{prefix}/intermediate/dense/kernel")
+                encoderLayers.[layerIndex].intermediateBias <-
+                    reader.readTensor(name=  $"{prefix}/intermediate/dense/bias")
+                encoderLayers.[layerIndex].outputWeight <-
+                    reader.readTensor(name=  $"{prefix}/output/dense/kernel")
+                encoderLayers.[layerIndex].outputBias <-
+                    reader.readTensor(name=  $"{prefix}/output/dense/bias")
+                encoderLayers.[layerIndex].outputLayerNorm.offset <-
+                    reader.readTensor(name=  $"{prefix}/output/LayerNorm/beta")
+                encoderLayers.[layerIndex].outputLayerNorm.scale <-
+                    reader.readTensor(name=  $"{prefix}/output/LayerNorm/gamma")
 
 
 //===-----------------------------------------------------------------------------------------===//
@@ -438,7 +519,7 @@ type RoBERTaTokenizer(bytePairEncoder: BytePairEncoder,
 
     override _.tokenize(text) =
         [| for m in tokenizationRegex.Matches(text) do
-                let range = m.Math 
+                let range = m.Index 
                 yield bytePairEncoder.encode(text.[range]) |]
 
 //===-----------------------------------------------------------------------------------------===//
@@ -458,7 +539,7 @@ type PreTrainedModel =
     | ElectraLarge
 
     /// The name of this pre-trained model.
-    member _.Name =
+    member self.Name =
         match self with
         | BertBase(false, false) -> "BERT Base Uncased"
         | BertBase(true, false) -> "BERT Base Cased"
@@ -485,42 +566,42 @@ type PreTrainedModel =
         let electraPrefix = "https://storage.googleapis.com/electra-data/electra_"
         match self with
         | BertBase(false, false) ->
-            Uri($"{bertPrefix}10_18/{subDirectory}.zip")
+            Uri($"{bertPrefix}10_18/{self.subDirectory}.zip")
         | BertBase(true, false) ->
-            Uri($"{bertPrefix}10_18/{subDirectory}.zip")!
+            Uri($"{bertPrefix}10_18/{self.subDirectory}.zip")
         | BertBase(false, true) ->
-            Uri($"{bertPrefix}11_03/{subDirectory}.zip")!
+            Uri($"{bertPrefix}11_03/{self.subDirectory}.zip")
         | BertBase(true, true) ->
-            Uri($"{bertPrefix}11_23/{subDirectory}.zip")!
+            Uri($"{bertPrefix}11_23/{self.subDirectory}.zip")
         | BertLarge(false, false) ->
-            Uri($"{bertPrefix}10_18/{subDirectory}.zip")!
+            Uri($"{bertPrefix}10_18/{self.subDirectory}.zip")
         | BertLarge(true, false) ->
-            Uri($"{bertPrefix}10_18/{subDirectory}.zip")!
+            Uri($"{bertPrefix}10_18/{self.subDirectory}.zip")
         | BertLarge(false, true) ->
-            Uri($"{bertPrefix}05_30/{subDirectory}.zip")!
+            Uri($"{bertPrefix}05_30/{self.subDirectory}.zip")
         | BertLarge(true, true) ->
-            Uri($"{bertPrefix}05_30/{subDirectory}.zip")!
+            Uri($"{bertPrefix}05_30/{self.subDirectory}.zip")
         | RobertaBase ->
-            Uri($"{robertaPrefix}/base.zip")!
+            Uri($"{robertaPrefix}/base.zip")
         | RobertaLarge ->
-            Uri($"{robertaPrefix}/large.zip")!
+            Uri($"{robertaPrefix}/large.zip")
         | AlbertBase | AlbertLarge | AlbertXLarge | AlbertXXLarge ->
-            Uri($"{albertPrefix}_{subDirectory}/1.tar.gz")!
+            Uri($"{albertPrefix}_{self.subDirectory}/1.tar.gz")
         | ElectraBase ->
-            Uri($"{electraPrefix}base.zip")!
+            Uri($"{electraPrefix}base.zip")
         | ElectraLarge ->
-            Uri($"{electraPrefix}large.zip")!
+            Uri($"{electraPrefix}large.zip")
 
     member self.Variant =
         match self with
-        | BertBase | BertLarge ->
+        | BertBase _ | BertLarge _ ->
             Bert
         | RobertaBase | RobertaLarge ->
             Roberta
-        | AlbertBase | AlbertLarge | AlbertXLarge | AlbertXXLarge:
-            .albert(embeddingSize=128, hiddenGroupCount: 1)
-        | ElectraBase, .electraLarge:
-            | Electra
+        | AlbertBase | AlbertLarge | AlbertXLarge | AlbertXXLarge ->
+            Albert(embeddingSize=128, hiddenGroupCount=1)
+        | ElectraBase | ElectraLarge ->
+            Electra
 
     member self.CaseSensitive =
         match self with
@@ -528,79 +609,79 @@ type PreTrainedModel =
         | BertLarge(cased, _) -> cased
         | RobertaBase | RobertaLarge -> true
         | AlbertBase | AlbertLarge | AlbertXLarge | AlbertXXLarge -> false
-        | ElectraBase, .electraLarge -> false
+        | ElectraBase | ElectraLarge -> false
 
-        let hiddenSize =
-            match self with
-            | BertBase -> 768
-            | BertLarge -> 1024
-            | RobertaBase -> 768
-            | RobertaLarge -> 1024
-            | AlbertBase -> 768
-            | AlbertLarge -> 1024
-            | AlbertXLarge -> 2048
-            | AlbertXXLarge -> 4096
-            | ElectraBase -> 768
-            | ElectraLarge -> 1024
+    member self.hiddenSize =
+        match self with
+        | BertBase _ -> 768
+        | BertLarge _ -> 1024
+        | RobertaBase -> 768
+        | RobertaLarge -> 1024
+        | AlbertBase -> 768
+        | AlbertLarge -> 1024
+        | AlbertXLarge -> 2048
+        | AlbertXXLarge -> 4096
+        | ElectraBase -> 768
+        | ElectraLarge -> 1024
 
-        let hiddenLayerCount =
-            match self with
-            | BertBase -> 12
-            | BertLarge -> 24
-            | RobertaBase -> 12
-            | RobertaLarge -> 24
-            | AlbertBase -> 12
-            | AlbertLarge -> 24
-            | AlbertXLarge -> 24
-            | AlbertXXLarge -> 12
-            | ElectraBase -> 12
-            | ElectraLarge -> 24
+    member self.hiddenLayerCount =
+        match self with
+        | BertBase _ -> 12
+        | BertLarge _ -> 24
+        | RobertaBase -> 12
+        | RobertaLarge -> 24
+        | AlbertBase -> 12
+        | AlbertLarge -> 24
+        | AlbertXLarge -> 24
+        | AlbertXXLarge -> 12
+        | ElectraBase -> 12
+        | ElectraLarge -> 24
 
-        let attentionHeadCount =
-            match self with
-            | BertBase -> 12
-            | BertLarge -> 16
-            | RobertaBase -> 12
-            | RobertaLarge -> 16
-            | AlbertBase -> 12
-            | AlbertLarge -> 16
-            | AlbertXLarge -> 16
-            | AlbertXXLarge -> 64
-            | ElectraBase -> 12
-            | ElectraLarge -> 16
+    member self.attentionHeadCount =
+        match self with
+        | BertBase _ -> 12
+        | BertLarge _ -> 16
+        | RobertaBase -> 12
+        | RobertaLarge -> 16
+        | AlbertBase -> 12
+        | AlbertLarge -> 16
+        | AlbertXLarge -> 16
+        | AlbertXXLarge -> 64
+        | ElectraBase -> 12
+        | ElectraLarge -> 16
 
-        let intermediateSize =
-            match self with
-            | BertBase -> 3072
-            | BertLarge -> 4096
-            | RobertaBase -> 3072
-            | RobertaLarge -> 4096
-            | AlbertBase -> 3072
-            | AlbertLarge -> 4096
-            | AlbertXLarge -> 8192
-            | AlbertXXLarge -> 16384
-            | ElectraBase -> 3072
-            | ElectraLarge -> 4096
+    member self.intermediateSize =
+        match self with
+        | BertBase _ -> 3072
+        | BertLarge _ -> 4096
+        | RobertaBase -> 3072
+        | RobertaLarge -> 4096
+        | AlbertBase -> 3072
+        | AlbertLarge -> 4096
+        | AlbertXLarge -> 8192
+        | AlbertXXLarge -> 16384
+        | ElectraBase -> 3072
+        | ElectraLarge -> 4096
 
-        /// The sub-directory of this pre-trained model.
-        let subDirectory =
-            match self with
-            | BertBase(false, false) -> "uncased_L-12_H-768_A-12"
-            | BertBase(true, false) -> "cased_L-12_H-768_A-12"
-            | BertBase(false, true) -> "multilingual_L-12_H-768_A-12"
-            | BertBase(true, true) -> "multi_cased_L-12_H-768_A-12"
-            | BertLarge(false, false) -> "uncased_L-24_H-1024_A-16"
-            | BertLarge(true, false) -> "cased_L-24_H-1024_A-16"
-            | BertLarge(false, true) -> "wwm_uncased_L-24_H-1024_A-16"
-            | BertLarge(true, true) -> "wwm_cased_L-24_H-1024_A-16"
-            | RobertaBase -> "base"
-            | RobertaLarge -> "large"
-            | AlbertBase -> "base"
-            | AlbertLarge -> "large"
-            | AlbertXLarge -> "xLarge"
-            | AlbertXXLarge -> "xxLarge"
-            | ElectraBase -> "electra_base"
-            | ElectraLarge -> "electra_large"
+    /// The sub-directory of this pre-trained model.
+    member self.subDirectory =
+        match self with
+        | BertBase(false, false) -> "uncased_L-12_H-768_A-12"
+        | BertBase(true, false) -> "cased_L-12_H-768_A-12"
+        | BertBase(false, true) -> "multilingual_L-12_H-768_A-12"
+        | BertBase(true, true) -> "multi_cased_L-12_H-768_A-12"
+        | BertLarge(false, false) -> "uncased_L-24_H-1024_A-16"
+        | BertLarge(true, false) -> "cased_L-24_H-1024_A-16"
+        | BertLarge(false, true) -> "wwm_uncased_L-24_H-1024_A-16"
+        | BertLarge(true, true) -> "wwm_cased_L-24_H-1024_A-16"
+        | RobertaBase -> "base"
+        | RobertaLarge -> "large"
+        | AlbertBase -> "base"
+        | AlbertLarge -> "large"
+        | AlbertXLarge -> "xLarge"
+        | AlbertXXLarge -> "xxLarge"
+        | ElectraBase -> "electra_base"
+        | ElectraLarge -> "electra_large"
 
     /// Loads this pre-trained BERT model from the specified URL.
     ///
@@ -609,65 +690,61 @@ type PreTrainedModel =
     ///
     /// - Parameters:
     ///   - url: Uri to load the pretrained model from.
-    static member load(url: Uri) : BERT =
+    member self.load(url: Uri) : BERT =
         print("Loading BERT pre-trained model '{name)'.")
             
-        let reader = CheckpointReader(checkpointLocation= defaultArg url self.url, modelName: name)
-        // TODO(michellecasbon): expose this.
-        reader.isCRCVerificationEnabled = false
+        failwith "tbd - CheckpointReader"
+        //let reader = CheckpointReader(checkpointLocation= defaultArg url self.url, modelName: name)
+        //// TODO(michellecasbon): expose this.
+        //reader.isCRCVerificationEnabled <- false
 
         let storage = reader.localCheckpointLocation.deletingLastPathComponent()
 
         // Load the appropriate vocabulary file.
         let vocabulary: Vocabulary = 
             match self with
-            | BertBase | BertLarge | ElectraBase | ElectraLarge:
-                let vocabularyURL = storage </> "vocab.txt")
-                Vocabulary(fromFile: vocabularyURL)
-            | RobertaBase | RobertaLarge:
+            | BertBase _ | BertLarge _ | ElectraBase | ElectraLarge ->
+                let vocabularyURL = storage </> "vocab.txt"
+                Vocabulary.FromFile(vocabularyURL)
+            | RobertaBase | RobertaLarge ->
                 let vocabularyURL = storage </> "vocab.json"
                 let dictionaryURL = storage </> "dict.txt"
                 Vocabulary.FromRoBERTaJSONFile(vocabularyURL, dictionaryURL)
-            | AlbertBase | AlbertLarge | AlbertXLarge | AlbertXXLarge:
-                let vocabularyURL = Path.GetDirectory(storage) </> "assets" </> "30k-clean.model"
-                Vocabulary(fromSentencePieceModel: vocabularyURL)
+            | AlbertBase | AlbertLarge | AlbertXLarge | AlbertXXLarge ->
+                let vocabularyURL = Path.GetDirectoryName(storage) </> "assets" </> "30k-clean.model"
+                Vocabulary.FromSentencePieceModel(vocabularyURL)
 
         // Create the tokenizer and load any necessary files.
         let tokenizer: Tokenizer = 
 
             match self with
-            | BertBase | BertLarge | AlbertBase | AlbertLarge | AlbertXLarge | AlbertXXLarge,
+            | BertBase _ | BertLarge _ | AlbertBase | AlbertLarge | AlbertXLarge | AlbertXXLarge
             | ElectraBase | ElectraLarge ->
                 BERTTokenizer(vocabulary=vocabulary,
-                    caseSensitive=caseSensitive,
+                    caseSensitive=self.caseSensitive,
                     unknownToken="[UNK]",
-                    ?maxTokenLength=None)
-            | RobertaBase | RobertaLarge:
-                let mergePairsFileURL = storage
-                        </> ("merges.txt")
-                let mergePairs = [BytePairEncoder.Pair: int](
-                    uniqueKeysWithValues:
-                        (File.ReadAllText(mergePairsFileURL.path))
-                            .components(separatedBy: .newlines)
-                            .dropFirst()
-                            .enumerated()
-                            .compactMap { (index, line) = (BytePairEncoder.Pair, Int)? in
-                                let lineParts = line.Split(" ")
-                                if lineParts.count < 2 then nil
-                                (
-                                    BytePairEncoder.Pair(
-                                        String(lineParts[0]),
-                                        String(lineParts[1])),
-                                    index))
+                    ?maxTokenLength=None) :> Tokenizer
+            | RobertaBase | RobertaLarge ->
+                let mergePairsFileURL = storage </> "merges.txt"
+                let mergePairs = 
+                    File.ReadAllLines(mergePairsFileURL)
+                    |> Array.skip 1
+                    |> Array.mapi (fun index line ->
+                        let lineParts = line.Split(" ")
+                        if lineParts.count < 2 then nil
+                        (
+                            BytePairEncoder.Pair(
+                                String(lineParts[0]),
+                                String(lineParts[1])),
+                            index))
                 RoBERTaTokenizer(
                     bytePairEncoder= BytePairEncoder(vocabulary= vocabulary, mergePairs= mergePairs),
                     caseSensitive= caseSensitive,
-                    unknownToken= "[UNK]")
+                    unknownToken= "[UNK]") :> Tokenizer
 
         // Create a BERT model.
         let model =
-            BERT(
-                variant=variant,
+            BERT(variant=variant,
                 vocabulary=vocabulary,
                 tokenizer=tokenizer,
                 ?caseSensitive=caseSensitive,
@@ -675,7 +752,7 @@ type PreTrainedModel =
                 hiddenLayerCount=hiddenLayerCount,
                 attentionHeadCount=attentionHeadCount,
                 intermediateSize=intermediateSize,
-                intermediateactivation= gelu,
+                intermediateActivation= gelu,
                 hiddenDropoutProbability=0.1,
                 attentionDropoutProbability=0.1,
                 maxSequenceLength=512,
@@ -685,91 +762,4 @@ type PreTrainedModel =
 
         model.loadTensors(reader)
         model
-
-    /// Loads a BERT model from the provided CheckpointReader into this BERT model.
-    ///
-    /// - Parameters:
-    ///   - reader: CheckpointReader object to load tensors from.
-    member _.loadTensors(reader: CheckpointReader) = 
-        match variant with
-        | Bert
-        | Albert
-        | Roberta ->
-            tokenEmbedding.embeddings <-
-                reader.readTensor(name= "bert/embeddings/word_embeddings")
-            positionEmbedding.embeddings <-
-                reader.readTensor(name= "bert/embeddings/position_embeddings")
-            embeddingLayerNorm.offset <-
-                reader.readTensor(name= "bert/embeddings/LayerNorm/beta")
-            embeddingLayerNorm.scale <-
-                reader.readTensor(name= "bert/embeddings/LayerNorm/gamma")
-        | Electra ->
-            tokenEmbedding.embeddings <-
-                reader.readTensor(name= "electra/embeddings/word_embeddings")
-            positionEmbedding.embeddings <-
-                reader.readTensor(name= "electra/embeddings/position_embeddings")
-            embeddingLayerNorm.offset <-
-                reader.readTensor(name= "electra/embeddings/LayerNorm/beta")
-            embeddingLayerNorm.scale <-
-                reader.readTensor(name= "electra/embeddings/LayerNorm/gamma")
-
-        match variant with
-        | Bert| Albert ->
-            tokenTypeEmbedding.embeddings <-
-                reader.readTensor(name= "bert/embeddings/token_type_embeddings")
-        | Roberta -> ()
-        | Electra ->
-            tokenTypeEmbedding.embeddings <-
-                reader.readTensor(name= "electra/embeddings/token_type_embeddings")    
-
-        match variant with
-        | Bert | Roberta:
-            for layerIndex in encoderLayers.indices do
-                encoderLayers.[layerIndex].load(bert: reader,
-                    prefix: "bert/encoder/layer_{layerIndex)")
-
-        | Albert ->
-            embeddingProjection.[0].weight <-
-                reader.readTensor(name= "bert/encoder/embedding_hidden_mapping_in/kernel")
-            embeddingProjection.[0].bias <-
-                reader.readTensor(name= "bert/encoder/embedding_hidden_mapping_in/bias")
-            for layerIndex in encoderLayers.indices do
-                let prefix = "bert/encoder/transformer/group_{layerIndex)/inner_group_0"
-                encoderLayers.[layerIndex].load(albert: reader, prefix: prefix)
-
-        | Electra ->
-            for layerIndex in encoderLayers.indices do
-                let prefix = "electra/encoder/layer_{layerIndex)"
-                encoderLayers.[layerIndex].multiHeadAttention.queryWeight <-
-                    reader.readTensor(name=  $"{prefix}/attention/self/query/kernel")
-                encoderLayers.[layerIndex].multiHeadAttention.queryBias <-
-                    reader.readTensor(name=  $"{prefix}/attention/self/query/bias")
-                encoderLayers.[layerIndex].multiHeadAttention.keyWeight <-
-                    reader.readTensor(name=  $"{prefix}/attention/self/key/kernel")
-                encoderLayers.[layerIndex].multiHeadAttention.keyBias <-
-                    reader.readTensor(name=  $"{prefix}/attention/self/key/bias")
-                encoderLayers.[layerIndex].multiHeadAttention.valueWeight <-
-                    reader.readTensor(name=  $"{prefix}/attention/self/value/kernel")
-                encoderLayers.[layerIndex].multiHeadAttention.valueBias <-
-                    reader.readTensor(name=  $"{prefix}/attention/self/value/bias")
-                encoderLayers.[layerIndex].attentionWeight <-
-                    reader.readTensor(name=  $"{prefix}/attention/output/dense/kernel")
-                encoderLayers.[layerIndex].attentionBias <-
-                    reader.readTensor(name=  $"{prefix}/attention/output/dense/bias")
-                encoderLayers.[layerIndex].attentionLayerNorm.offset <-
-                    reader.readTensor(name=  $"{prefix}/attention/output/LayerNorm/beta")
-                encoderLayers.[layerIndex].attentionLayerNorm.scale <-
-                    reader.readTensor(name=  $"{prefix}/attention/output/LayerNorm/gamma")
-                encoderLayers.[layerIndex].intermediateWeight <-
-                    reader.readTensor(name=  $"{prefix}/intermediate/dense/kernel")
-                encoderLayers.[layerIndex].intermediateBias <-
-                    reader.readTensor(name=  $"{prefix}/intermediate/dense/bias")
-                encoderLayers.[layerIndex].outputWeight <-
-                    reader.readTensor(name=  $"{prefix}/output/dense/kernel")
-                encoderLayers.[layerIndex].outputBias <-
-                    reader.readTensor(name=  $"{prefix}/output/dense/bias")
-                encoderLayers.[layerIndex].outputLayerNorm.offset <-
-                    reader.readTensor(name=  $"{prefix}/output/LayerNorm/beta")
-                encoderLayers.[layerIndex].outputLayerNorm.scale <-
-                    reader.readTensor(name=  $"{prefix}/output/LayerNorm/gamma")
 

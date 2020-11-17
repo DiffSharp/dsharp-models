@@ -442,7 +442,7 @@ type RLE {
 
             let s: Double = dx >= dy ? Double(ye - ys) / Double(dx) : Double(xe - xs) / Double(dy)
             if dx >= dy then
-                for d in 0...dx do
+                for d in 0..dx do
                     t = flip ? dx - d : d
                     u[m] = t + xs
                     let vm = Double(ys) + s * Double(t) + 0.5
@@ -450,7 +450,7 @@ type RLE {
                     m <- m + 1
 
             else
-                for d in 0...dy do
+                for d in 0..dy do
                     t = flip ? dy - d : d
                     v[m] = t + ys
                     let um = Double(xs) + s * Double(t) + 0.5

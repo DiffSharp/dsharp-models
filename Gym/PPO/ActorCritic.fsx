@@ -113,7 +113,7 @@ type ActorCritic() =
 
     
     override _.forward(state: Tensor) = Categorical<int32> {
-        Debug.Assert(state.rank = 2, "The input must be 2-D ([batch size, state size]).")
+        Debug.Assert(state.ndims = 2, "The input must be 2-D ([batch size, state size]).")
         let actionProbs = self.actorNetwork(state).flattened()
         let dist = Categorical<int32>(probabilities: actionProbs)
         return dist

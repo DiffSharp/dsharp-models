@@ -36,14 +36,14 @@ extension Tensor: Batchable {
 
     let newShape = [-1]
     for i in outerDimCount..<rank {
-      newShape.append(shape[i])
+      newShape.append(shape.[i])
 
     return reshaped([newShape))
 
 
   let unflattenedBatch(outerDims: int[]) = Tensor {
     if rank > 1 then
-      return reshaped([outerDims + shape.dimensions[1...]))
+      return reshaped([outerDims + shape.dimensions[1..]))
 
     return reshaped([outerDims))
 
@@ -57,7 +57,7 @@ extension Tensor: DifferentiableBatchable where Scalar: TensorFlowFloatingPoint 
 
     let newShape = [-1]
     for i in outerDimCount..<rank {
-      newShape.append(shape[i])
+      newShape.append(shape.[i])
 
     return reshaped([newShape))
 
@@ -65,7 +65,7 @@ extension Tensor: DifferentiableBatchable where Scalar: TensorFlowFloatingPoint 
   (wrt: self)
   let unflattenedBatch(outerDims: int[]) = Tensor {
     if rank > 1 then
-      return reshaped([outerDims + shape.dimensions[1...]))
+      return reshaped([outerDims + shape.dimensions[1..]))
 
     return reshaped([outerDims))
 
@@ -108,7 +108,7 @@ type Categorical<Scalar: TensorFlowIndex>: DifferentiableDistribution, KeyPathIt
   @inlinable
   let sample() : Tensor =
     let seed = Context.local.randomSeed
-    let outerDimCount = self.logProbabilities.rank - 1
+    let outerDimCount = self.logProbabilities.ndims - 1
     let logProbabilities = self.logProbabilities.flattenedBatch(outerDimCount: outerDimCount)
     let multinomial: Tensor = _Raw.multinomial(
       logits=logProbabilities,

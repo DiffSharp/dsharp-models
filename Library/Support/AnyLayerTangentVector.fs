@@ -61,15 +61,15 @@ internal class AnyLayerTangentVectorBox<Scalar: FloatingPoint & ElementaryFuncti
 
   
   // `VectorProtocol` requirements.
-  let _adding(x: Scalar) = AnyLayerTangentVectorBox {
+  let _adding(x: scalar) = AnyLayerTangentVectorBox {
     mustOverride()
 
-  let _subtracting(x: Scalar) = AnyLayerTangentVectorBox {
+  let _subtracting(x: scalar) = AnyLayerTangentVectorBox {
     mustOverride()
 
 
   /// Returns `self` multiplied by the given scalar.
-  let _scaled(by: Scalar) = AnyLayerTangentVectorBox {
+  let _scaled(by: scalar) = AnyLayerTangentVectorBox {
     mustOverride()
 
 

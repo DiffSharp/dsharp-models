@@ -56,8 +56,8 @@ type UpsampleConvLayer(inChannels: int, outChannels: int, kernelSize: int, strid
     /// - Returns: The output.
     
     override _.forward(input) =
-        let newHeight = int(roundf(double(input.shape.[input.rank - 3]) * scaleFactor))
-        let newWidth = int(roundf(double(input.shape.[input.rank - 2]) * scaleFactor))
+        let newHeight = int(roundf(double(input.shape.[input.ndims - 3]) * scaleFactor))
+        let newWidth = int(roundf(double(input.shape.[input.ndims - 2]) * scaleFactor))
         let resizedInput = resize(images=input, size= (newHeight, newWidth), method=".nearest")
         resizedInput |> reflectionPad, conv2d
 

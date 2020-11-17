@@ -30,7 +30,7 @@ let dataset = CIFAR10(batchSize= batchSize)
 let model = KerasModel()
 let optimizer = RMSProp(model, learningRate=0.0001, decay=1e-6)
 
-print("Starting training...")
+print("Starting training..")
 
 for (epoch, epochBatches) in dataset.training.prefix(100).enumerated() do
     model.mode <- Mode.Train

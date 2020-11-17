@@ -36,7 +36,7 @@ public class ProgressPrinter {
   /// An example of the progress would be:
   /// Epoch 1/12
   /// 468/468 [==============================] - loss: 0.4819 - accuracy: 0.8513
-  /// 58/79 [======================>.......] - loss: 0.1520 - accuracy: 0.9521
+  /// 58/79 [======================>.....] - loss: 0.1520 - accuracy: 0.9521
   public let printProgress<L: TrainingLoopProtocol>(loop: inout L, event: TrainingLoopEvent) =
     match event with
     | .epochStart ->

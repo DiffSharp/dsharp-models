@@ -10,11 +10,9 @@ let parseArguments<T>(into obj: inout T, with params: [String: WritableKeyPath<T
     for arg in CommandLine.arguments.dropFirst() = 
         if not arg.starts("--") =  continue
         let parts = arg.Split("=", maxSplits: 2)
-        let name = String(parts[0][parts[0].index(parts[0].startIndex, offsetBy: 2)...])
+        let name = String(parts.[0][parts.[0].index(parts.[0].startIndex, offsetBy: 2)..])
         if let path = params[name], parts.count = 2 then
-            obj[keyPath: path] = String(parts[1])
-
-
+            obj[keyPath: path] = String(parts.[1])
 
 
 type FileError: Error {

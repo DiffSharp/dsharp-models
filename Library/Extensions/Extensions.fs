@@ -15,42 +15,24 @@ module DiffSharpExtensions =
     type RandomNumberGenerator = System.Random
     let (</>) (a: FilePath) (b: string) : FilePath = Path.Combine(a,b)
     type Tensor with 
-        member x.ndims = x.dim
-        member x.view(shape: seq<int>) = x.view(shape)
-        member x.view(shape: seq<Int>) = x.view(shape)
-        member x.sqr() = x * x
-        member x.toInt32() = x.toScalar() |> Convert.ToInt32
-        member x.toFloat32() = x.toScalar() |> Convert.ToSingle
-        member x.gelu() : Tensor = failwith "TBD"
+        member t.ndims = t.dim
 
-    type dsharp with 
-        static member scalar(x: scalar, ?dtype, ?device, ?backend) = dsharp.full(1, x, ?dtype=dtype, ?device=device, ?backend=backend)
-        static member randn(shape: seq<int>, stddev: scalar, ?mean: scalar) = dsharp.randn(shape=shape)
-        static member sigmoidCrossEntropy(logits:Tensor, labels:Tensor, ?reduction:string) = logits.oneLike()
+        member t.reshape(shape: seq<int>) = t.view(shape)
 
-    type Sequential([<ParamArray>] models: Model[]) =
-        inherit Model()
-        do base.add(Array.map box models)
-        override _.forward(input) = 
-            (input, models) ||> Array.fold (fun input m -> m.forward input)
-        new (models: seq<Model>) = Sequential(Seq.toArrayQuick models)
-    
-    type Function(f: Tensor -> Tensor) =
-        inherit Model()
+        member t.reshape(shape: seq<Int>) = t.view(shape)
 
-        override _.ToString() = sprintf "Function()"
+        member t.reshape(shape: Shape) = t.view(shape)
 
-        override m.forward(value) = f value
+        member t.sqr() = t * t
 
-    type Flatten() =
-        inherit Model()
+        member t.toInt32() = t.toScalar() |> Convert.ToInt32
 
-        override _.ToString() = sprintf "Flatten()"
+        member t.toFloat32() = t.toScalar() |> Convert.ToSingle
 
-        override m.forward(value) = value.flatten()
+        member t.gelu() : Tensor = failwith "TBD"
 
-        
-    type Tensor with 
+        member t.permute([<ParamArray>] permutation: int[]) : Tensor = failwith "TBD"
+
         member t.rsqrt() = 1.0 / t.sqrt()
 
         member t.argmax(dim: int) : Tensor = failwith "tbd"
@@ -89,8 +71,33 @@ module DiffSharpExtensions =
                t.mean(dims, ?keepDim=keepDim), t.stddev(dims, ?keepDim=keepDim)
 
 
+    type Sequential([<ParamArray>] models: Model[]) =
+        inherit Model()
+        do base.add(Array.map box models)
+        override _.forward(input) = 
+            (input, models) ||> Array.fold (fun input m -> m.forward input)
+        new (models: seq<Model>) = Sequential(Seq.toArrayQuick models)
+    
+    type Function(f: Tensor -> Tensor) =
+        inherit Model()
+
+        override _.ToString() = sprintf "Function()"
+
+        override m.forward(value) = f value
+
+    type Flatten() =
+        inherit Model()
+
+        override _.ToString() = sprintf "Flatten()"
+
+        override m.forward(value) = value.flatten()
+
+      
+
     type dsharp with 
         static member gelu(input: Tensor) = input.gelu()
+
+        static member permute(input: Tensor, [<ParamArray>] permutation: int[]) = input.permute(permutation)
 
         static member rsqrt(input: Tensor) = input.rsqrt()
 
@@ -117,13 +124,19 @@ module DiffSharpExtensions =
             // needs "groups"
             input.conv2d(filters, ?stride=stride, ?strides=strides, ?padding=padding, ?paddings=paddings, ?dilation=dilation, ?dilations=dilations)
 
+        //static member scalar(t: scalar, ?dtype, ?device, ?backend) = dsharp.full(1, t, ?dtype=dtype, ?device=device, ?backend=backend)
+
+        static member randn(shape: seq<int>, stddev: scalar, ?mean: scalar) = dsharp.randn(shape=shape)
+
+        static member sigmoidCrossEntropy(logits:Tensor, labels:Tensor, ?reduction:string) = logits.oneLike()
+
     type Model with 
         member m.grad(input, loss) = 
             m.reverseDiff()
-            dsharp.grad (fun x -> loss (m.forward x)) input
+            dsharp.grad (fun t -> loss (m.forward t)) input
         member m.gradv(input, loss) = 
             m.reverseDiff()
-            dsharp.gradv (fun x -> loss (m.forward x)) input
+            dsharp.gradv (fun t -> loss (m.forward t)) input
 
     type ZeroPadding2D(padding: (int*int) * (int * int)) =
        inherit Model()

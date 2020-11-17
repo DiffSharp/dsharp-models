@@ -165,7 +165,7 @@ let makeBatch<BatchSamples: Collection>(
   let bytes = samples |> Seq.map (fun x -> x.data).reduce(into: [], +=)
   let images = Tensor<byte>(shape=[samples.count, 3, 32, 32], scalars=bytes, device=device)
   
-  let imageTensor = Tensor<Float>(images.transposed(permutation: [0, 2, 3, 1]))
+  let imageTensor = Tensor<Float>(images.permute([0, 2, 3, 1]))
   imageTensor /= 255.0
   if let mean = mean, let standardDeviation = standardDeviation then
     imageTensor = (imageTensor - mean) / standardDeviation

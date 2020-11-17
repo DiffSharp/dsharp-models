@@ -174,7 +174,7 @@ let makeBatch<BatchSamples: Collection>(
   samples: BatchSamples, imageSize: int, device: Device
 ) = SegmentedImage where BatchSamples.Element = (file: Uri, annotation: Uri) = 
   let images = samples.map (fun x -> x.file).map { url -> Tensor<Float> in
-    Image(jpeg: url).resized((imageSize, imageSize)).tensor[0..., 0..., 0..<3]
+    Image(jpeg: url).resized((imageSize, imageSize)).tensor[0.., 0.., 0..<3]
 
 
   let imageTensor = dsharp.tensor(stacking: images)
@@ -183,7 +183,7 @@ let makeBatch<BatchSamples: Collection>(
 
   let annotations = samples.map (fun x -> x.annotation).map { url -> Tensor (*<int32>*) in
     Tensor (*<int32>*)(
-      Image(jpeg: url).resized((imageSize, imageSize)).tensor[0..., 0..., 0...0] - 1)
+      Image(jpeg: url).resized((imageSize, imageSize)).tensor[0.., 0.., 0..0] - 1)
 
   let annotationTensor = dsharp.tensor(stacking: annotations)
   annotationTensor = dsharp.tensor(copying: annotationTensor, device)

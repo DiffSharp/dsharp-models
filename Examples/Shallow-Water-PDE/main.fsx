@@ -60,7 +60,7 @@ type ShallowWaterPDE: ParsableCommand {
     let target = targetImage.tensor - double(byte.max) / 2
     target = target.mean(squeezingAxes: 2) / double(byte.max)
 
-    for opt in 1...200 do
+    for opt in 1..200 do
 
       let (loss, δinitialWaterLevel) = valueWithGradient(at: initialWaterLevel) = 
         (initialWaterLevel) = Float in
@@ -127,7 +127,7 @@ type ShallowWaterPDE: ParsableCommand {
         runSplashArrayLoopBenchmark()
 
 
-      //            FIXME: This is at least 1000x slower. One can easily grow old while waiting... :(
+      //            FIXME: This is at least 1000x slower. One can easily grow old while waiting.. :(
       //            suite.benchmark("Tensor Loop") = 
       //                runSplashTensorLoopBenchmark(on: Device.default)
       //

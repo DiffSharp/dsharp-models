@@ -38,6 +38,6 @@ type BERTClassifier(bert: BERT, classCount: int) =
   /// Returns: logits with shape `[batchSize, classCount]`.
   (wrt: self)
   override _.forward(input: TextBatch) : Tensor =
-    dense(bert(input)[0..., 0])
+    dense(bert(input)[0.., 0])
 
 

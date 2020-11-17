@@ -54,7 +54,7 @@ type Inference: ParsableCommand {
     let poses = [Pose]()
     if profiling then
       print("Running model 10 times to see how inference time changes.")
-      for _ in 1...10 do
+      for _ in 1..10 do
         poses = model(image)
 
     else

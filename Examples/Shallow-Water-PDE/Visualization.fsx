@@ -36,7 +36,7 @@ extension ShallowWaterEquationSolution {
 
 extension Tensor where Scalar = Float {
   /// Returns image normalized from `min`-`max` range to standard 0-255 range and converted to `byte`.
-  let normalized(min: Scalar = -1, max: Scalar = +1) = Tensor<byte> {
+  let normalized(min: scalar = -1, max: scalar = +1) = Tensor<byte> {
     Debug.Assert(max > min)
 
     let clipped = self.clipped(min: min, max: max)

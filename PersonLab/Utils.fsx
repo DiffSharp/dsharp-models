@@ -75,17 +75,17 @@ let hash(tensor: Tensor) =
 /// as it avoids unnecesary GPU->CPU copies on each access.
 type CPUTensor<T: TensorFlowScalar> {
   let flattenedTensor: T[]
-  let shape: TensorShape
+  let shape: Shape
 
   init(tensor: Tensor<T>) = 
     self.flattenedTensor = tensor.scalars
     self.shape = tensor.shape
 
 
-  subscript(indexes: int...) = T {
+  subscript(indexes: int..) = T {
     let oneDimensionalIndex = 0
     for i in 1..<ndims {
-      oneDimensionalIndex <- oneDimensionalIndex + indexes[i - 1] * shape[i...].reduce(1, *)
+      oneDimensionalIndex <- oneDimensionalIndex + indexes[i - 1] * shape.[i..].reduce(1, *)
 
     // Last dimension doesn't have multipliers.
     oneDimensionalIndex <- oneDimensionalIndex + indexes |> Array.last

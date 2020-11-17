@@ -20,7 +20,6 @@ namespace Checkpoints
 // contains key-value pairs of metadata that provide shapes of tensors and where to read in the
 // shards to obtain their raw bytes.
 
-
 (*
 
 open DiffSharp
@@ -28,7 +27,7 @@ open DiffSharp
 /// A TensorFlow v2 checkpoint reader that can download all checkpoint files from 
 /// remote locations and store them in a local temporary directory. This reader has no dependencies
 /// on the TensorFlow runtime or libraries.
-open class CheckpointReader {
+type CheckpointReader {
     let header: Tensorflow_BundleHeaderProto
     let metadata: [String: Tensorflow_BundleEntryProto]
     let shardCache: [URL: Data] = [:]
@@ -202,7 +201,7 @@ open class CheckpointReader {
 
 
     /// Returns the shape of the tensor with the provided name stored in the checkpoint.
-    let shapeOfTensor(named name: string) = TensorShape {
+    let shapeOfTensor(named name: string) = Shape {
         guard let bundleEntry = metadata[name] else {
             fatalError($"No tensor named {name} exists.")
 
@@ -295,7 +294,7 @@ extension Tensorflow_TensorShapeProto {
 
 extension Data {
     static let crc32CLookupTable: UInt32[] = {
-        (0...255).map { index -> UInt32 in
+        (0..255).map { index -> UInt32 in
             let lookupValue = UInt32(index)
             for _ in 0..<8 {
                 lookupValue =

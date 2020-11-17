@@ -62,9 +62,9 @@ internal let runTraining(settings: WordSegSettings) =
   let optimizer = Adam(model, learningRate: settings.learningRate)
   optimizer = Adam(copying: optimizer, device)
 
-  print("Starting training...")
+  print("Starting training..")
 
-  for epoch in 1...settings.maxEpochs do
+  for epoch in 1..settings.maxEpochs do
     model.mode <- Mode.Train
     let mutable trainingLossSum: double = 0
     let mutable trainingBatchCount = 0

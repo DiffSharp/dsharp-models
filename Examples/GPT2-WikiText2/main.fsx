@@ -65,5 +65,5 @@ let trainingLoop: TrainingLoop = TrainingLoop(
   lossFunction: softmaxCrossEntropyReshaped,
   metrics: [.accuracy])
 
-print("Starting training...")
+print("Starting training..")
 try! trainingLoop.fit(&gpt.model, epochs: 10, device=device)

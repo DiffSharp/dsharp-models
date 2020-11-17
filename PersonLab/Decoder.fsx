@@ -132,10 +132,10 @@ type PoseDecoder {
   {
     let yStart = max(heatmapY - config.keypointLocalMaximumRadius, 0)
     let yEnd = min(heatmapY + config.keypointLocalMaximumRadius, heatmap.shape.[0] - 1)
-    for windowY in yStart...yEnd do
+    for windowY in yStart..yEnd do
       let xStart = max(heatmapX - config.keypointLocalMaximumRadius, 0)
       let xEnd = min(heatmapX + config.keypointLocalMaximumRadius, heatmap.shape.[1] - 1)
-      for windowX in xStart...xEnd do
+      for windowX in xStart..xEnd do
         if heatmap[windowY, windowX, keypointIndex] > score then
           return false
 

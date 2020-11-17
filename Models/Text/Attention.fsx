@@ -12,47 +12,52 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
+#load "Utilities.fsx"
+
+open System.Diagnostics
 open DiffSharp
+open DiffSharp.Model
+open DiffSharp.ShapeChecking
+open global.Utilities
+
+[<AutoOpen>]
+module Defaults =
+    /// Default initializer to use for the linear transform weights.
+    let defaultWeightInitializer = truncatedNormalInitializer(dsharp.scalar 0.02)
+
+    /// Default initializer to use for the linear transform biases.
+    let defaultBiasInitializer (shape: Shape) = dsharp.zeros shape
+
 
 /// Input to an attention layer.
-type AttentionInput<Scalar: TensorFlowFloatingPoint>: Differentiable {
+type AttentionInput(source: Tensor, target: Tensor, mask: Tensor, ?batchSize: int) =
+
+    do Debug.Assert(source.ndims = target.ndims, "The rank of the attention source and target tensors must match.")
+
     /// Source tensor that we are attending from, with shape
     /// `[batchSize, sourceSequenceLength, sourceDepth]` or
     /// `[batchSize, sourceSequenceLength * sourceDepth]`.
-    let source: Tensor
+    member _.source = source
 
     /// Target tensor that we are attending to, with shape
     /// `[batchSize, targetSequenceLength, targetDepth]` or
     /// `[batchSize, targetSequenceLength * targetDepth]`.
-    let target: Tensor
+    member _.target = target
 
     /// Mask to apply on the attention scores. This is a tensor with shape
     /// `[batchSize, sourceSequenceLength, targetSequenceLength]` or
     /// `[batchSize, sourceSequenceLength * targetSequenceLength]`. The values should be `1` or `0`.
     /// The attention scores will effectively be set to negative infinity for any positions in the
     /// mask that are set to `0`, and will be unchanged for positions that are set to `1`.
-    let mask: Tensor
+    member _.mask = mask
 
     /// The batch size of this input. This is optional because it is only needed if the input
     /// sequences have been reshaped to matrices.
-    let batchSize: int?
-
-    
-    public init(
-        source: Tensor,
-        target: Tensor,
-        mask: Tensor,
-        batchSize: int? = nil
-    ) = 
-        Debug.Assert(
-            source.rank = target.rank,
-            "The rank of the attention source and target tensors must match.")
-        self.source = source
-        self.target = target
-        self.mask = mask
-        self.batchSize = batchSize
-
-
+    member _.batchSize = batchSize
 
 /// Multi-head attention layer.
 ///
@@ -73,152 +78,127 @@ type AttentionInput<Scalar: TensorFlowFloatingPoint>: Differentiable {
 /// rather than using separate tensors.
 ///
 /// - Source: ["Attention Is All You Need"](https://arxiv.org/abs/1706.03762).
-type MultiHeadAttention: Layer, Regularizable {
-    // TODO: Convert to a generic constraint once TF-427 is resolved.
-    type Scalar = Float
-
-    let sourceSize: int
-    let targetSize: int
-    let headCount: int
-    let headSize: int
-    let queryactivation= Activation<Scalar>
-    let keyactivation= Activation<Scalar>
-    let valueactivation= Activation<Scalar>
-    let matrixResult: bool
-
-    let queryWeight: Tensor
-    let queryBias: Tensor
-    let keyWeight: Tensor
-    let keyBias: Tensor
-    let valueWeight: Tensor
-    let valueBias: Tensor
-    let attentionDropout: Dropout<Scalar>
-
-    let regularizationValue: TangentVector {
-        TangentVector(
-            queryWeight: queryWeight,
-            queryBias: dsharp.tensor(Scalar(0), device=queryBias.device),
-            keyWeight: keyWeight,
-            keyBias: dsharp.tensor(Scalar(0), device=keyBias.device),
-            valueWeight: valueWeight,
-            valueBias: dsharp.tensor(Scalar(0), device=valueBias.device))
-
-
-    /// Creates a multi-head attention layer.
-    ///
-    /// - Parameters:
-    ///   - sourceSize: Size/depth of the source tensor this layer is attending from.
-    ///   - targetSize: Size/depth of the target tensor this layer is attending to.
-    ///   - headCount: Number of attention heads.
-    ///   - headSize: Size/depth of each attention head.
-    ///   - queryactivation= Activation function applied to the attention query tensor.
-    ///   - keyactivation= Activation function applied to the attention key tensor.
-    ///   - valueactivation= Activation function applied to the attention value tensor.
-    ///   - attentionDropoutProbability: Dropout probability for the attention scores.
-    ///   - matrixResult: If `true`, the resulting tensor will have shape
-    ///     `[batchSize * sourceSequenceLength, headCount * headSize]`. Otherwise, it will have shape
-    ///     `[batchSize, sourceSequenceLength, headCount * headSize]`.
-    ///   - queryWeightInitializer: Initializer for the query transformation weight.
-    ///   - queryBiasInitializer: Initializer for the query transformation bias.
-    ///   - keyWeightInitializer: Initializer for the key transformation weight.
-    ///   - keyBiasInitializer: Initializer for the key transformation bias.
-    ///   - valueWeightInitializer: Initializer for the value transformation weight.
-    ///   - valueBiasInitializer: Initializer for the value transformation bias.
-    public init(
-        sourceSize: int,
+/// Creates a multi-head attention layer.
+///
+/// - Parameters:
+///   - sourceSize: Size/depth of the source tensor this layer is attending from.
+///   - targetSize: Size/depth of the target tensor this layer is attending to.
+///   - headCount: Number of attention heads.
+///   - headSize: Size/depth of each attention head.
+///   - queryActivation= Activation function applied to the attention query tensor.
+///   - keyActivation= Activation function applied to the attention key tensor.
+///   - valueActivation= Activation function applied to the attention value tensor.
+///   - attentionDropoutProbability: Dropout probability for the attention scores.
+///   - matrixResult: If `true`, the resulting tensor will have shape
+///     `[batchSize * sourceSequenceLength, headCount * headSize]`. Otherwise, it will have shape
+///     `[batchSize, sourceSequenceLength, headCount * headSize]`.
+///   - queryWeightInitializer: Initializer for the query transformation weight.
+///   - queryBiasInitializer: Initializer for the query transformation bias.
+///   - keyWeightInitializer: Initializer for the key transformation weight.
+///   - keyBiasInitializer: Initializer for the key transformation bias.
+///   - valueWeightInitializer: Initializer for the value transformation weight.
+///   - valueBiasInitializer: Initializer for the value transformation bias.
+type MultiHeadAttention(sourceSize: int,
         targetSize: int,
-        headCount: int = 1,
-        headSize: int = 512,
-        queryactivation= @escaping Activation<Scalar> = identity,
-        keyactivation= @escaping Activation<Scalar> = identity,
-        valueactivation= @escaping Activation<Scalar> = identity,
-        attentionDropoutProbability: Scalar = 0,
-        matrixResult: bool = false,
-        queryWeightInitializer: ParameterInitializer<Scalar> = defaultWeightInitializer,
-        queryBiasInitializer: ParameterInitializer<Scalar> = defaultBiasInitializer,
-        keyWeightInitializer: ParameterInitializer<Scalar> = defaultWeightInitializer,
-        keyBiasInitializer: ParameterInitializer<Scalar> = defaultBiasInitializer,
-        valueWeightInitializer: ParameterInitializer<Scalar> = defaultWeightInitializer,
-        valueBiasInitializer: ParameterInitializer<Scalar> = defaultBiasInitializer
-    ) = 
-        self.sourceSize = sourceSize
-        self.targetSize = targetSize
-        self.headCount = headCount
-        self.headSize = headSize
-        self.queryActivation = queryActivation
-        self.keyActivation = keyActivation
-        self.valueActivation = valueActivation
-        self.matrixResult = matrixResult
-        self.queryWeight = queryWeightInitializer([sourceSize, headCount * headSize])
-        self.queryBias = queryBiasInitializer([headCount * headSize])
-        self.keyWeight = keyWeightInitializer([targetSize, headCount * headSize])
-        self.keyBias = keyBiasInitializer([headCount * headSize])
-        self.valueWeight = valueWeightInitializer([targetSize, headCount * headSize])
-        self.valueBias = valueBiasInitializer([headCount * headSize])
-        // TODO: Make dropout generic over the probability type.
-        self.attentionDropout = Dropout(probability: Double(attentionDropoutProbability))
+        ?headCount: int,
+        ?headSize: int,
+        ?queryActivation: Activation,
+        ?keyActivation: Activation,
+        ?valueActivation: Activation,
+        ?attentionDropoutProbability: scalar,
+        ?matrixResult: bool,
+        ?queryWeightInitializer: ParameterInitializer,
+        ?queryBiasInitializer: ParameterInitializer,
+        ?keyWeightInitializer: ParameterInitializer,
+        ?keyBiasInitializer: ParameterInitializer,
+        ?valueWeightInitializer: ParameterInitializer,
+        ?valueBiasInitializer: ParameterInitializer) = 
 
+    inherit Model()
+
+    let headCount = defaultArg headCount 1
+    let headSize = defaultArg headSize 512
+    let queryActivation = defaultArg queryActivation id
+    let keyActivation = defaultArg keyActivation id
+    let valueActivation = defaultArg valueActivation id
+    let attentionDropoutProbability = defaultArg attentionDropoutProbability (scalar 0)
+    let matrixResult = defaultArg matrixResult false
+    let queryWeightInitializer = defaultArg queryWeightInitializer defaultWeightInitializer
+    let queryBiasInitializer = defaultArg queryBiasInitializer defaultBiasInitializer
+    let keyWeightInitializer = defaultArg keyWeightInitializer defaultWeightInitializer
+    let keyBiasInitializer = defaultArg keyBiasInitializer defaultBiasInitializer
+    let valueWeightInitializer = defaultArg valueWeightInitializer defaultWeightInitializer
+    let valueBiasInitializer = defaultArg valueBiasInitializer defaultBiasInitializer
+
+    let queryWeight = queryWeightInitializer(Shape [sourceSize; headCount * headSize])
+    let queryBias = queryBiasInitializer(Shape [headCount * headSize])
+    let keyWeight = keyWeightInitializer(Shape [targetSize; headCount * headSize])
+    let keyBias = keyBiasInitializer(Shape [headCount * headSize])
+    let valueWeight = valueWeightInitializer(Shape [targetSize; headCount * headSize])
+    let valueBias = valueBiasInitializer(Shape [headCount * headSize])
+    // TODO: Make dropout generic over the probability type.
+    let attentionDropout = Dropout(attentionDropoutProbability.toDouble())
+
+    member _.regularizationValue =
+        TangentVector 
+            {| queryWeight=queryWeight;
+               queryBias=dsharp.tensor(0, device=queryBias.device);
+               keyWeight=keyWeight;
+               keyBias=dsharp.tensor(0, device=keyBias.device);
+               valueWeight=valueWeight;
+               valueBias=dsharp.tensor(0, device=valueBias.device) |}
 
     
-    override _.forward(input: AttentionInput<Scalar>) : Tensor =
+    override _.forward(input: Tensor (* AttentionInput *) ) : Tensor =
+        let input = Unchecked.defaultof<AttentionInput> // TODO
         Debug.Assert(
-            input.source.rank = 3 || input.batchSize <> nil,
+            input.source.ndims = 3 || input.batchSize.IsSome,
             "Whenever the input is provided in matrix form, the batch size must also be provided.")
+
         // Scalar dimensions referenced here:
         //   - B = batch size (number of sequences)
         //   - F = `input.source` sequence length
         //   - T = `input.target` sequence length
         //   - N = number of attention heads
         //   - H = size per attention head
-        let matrixInput = input.source.rank < 3
-        let B = matrixInput ? input.batchSize! : input.source.shape.[0]
-        let F = matrixInput ? input.source.shape.[0] / B : input.source.shape.[1]
-        let T = matrixInput ? input.target.shape.[0] / B : input.target.shape.[1]
+        let matrixInput = input.source.ndims < 3
+        let B = if matrixInput then input.batchSize.Value else input.source.shape.[0]
+        let F = if matrixInput then input.source.shape.[0] / B else input.source.shape.[1]
+        let T = if matrixInput then input.target.shape.[0] / B else input.target.shape.[1]
         let N = headCount
         let H = headSize
 
         let source = input.source.reshapedToMatrix()
         let target = input.target.reshapedToMatrix()
 
-        let q = queryActivation(matmul(source, queryWeight) + queryBias)  // [B * F, N * H]
-        let k = keyActivation(matmul(target, keyWeight) + keyBias)  // [B * T, N * H]
-        let v = valueActivation(matmul(target, valueWeight) + valueBias)  // [B * T, N * H]
+        let q = queryActivation(dsharp.matmul(source, queryWeight) + queryBias)  // [B * F; N * H]
+        let k = keyActivation(dsharp.matmul(target, keyWeight) + keyBias)  // [B * T; N * H]
+        let v = valueActivation(dsharp.matmul(target, valueWeight) + valueBias)  // [B * T; N * H]
 
-        q = q.view([B, F, N, H]).transposed(permutation: 0, 2, 1, 3)  // [B, N, F, H]
-        k = k.view([B, T, N, H]).transposed(permutation: 0, 2, 1, 3)  // [B, N, T, H]
-        v = v.view([B, T, N, H]).transposed(permutation: 0, 2, 1, 3)  // [B, N, T, H]
+        let q = q.view([B; F; N; H]).permute(0, 2, 1, 3)  // [B; N; F; H]
+        let k = k.view([B; T; N; H]).permute(0, 2, 1, 3)  // [B; N; T; H]
+        let v = v.view([B; T; N; H]).permute(0, 2, 1, 3)  // [B; N; T; H]
 
         // Take the dot product between the query and the key to get the raw attention scores.
-        let attentionScores = matmul(q, transposed: false, k, transposed: true)  // [B, N, F, T]
-        attentionScores = attentionScores / sqrtf(Scalar(headSize))
+        let attentionScores : Tensor = 
+           failwith "todo - matmul transposed"
+           dsharp.matmul(q, (* transposed: false, *) k (* ,  transposed: true *) )  // [B; N; F; T]
+        let attentionScores = attentionScores / sqrt(double(headSize))
 
         // Since the attention mask is set to 1.0 for positions we want to attend to and 0.0 for
         // masked positions, we create a tensor which is 0.0 for positions we want to attend to and 
         // -10000.0 for masked positions. Since we are adding this tensor to the raw scores before 
         // the softmax, this is effectively the same as removing the masked entries entirely.
-        let attentionMask = input.mask.unsqueeze(1)  // [B, 1, F, T]
-        attentionScores = attentionScores - 10000 * (1 - attentionMask)
+        let attentionMask = input.mask.unsqueeze(1)  // [B; 1, F; T]
+        let attentionScores = attentionScores - 10000 * (1 - attentionMask)
 
         // Normalize the attention scores to convert them to probabilities. We are also dropping
         // out entire tokens to attend to, which might seem a bit unusual, but it is taken from the
         // original Transformer paper.
-        let attentionProbabilities = attentionDropout(softmax(attentionScores))  // [B, N, F, T]
+        let attentionProbabilities = attentionDropout.forward(dsharp.softmax(attentionScores, dim = -1))  // [B; N; F; T]
 
-        let result = matmul(attentionProbabilities, v)  // [B, N, F, H]
-            .transposed(permutation: 0, 2, 1, 3)  // [B, F, N, H]
-        return matrixResult
-            ? result.view([B * F, N * H]) : result.view([B, F, N * H])
-
-
-
-extension MultiHeadAttention {
-    /// Default initializer to use for the linear transform weights.
-    public static let defaultWeightInitializer: ParameterInitializer<Scalar> {
-        truncatedNormalInitializer(standardDeviation=Tensor(0.02))
-
-
-    /// Default initializer to use for the linear transform biases.
-    public static let defaultBiasInitializer: ParameterInitializer<Scalar> {
-        zeros()
+        let result = dsharp.matmul(attentionProbabilities, v)  // [B; N; F; H]
+                           .permute(0, 2, 1, 3)  // [B; F; N; H]
+        if matrixResult then result.view([B * F; N * H]) else result.view([B; F; N * H])
 
 

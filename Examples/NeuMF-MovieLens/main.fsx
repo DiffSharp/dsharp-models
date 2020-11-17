@@ -44,7 +44,7 @@ for element in dataset.testData do
 
 print("Dataset acquired.")
 
-print("Starting training...")
+print("Starting training..")
 let epochCount = 20
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
     let avgLoss: double = 0.0
@@ -64,7 +64,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
     model.mode <- Mode.Eval
     let correct = 0.0
     let count = 0
-    for user in dataset.testUsers[0...30] do
+    for user in dataset.testUsers[0..30] do
         let negativeItem: double[] = [| |]
         let output: double[] = [| |]
         let userIndex = dataset.user2id[user]!
@@ -93,7 +93,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         correct / Double(count))
 
 
-print("Starting testing...")
+print("Starting testing..")
 model.mode <- Mode.Eval
 let correct = 0.0
 let count = 0

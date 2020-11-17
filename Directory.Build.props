@@ -2,9 +2,9 @@
 
   <PropertyGroup>
 
-    <LibTorchNugetVersion>1.5.6</LibTorchNugetVersion>
-    <TorchSharpVersion>0.3.52276</TorchSharpVersion>
-    <FSharpCoreVersion>4.7.2</FSharpCoreVersion>
+    <LibTorchNugetVersion>1.7.0.1</LibTorchNugetVersion>
+    <TorchSharpVersion>0.3.52338</TorchSharpVersion>
+    <FSharpCoreVersion>5.0.0</FSharpCoreVersion>
   </PropertyGroup>
 
 </Project>

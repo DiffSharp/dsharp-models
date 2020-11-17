@@ -27,9 +27,9 @@ type NeuMF: Module {
     let numUsers: int
     let numItems: int
     let numLatentFeatures: int
-    let matrixRegularization: Scalar
+    let matrixRegularization: scalar
     let mlpLayerSizes: int[] = [64, 32, 16, 8]
-    let mlpRegularizations: Scalar[] = [0, 0, 0, 0]
+    let mlpRegularizations: scalar[] = [0, 0, 0, 0]
 
     let mfUserEmbedding: Embedding<Scalar>
     let mfItemEmbedding: Embedding<Scalar>
@@ -84,7 +84,7 @@ type NeuMF: Module {
         mlpItemEmbedding = Embedding<Scalar>(
             vocabularySize=self.numItems, embeddingSize=self.mlpLayerSizes[0] / 2)
 
-        for (inputSize, outputSize) in zip(mlpLayerSizes, mlpLayerSizes[1...]) = 
+        for (inputSize, outputSize) in zip(mlpLayerSizes, mlpLayerSizes[1..]) = 
             mlpLayers.append(Linear(inFeatures=inputSize, outFeatures=outputSize, activation= dsharp.relu))
 
 

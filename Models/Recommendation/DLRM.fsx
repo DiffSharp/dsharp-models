@@ -103,8 +103,8 @@ type DLRM(nDense: int, mSpa: int, lnEmb: int[], lnBot: int[], lnTop: int[],
                 concatenating: sparseEmbVecs + [denseEmbVec],
                 alongAxis: 1).view([batchSize, -1, denseEmbVec.shape.[1]])
             // Use matmul to efficiently compute all dot products
-            let higherOrderInteractions = matmul(
-                allEmbeddings, allEmbeddings.transposed(permutation: 0, 2, 1))
+            let higherOrderInteractions = dsharp.matmul(
+                allEmbeddings, allEmbeddings.permute(0, 2, 1))
             // Gather relevant indices
             let flattenedHigherOrderInteractions = higherOrderInteractions.view(
                 [batchSize, -1])

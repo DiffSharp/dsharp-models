@@ -78,7 +78,7 @@ type Solver {
         let stayReward = qLookup[0]
         let hitReward = qLookup[1]
 
-        if iteration < Int.random(in: 1...learningPhase) = 
+        if iteration < Int.random(in: 1..learningPhase) = 
             return randomStrategy()
         else
             // quit learning after initial phase
@@ -154,7 +154,7 @@ let learner = Solver()
 for solver in SolverType.allCases do
     let totalReward = 0
 
-    for i in 1...iterationCount do
+    for i in 1..iterationCount do
         let isDone = false
         environment.reset()
 

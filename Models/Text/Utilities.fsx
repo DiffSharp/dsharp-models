@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
 
 open DiffSharp
 
-type Activation<Scalar: TensorFlowFloatingPoint> =
-     (Tensor<Scalar>) = Tensor<Scalar>
+type Activation = Tensor -> Tensor
+type ParameterInitializer = Shape -> Tensor
 
+(*
 extension KeyPathIterable {
-    public mutating let clipByGlobalNorm<Scalar: TensorFlowFloatingPoint>(clipNorm: Scalar) = 
+    public mutating let clipByGlobalNorm<Scalar: TensorFlowFloatingPoint>(clipNorm: scalar) = 
         let globalNorm: Tensor? = nil
         for kp in self.recursivelyAllWritableKeyPaths(Tensor<Scalar>.self) = 
             let tmp = self[keyPath: kp].squared().sum()
@@ -33,31 +37,24 @@ extension KeyPathIterable {
                 self[keyPath: kp] *= clipNorm / max(globalNorm, clipNorm)
 
 
+*)
 
 
 
-extension Tensor {
+type Tensor with
     /// Returns this tensor reshaped to a matrix (i.e., a rank-2 tensor).
-    (wrt: self where Scalar: TensorFlowFloatingPoint)
-    internal let reshapedToMatrix() = Tensor {
-        reshaped([-1, shape[rank - 1]])
-
+    member t.reshapedToMatrix() =
+        t.reshape([-1; t.shape.[t.dim - 1]])
 
     /// Returns this previously-reshaped rank-2 tensor reshaped back to its original shape.
-    (wrt: self where Scalar: TensorFlowFloatingPoint)
-    internal let reshapedFromMatrix(originalShape: TensorShape) = Tensor {
-        reshaped(
-            [
-                originalShape[0..<originalShape.count - 1].dimensions + [shape[rank - 1]]))
+    member t.reshapedFromMatrix(originalShape: Shape) =
+        t.reshape(Shape [| yield! originalShape.Dims.[0..originalShape.Length - 2]; yield t.shapex.[t.dim - 1] |])
 
-
-    /// Returns this previously-reshaped rank-2 tensor reshaped back to its original shape.
-    (wrt: self where Scalar: TensorFlowFloatingPoint)
-    internal let reshapedFromMatrix(originalShape: Tensor (*<int32>*)) = Tensor {
-        reshaped(
-            toShape: Tensor (*<int32>*)(concatenating: [
-                originalShape[0..<originalShape.shape.[0] - 1],
-                Tensor (*<int32>*)([int32(shape[rank - 1])], device=device),
-            ]))
+    //member t.reshapedFromMatrix(originalShape: Tensor) = Tensor {
+    //    reshaped(
+    //        toShape: Tensor (*<int32>*)(concatenating: [
+    //            originalShape.[0..<originalShape.shape.[0] - 1],
+    //            Tensor (*<int32>*)([int32(shape.[rank - 1])], device=device),
+    //        ]))
 
 

@@ -86,7 +86,7 @@ let optD = Adam(discriminator, learningRate=dsharp.scalar 0.0001)
 // Test noise so we can track progress.
 let noise = dsharp.randn([1; zDim])
 
-print("Begin training...")
+print("Begin training..")
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
     model.mode <- Mode.Train
     for batch in epochBatches do
