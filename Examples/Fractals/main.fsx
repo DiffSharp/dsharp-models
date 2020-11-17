@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-open ArgumentParser
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"System.Runtime.Extensions.dll"
+
 open DiffSharp
 
 type FractalCommand: ParsableCommand {

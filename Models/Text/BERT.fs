@@ -13,13 +13,6 @@
 // limitations under the License.
 
 
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
-#r @"System.Runtime.Extensions.dll"
-#load "Utilities.fsx"
-#load "TransformerBERT.fsx"
-
 //open Checkpoints
 open System
 open System.Diagnostics
