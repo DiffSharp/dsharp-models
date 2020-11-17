@@ -130,23 +130,30 @@ type MultiHeadAttention(sourceSize: int,
     let valueWeightInitializer = defaultArg valueWeightInitializer defaultWeightInitializer
     let valueBiasInitializer = defaultArg valueBiasInitializer defaultBiasInitializer
 
-    let queryWeight = queryWeightInitializer(Shape [sourceSize; headCount * headSize])
-    let queryBias = queryBiasInitializer(Shape [headCount * headSize])
-    let keyWeight = keyWeightInitializer(Shape [targetSize; headCount * headSize])
-    let keyBias = keyBiasInitializer(Shape [headCount * headSize])
-    let valueWeight = valueWeightInitializer(Shape [targetSize; headCount * headSize])
-    let valueBias = valueBiasInitializer(Shape [headCount * headSize])
+    let p_queryWeight = queryWeightInitializer(Shape [sourceSize; headCount * headSize]) |> Parameter
+    let p_queryBias = queryBiasInitializer(Shape [headCount * headSize]) |> Parameter
+    let p_keyWeight = keyWeightInitializer(Shape [targetSize; headCount * headSize]) |> Parameter
+    let p_keyBias = keyBiasInitializer(Shape [headCount * headSize]) |> Parameter
+    let p_valueWeight = valueWeightInitializer(Shape [targetSize; headCount * headSize]) |> Parameter
+    let p_valueBias = valueBiasInitializer(Shape [headCount * headSize]) |> Parameter
     // TODO: Make dropout generic over the probability type.
     let attentionDropout = Dropout(attentionDropoutProbability.toDouble())
 
+    member _.queryWeight = p_queryWeight
+    member _.queryBias = p_queryBias
+    member _.keyWeight = p_keyWeight
+    member _.keyBias = p_keyBias
+    member _.valueWeight = p_valueWeight
+    member _.valueBias = p_valueBias
+
     member _.regularizationValue =
         TangentVector 
-            {| queryWeight=queryWeight;
-               queryBias=dsharp.tensor(0, device=queryBias.device);
-               keyWeight=keyWeight;
-               keyBias=dsharp.tensor(0, device=keyBias.device);
-               valueWeight=valueWeight;
-               valueBias=dsharp.tensor(0, device=valueBias.device) |}
+            {| queryWeight=p_queryWeight;
+               queryBias=dsharp.tensor(0, device=p_queryBias.value.device);
+               keyWeight=p_keyWeight;
+               keyBias=dsharp.tensor(0, device=p_keyBias.value.device);
+               valueWeight=p_valueWeight;
+               valueBias=dsharp.tensor(0, device=p_valueBias.value.device) |}
 
     
     override _.forward(input: Tensor (* AttentionInput *) ) : Tensor =
@@ -171,9 +178,9 @@ type MultiHeadAttention(sourceSize: int,
         let source = input.source.reshapedToMatrix()
         let target = input.target.reshapedToMatrix()
 
-        let q = queryActivation(dsharp.matmul(source, queryWeight) + queryBias)  // [B * F; N * H]
-        let k = keyActivation(dsharp.matmul(target, keyWeight) + keyBias)  // [B * T; N * H]
-        let v = valueActivation(dsharp.matmul(target, valueWeight) + valueBias)  // [B * T; N * H]
+        let q = queryActivation(dsharp.matmul(source, p_queryWeight.value) + p_queryBias.value)  // [B * F; N * H]
+        let k = keyActivation(dsharp.matmul(target, p_keyWeight.value) + p_keyBias.value)  // [B * T; N * H]
+        let v = valueActivation(dsharp.matmul(target, p_valueWeight.value) + p_valueBias.value)  // [B * T; N * H]
 
         let q = q.view([B; F; N; H]).permute(0, 2, 1, 3)  // [B; N; F; H]
         let k = k.view([B; T; N; H]).permute(0, 2, 1, 3)  // [B; N; T; H]

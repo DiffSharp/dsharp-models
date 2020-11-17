@@ -1,4 +1,3 @@
-namespace Checkpoints
 // Copyright 2020 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,6 +18,16 @@ namespace Checkpoints
 // have the same base file name, but extensions of the form `.data-00001-of-00020`. The index file
 // contains key-value pairs of metadata that provide shapes of tensors and where to read in the
 // shards to obtain their raw bytes.
+
+namespace Checkpoints
+
+open System
+open DiffSharp
+
+type CheckpointReader(checkpointLocation: Uri, modelName: string) =
+  
+    member _.readTensor(name: string) : Tensor = failwith "tbd"
+    member _.localCheckpointLocation : FilePath = failwith "tbd"
 
 (*
 

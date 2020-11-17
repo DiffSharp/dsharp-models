@@ -115,7 +115,7 @@ type TransformerEncoderLayer(hiddenSize: int,
             hiddenSize % attentionHeadCount = 0,
             "The hidden size of the transformer ({hiddenSize}) must be a multiple of the "
                 + "attention head count ({attentionHeadCount}).")
-    let multiHeadAttention = 
+    let _multiHeadAttention = 
         MultiHeadAttention(
             sourceSize=hiddenSize,
             targetSize=hiddenSize,
@@ -140,26 +140,36 @@ type TransformerEncoderLayer(hiddenSize: int,
 
     // TODO: Make dropout generic over the probability type.
     let hiddenDropout = Dropout(hiddenDropoutProbability.toDouble())
-    let attentionWeight = attentionWeightInitializer(Shape [attentionHeadCount * hiddenSize / attentionHeadCount; hiddenSize])
-    let attentionBias = attentionBiasInitializer(Shape [hiddenSize])
-    let attentionLayerNorm = LayerNorm( featureCount=hiddenSize, axis= -1)
-    let intermediateWeight = intermediateWeightInitializer(Shape [hiddenSize; intermediateSize])
-    let intermediateBias = intermediateBiasInitializer(Shape [intermediateSize])
-    let outputWeight = intermediateWeightInitializer(Shape [intermediateSize; hiddenSize])
-    let outputBias = intermediateBiasInitializer(Shape [hiddenSize])
-    let outputLayerNorm = LayerNorm(featureCount=hiddenSize, axis = -1)
+    let p_attentionWeight = attentionWeightInitializer(Shape [attentionHeadCount * hiddenSize / attentionHeadCount; hiddenSize]) |> Parameter
+    let p_attentionBias = attentionBiasInitializer(Shape [hiddenSize]) |> Parameter
+    let m_attentionLayerNorm = LayerNorm( featureCount=hiddenSize, axis= -1) 
+    let p_intermediateWeight = intermediateWeightInitializer(Shape [hiddenSize; intermediateSize]) |> Parameter
+    let p_intermediateBias = intermediateBiasInitializer(Shape [intermediateSize]) |> Parameter
+    let p_outputWeight = intermediateWeightInitializer(Shape [intermediateSize; hiddenSize]) |> Parameter
+    let p_outputBias = intermediateBiasInitializer(Shape [hiddenSize]) |> Parameter
+    let m_outputLayerNorm = LayerNorm(featureCount=hiddenSize, axis = -1)
+
+    member _.multiHeadAttention = _multiHeadAttention
+    member _.attentionWeight = p_attentionWeight
+    member _.attentionBias = p_attentionBias
+    member _.attentionLayerNorm = m_attentionLayerNorm
+    member _.intermediateWeight = p_intermediateWeight
+    member _.intermediateBias = p_intermediateBias
+    member _.outputWeight = p_outputWeight
+    member _.outputBias = p_outputBias
+    member _.outputLayerNorm = m_outputLayerNorm
 
     member _.regularizationValue =
         TangentVector
-            {| multiHeadAttention=multiHeadAttention.regularizationValue
-               attentionWeight=attentionWeight
-               attentionBias=dsharp.tensor(0, device=attentionBias.device)
-               attentionLayerNorm=attentionLayerNorm.regularizationValue
-               intermediateWeight=intermediateWeight
-               intermediateBias=dsharp.tensor(0, device=intermediateBias.device)
-               outputWeight=outputWeight
-               outputBias=dsharp.tensor(0, device=outputBias.device)
-               outputLayerNorm=outputLayerNorm.regularizationValue |}
+            {| multiHeadAttention=_multiHeadAttention.regularizationValue
+               attentionWeight=p_attentionWeight
+               attentionBias=dsharp.tensor(0, device=p_attentionBias.value.device)
+               attentionLayerNorm=m_attentionLayerNorm.regularizationValue
+               intermediateWeight=p_intermediateWeight
+               intermediateBias=dsharp.tensor(0, device=p_intermediateBias.value.device)
+               outputWeight=p_outputWeight
+               outputBias=dsharp.tensor(0, device=p_outputBias.value.device)
+               outputLayerNorm=m_outputLayerNorm.regularizationValue |}
 
     override _.forward(input: Tensor) : Tensor =
         let input = Unchecked.defaultof<TransformerInput> // TBD
@@ -169,21 +179,21 @@ type TransformerEncoderLayer(hiddenSize: int,
                 target=input.sequence,
                 mask=input.attentionMask,
                 ?batchSize= input.batchSize)
-        let attentionOutput = multiHeadAttention.forward(failwith "tbd" (* attentionInput *) )
+        let attentionOutput = _multiHeadAttention.forward(failwith "tbd" (* attentionInput *) )
 
         // Run a linear projection of `hiddenSize` and then add a residual connection to the input.
-        let attentionOutput = dsharp.matmul(attentionOutput, attentionWeight) + attentionBias
+        let attentionOutput = dsharp.matmul(attentionOutput, p_attentionWeight.value) + p_attentionBias.value
         let attentionOutput = hiddenDropout.forward(attentionOutput)
-        let attentionOutput = attentionLayerNorm.forward(attentionOutput + input.sequence)
+        let attentionOutput = m_attentionLayerNorm.forward(attentionOutput + input.sequence)
 
         // The activation is only applied to the "intermediate" hidden layer.
-        let intermediateOutput = dsharp.matmul(attentionOutput, intermediateWeight) + intermediateBias
+        let intermediateOutput = dsharp.matmul(attentionOutput, p_intermediateWeight.value) + p_intermediateBias.value
         let intermediateOutput = intermediateActivation(intermediateOutput)
 
         // Project back to `hiddenSize` and add the residual.
-        let output = dsharp.matmul(intermediateOutput, outputWeight) + outputBias
+        let output = dsharp.matmul(intermediateOutput, p_outputWeight.value) + p_outputBias.value
         let output = hiddenDropout.forward(output)
-        let output = outputLayerNorm.forward(output + attentionOutput)
+        let output = m_outputLayerNorm.forward(output + attentionOutput)
 
         output
 
@@ -285,7 +295,7 @@ type TransformerEncoder(hiddenSize: int,
         // on TPUs, and so we want to minimize them to help the optimizer.
         let mutable transformerInput = input.sequence.reshapedToMatrix()
         let batchSize = input.sequence.shape.[0]
-        for layerIndex in 0..encoderLayers.Length do
+        for layerIndex in 0..encoderLayers.Length-1 do
             let layerInput = 
                 TransformerInput(sequence=transformerInput,
                     attentionMask=input.attentionMask,

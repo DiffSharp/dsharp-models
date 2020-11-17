@@ -82,12 +82,12 @@ extension CoLA {
     if isTest then
       // The test data file has a header.
       return lines.dropFirst()|> Seq.map (fun (i, lineParts) ->
-        CoLAExample(id: lineParts[0], sentence: lineParts[1], isAcceptable: nil)
+        CoLAExample(id: lineParts.[0], sentence: lineParts.[1], isAcceptable: nil)
 
 
 
     return lines|> Seq.map { (i, lineParts) in
-      CoLAExample(id: lineParts[0], sentence: lineParts[3], isAcceptable: lineParts[1] = "1")
+      CoLAExample(id: lineParts.[0], sentence: lineParts.[3], isAcceptable: lineParts.[1] = "1")
 
 
 internal let parse(tsvFileAt fileURL: Uri) -> [string[]] {
