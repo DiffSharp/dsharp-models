@@ -21,8 +21,8 @@ let dataset = MovieLens(trainBatchSize= 1024)
 let numUsers = dataset.numUsers
 let numItems = dataset.numItems
 
-let size: int[] = [16, 32, 16, 8]
-let regs: double[] = [0.0, 0.0, 0.0, 0.0]
+let size: int[] = [| 16; 32; 16; 8 |]
+let regs: double[] = [| 0.0; 0.0; 0.0; 0.0 |]
 
 let model = NeuMF(
     numUsers: numUsers, numItems: numItems, numLatentFeatures: 8, matrixRegularization: 0.0, mlpLayerSizes: size,
@@ -90,7 +90,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
 
     print(
         "Epoch: {epoch}", "Current loss: \(avgLoss/1024.0)", "Validation Accuracy:",
-        correct / Double(count))
+        correct / double(count))
 
 
 print("Starting testing..")
@@ -127,4 +127,4 @@ for user in dataset.testUsers do
 
     print(terminator: "\n")
 
-print("Test Accuracy:", correct / Double(count))
+print("Test Accuracy:", correct / double(count))

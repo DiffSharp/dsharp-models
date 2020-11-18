@@ -35,6 +35,11 @@ module DiffSharpExtensions =
 
         member t.rsqrt() = 1.0 / t.sqrt()
 
+        member t.swish() = failwith "tbd"
+        member t.hardSwish() = failwith "tbd"
+        member t.relu6() = failwith "tbd"
+        member t.hardSigmoid() = failwith "tbd"
+
         member t.argmax(dim: int) : Tensor = failwith "tbd"
 
         member t.unsqueeze (dims: seq<int>) =
@@ -68,8 +73,13 @@ module DiffSharpExtensions =
                t.mean(dim, ?keepDim=keepDim), t.stddev(dim, ?keepDim=keepDim)
 
         member t.moments (dims: seq<int>, ?keepDim: bool) =
-               t.mean(dims, ?keepDim=keepDim), t.stddev(dims, ?keepDim=keepDim)
+            t.mean(dims, ?keepDim=keepDim), t.stddev(dims, ?keepDim=keepDim)
 
+        member t.sequenced([<ParamArray>] models: Model[] ) =
+            let mutable res = t
+            for m in models do
+                res <- m.forward res
+            res
 
     type Sequential([<ParamArray>] models: Model[]) =
         inherit Model()
@@ -101,6 +111,8 @@ module DiffSharpExtensions =
 
         static member rsqrt(input: Tensor) = input.rsqrt()
 
+        static member hardSigmoid(input: Tensor) = input.hardSigmoid()
+
         static member squeeze (input: Tensor, dims: seq<int>) = input.squeeze(dims)
 
         static member unsqueeze (input: Tensor, dims: seq<int>) = input.unsqueeze(dims)
@@ -130,7 +142,9 @@ module DiffSharpExtensions =
 
         static member sigmoidCrossEntropy(logits:Tensor, labels:Tensor, ?reduction:string) = logits.oneLike()
 
-        static member swish(input:Tensor) : Tensor = failwith "tbd"
+        static member swish(input:Tensor) : Tensor = input.swish()
+        static member dsharp.hardSwish(input:Tensor) : Tensor = input.hardSwish()
+        static member relu6(input:Tensor) : Tensor = input.relu6()
 
     type Model with 
         member m.grad(input, loss) = 
@@ -140,11 +154,11 @@ module DiffSharpExtensions =
             m.reverseDiff()
             dsharp.gradv (fun t -> loss (m.forward t)) input
 
-    type ZeroPadding2d(padding: (int*int) * (int * int)) =
+    type ZeroPadding2d((int*int) * (int * int)) =
        inherit Model()
        override m.forward(value) = value // TBD
 
-    type AvgPool2d(kernelSize: int, stride: int, padding: int) =
+    type AvgPool2d(kernelSize: int, ?stride: int, ?padding: int) =
        inherit Model()
        override m.forward(value) = value // TBD
 

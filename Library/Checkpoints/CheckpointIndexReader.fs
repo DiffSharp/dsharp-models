@@ -63,7 +63,7 @@ type CheckpointIndexReader {
 
 // The main interface for iterating through all metadata contained in the index file.
 extension CheckpointIndexReader {
-    let readHeader() -> Tensorflow_BundleHeaderProto {
+    let readHeader() -> Tensorflow_BundleHeaderProto =
         // The header has a string key of "", so there's nothing to read for the key.
         // If a non-zero initial value is encountered, the file is Snappy-compressed, so we bail out
         // until it can be uncompressed.
@@ -79,7 +79,7 @@ extension CheckpointIndexReader {
         tempHeader
 
 
-    let readAllKeysAndValues() -> [String: Tensorflow_BundleEntryProto] {
+    let readAllKeysAndValues() -> [String: Tensorflow_BundleEntryProto] =
         let lookupTable: [String: Tensorflow_BundleEntryProto] = [:]
         while let (key, value) = try readKeyAndValue() = 
             lookupTable[key] = value
@@ -103,7 +103,7 @@ extension CheckpointIndexReader {
         String(bytes: keyData)!
 
 
-    let readKeyAndValue() -> (String, Tensorflow_BundleEntryProto)? {
+    let readKeyAndValue() -> (String, Tensorflow_BundleEntryProto)? =
         guard !atEndOfFile else { return nil
 
         let sharedKeyBytes = binaryData.readVarint32(at: &index)

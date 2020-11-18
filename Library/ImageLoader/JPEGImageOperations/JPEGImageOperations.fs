@@ -26,7 +26,7 @@ public enum pixelFormat: int {
     | ABGR0888 = 9 // TJPF_XBGR
     | YUV400 = 10 // TJPF_GREY
 
-    let channelCount: int {
+    let channelCount: int =
         match self with
         | .RGB888 ->
             3

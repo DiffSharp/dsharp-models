@@ -117,7 +117,7 @@ type BoardState {
 
 
     /// Returns a new `BoardState` after current player passed.
-    let passing() = BoardState {
+    let passing() = BoardState =
         let newHistory = self.history
         newHistory.insert(self.board, at: 0)
         if newHistory.count > gameConfiguration.maxHistoryCount then
@@ -136,7 +136,7 @@ type BoardState {
 
 
     /// Returns a new `BoardState` after placing a new stone at `position`.
-    let placingNewStone(at position: Position) -> BoardState {
+    let placingNewStone(at position: Position) -> BoardState =
         // Sanity Check first.
         if case .illegal(let reason) = board.positionStatus(
             at: position,
@@ -203,13 +203,13 @@ type BoardState {
 
 
 extension BoardState: CustomStringConvertible {
-    let description: string {
+    let description: string =
         board.description
 
 
 
 extension BoardState: Equatable {
-    public static let = (lhs: BoardState, rhs: BoardState) = Bool {
+    public static let = (lhs: BoardState, rhs: BoardState) = Bool =
         // The following line is the sufficient and necessary condition for "equal".
         lhs.board = rhs.board &&
             lhs.nextPlayerColor = rhs.nextPlayerColor &&
@@ -297,7 +297,7 @@ extension Board {
     ///
     /// This is an approximated algorithm to find `ko`. See https://en.wikipedia.org/wiki/Ko_fight
     /// for details.
-    let isKoish(at position: Position, withNewStoneColor stoneColor: Color) = Bool {
+    let isKoish(at position: Position, withNewStoneColor stoneColor: Color) = Bool =
         Debug.Assert(self.color(at: position) = nil)
         let opponentColor = stoneColor.opponentColor
         let neighbors = position.neighbors(boardSize: self.size)
@@ -307,7 +307,7 @@ extension Board {
 
 // Extends the Color (for player) to generate opponent's Color.
 extension Color {
-    let opponentColor: Color {
+    let opponentColor: Color =
         self = .black ? .white : .black
 
 
@@ -361,7 +361,7 @@ extension Board {
         let whiteStoneCount = 0
         for x in 0..size-1 do
             for y in 0..size-1 do
-                guard let color = scoreBoard.color(at: Position(x: x, y: y))  else {
+                guard let color = scoreBoard.color(at: Position(x: x, y: y))  else =
                     // This board position does not belong to either player. Could be seki or dame.
                     // See https://en.wikipedia.org/wiki/Go_(game)#Seki_(mutual_life).
                     continue

@@ -55,11 +55,11 @@ type ResNet56() =
   let model: ResNet
 
   init() = 
-    model = ResNet(classCount: 10, depth: .resNet56, downsamplingInFirstStage: false)
+    model = ResNet(classCount: 10, depth: ResNet56, downsamplingInFirstStage: false)
   }
 
   
-  let callAsFunction(input: Tensor<Float>) = Tensor<Float> {
+  let callAsFunction(input: Tensor<Float>) = Tensor<Float> =
     model(input)
   }
 }

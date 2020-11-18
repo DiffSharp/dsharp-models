@@ -27,7 +27,7 @@ type FoundationFileSystem: FileSystem {
           attributes: nil)
 
 
-  let open(filename: string) = File {
+  let open(filename: string) = File =
     FoundationFile(path: filename)
 
     
@@ -43,11 +43,11 @@ type FoundationFile: File {
     self.location = Uri(fileURLWithPath: path)
 
   
-  let read() -> Data {
+  let read() -> Data =
     Data.ReadAllBytes(location, options: .alwaysMapped)
 
   
-  let read(position: int, count: int) -> Data {
+  let read(position: int, count: int) -> Data =
     // TODO: Incorporate file offset.
     Data.ReadAllBytes(location, options: .alwaysMapped)
 

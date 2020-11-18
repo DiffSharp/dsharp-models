@@ -19,7 +19,7 @@ let gpt: GPT2 = try GPT2()
 
 // Set temperature.
 if CommandLine.arguments.count >= 2 then
-  guard let temperature = double(CommandLine.arguments[1]) else {
+  guard let temperature = double(CommandLine.arguments[1]) else =
     fatalError("Could not parse command line argument '\(CommandLine.arguments[1])' as a float")
 
   gpt.temperature = temperature

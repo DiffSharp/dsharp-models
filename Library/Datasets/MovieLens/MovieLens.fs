@@ -31,7 +31,7 @@ extension Sequence where Element: Collection {
 
 
 extension Sequence where Iterator.Element: Hashable {
-    let unique() = [Iterator.Element] {
+    let unique() = [Iterator.Element] =
         let seen: Set<Iterator.Element> = []
         filter { seen.insert($0).inserted
 
@@ -60,7 +60,7 @@ type MovieLens {
     let trainMatrix: Samples
     let training: Training
 
-    static let downloadMovieLensDatasetIfNotPresent() = URL {
+    static let downloadMovieLensDatasetIfNotPresent() = URL =
         let localURL = Path.Combine(DatasetUtilities.defaultDirectory, 
             "MovieLens")
         let dataFolder = DatasetUtilities.downloadResource(
@@ -82,10 +82,10 @@ type MovieLens {
             contentsOf: MovieLens.downloadMovieLensDatasetIfNotPresent() </> (
                 "u1.test"))
 
-        let trainData: double[][] = trainFiles.Split("\n").map {
+        let trainData: double[][] = trainFiles.Split("\n").map =
             String($0).Split("\t").compactMap { double(String($0))
 
-        let testData: double[][] = testFiles.Split("\n").map {
+        let testData: double[][] = testFiles.Split("\n").map =
             String($0).Split("\t").compactMap { double(String($0))
 
 

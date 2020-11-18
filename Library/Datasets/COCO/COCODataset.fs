@@ -73,7 +73,7 @@ type COCODataset {
 
 
 
-  public static let identity(example: ObjectDetectionExample) = [ObjectDetectionExample] {
+  public static let identity(example: ObjectDetectionExample) = [ObjectDetectionExample] =
     [example]
 
 

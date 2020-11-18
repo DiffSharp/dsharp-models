@@ -74,7 +74,7 @@ let wordSegBenchmark(operation: @escaping (SNLM, CharacterSequence, Device) = Vo
     state.start()
 
     let dataset: WordSegDataset
-    if let trainingFilePath = settings.datasetFilePath {
+    if let trainingFilePath = settings.datasetFilePath =
       dataset = try WordSegDataset(training: trainingFilePath)
     else
       dataset = try WordSegDataset()

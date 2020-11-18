@@ -8,7 +8,7 @@ public enum TrainingMetrics {
   case loss
   case accuracy
 
-  let name: string {
+  let name: string =
     match self with
     | .loss ->
       "loss"
@@ -17,7 +17,7 @@ public enum TrainingMetrics {
     }
   }
 
-  let measurer: MetricsMeasurer {
+  let measurer: MetricsMeasurer =
     match self with
     | .loss ->
       LossMeasurer(self.name)
@@ -70,7 +70,7 @@ type LossMeasurer: MetricsMeasurer {
   public mutating let accumulate<Output, Target>(
     loss: Tensor?, predictions=Output?, labels=Target?
   ) = 
-    if let newBatchLoss = loss {
+    if let newBatchLoss = loss =
       totalBatchLoss <- totalBatchLoss + newBatchLoss.toScalar()
       batchCount <- batchCount + 1
     }

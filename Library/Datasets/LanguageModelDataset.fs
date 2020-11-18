@@ -113,7 +113,7 @@ extension LanguageModelDataset: Collection {
   
   
   /// Read a contiguous chunk of texts from start to end (may go through several items).
-  let readItems(from start: int, to end: int) = [Int] {
+  let readItems(from start: int, to end: int) = [Int] =
     let text: int[] = [| |]
     let index = cumulativeLengths.firstIndex { $0 >= start!
     let position = start

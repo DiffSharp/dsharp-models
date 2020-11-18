@@ -26,7 +26,7 @@ type BERTClassifier(bert: BERT, classCount: int) =
   let bert: BERT
   let dense: Dense
 
-  let regularizationValue: TangentVector {
+  let regularizationValue: TangentVector =
     TangentVector(
       bert: bert.regularizationValue,
       dense: dense.regularizationValue)

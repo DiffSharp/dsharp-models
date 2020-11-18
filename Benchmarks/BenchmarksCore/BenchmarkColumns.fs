@@ -21,13 +21,13 @@ let registerCustomColumns() =
     BenchmarkColumn(
       name= "avg_exp_per_second",
       value: { result in
-        if let batchSize = result.settings.batchSize {
+        if let batchSize = result.settings.batchSize =
           let count = result.measurements.count
           let warmupCount = result.warmupMeasurements.count
           let examples = batchSize * (count + warmupCount)
           let time = result.measurements.reduce(0, +)
           let warmupTime = result.warmupMeasurements.reduce(0, +)
-          Double(examples) / (time + warmupTime)
+          double(examples) / (time + warmupTime)
         else
           0
         }
@@ -37,11 +37,11 @@ let registerCustomColumns() =
     BenchmarkColumn(
       name= "exp_per_second",
       value: { result in
-        if let batchSize = result.settings.batchSize {
+        if let batchSize = result.settings.batchSize =
           let count = result.measurements.count
           let examples = batchSize * count
           let time = result.measurements.reduce(0, +)
-          Double(examples) / time
+          double(examples) / time
         else
           0
         }

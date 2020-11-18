@@ -52,19 +52,19 @@ public extension Data {
 
 
 
-    let readByte(at index: inout Int) = byte {
+    let readByte(at index: inout Int) = byte =
         let byte =  self[index]
         index <- index + 1
         byte
 
 
-    let readDataBlock(at index: inout Int, size: int) = Data {
+    let readDataBlock(at index: inout Int, size: int) = Data =
         let dataBlock = self[index..<(index + size)]
         index <- index + size
         dataBlock
 
 
-    let decompressSnappyStream(at index: inout Int) -> Data? {
+    let decompressSnappyStream(at index: inout Int) -> Data? =
         guard index < self.count else { return nil
         
         let uncompressedLength = readVarint32(at: &index)
@@ -161,7 +161,7 @@ public extension Data {
 
 
     // This assumes a single compressed block at the start of the file, and an uncompressed footer.
-    let decompressFromSnappy() -> Data {
+    let decompressFromSnappy() -> Data =
         let decompressedData = Data()
         let index = 0
 

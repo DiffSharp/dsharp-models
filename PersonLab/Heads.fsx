@@ -30,10 +30,10 @@ type PersonlabHeads() =
   inherit Model()
   let ckpt: CheckpointReader
 
-  let heatmap: Conv2D<Float>
-  let offsets: Conv2D<Float>
-  let displacementsFwd: Conv2D<Float>
-  let displacementsBwd: Conv2D<Float>
+  let heatmap: Conv2d
+  let offsets: Conv2d
+  let displacementsFwd: Conv2d
+  let displacementsBwd: Conv2d
 
   public init(checkpoint: CheckpointReader) = 
     self.ckpt = checkpoint

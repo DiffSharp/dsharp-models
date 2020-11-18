@@ -24,9 +24,9 @@ open DiffSharp
 
 type Fire() =
     inherit Model()
-    let squeeze: Conv2D<Float>
-    let expand1: Conv2D<Float>
-    let expand3: Conv2D<Float>
+    let squeeze: Conv2d
+    let expand1: Conv2d
+    let expand3: Conv2d
 
     public init(
         inChannels=int,
@@ -105,8 +105,8 @@ type SqueezeNetV1_0() =
         squeezeFilterCount: 64,
         expand1FilterCount: 256,
         expand3FilterCount: 256)
-    let conv10: Conv2D<Float>
-    let avgPool10 = AvgPool2D<Float>(poolSize: (13, 13), stride=1)
+    let conv10: Conv2d
+    let avgPool10 = AvgPool2d<Float>(poolSize: (13, 13), stride=1)
     let dropout = Dropout2d(p=0.5)
 
     public init(classCount: int) = 
@@ -174,8 +174,8 @@ type SqueezeNetV1_1() =
         squeezeFilterCount: 64,
         expand1FilterCount: 256,
         expand3FilterCount: 256)
-    let conv10: Conv2D<Float>
-    let avgPool10 = AvgPool2D<Float>(poolSize: (13, 13), stride=1)
+    let conv10: Conv2d
+    let avgPool10 = AvgPool2d<Float>(poolSize: (13, 13), stride=1)
     let dropout = Dropout2d(p=0.5)
 
     public init(classCount: int) = 

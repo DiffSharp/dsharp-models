@@ -20,12 +20,12 @@ open DiffSharp
 
 type NetD() =
     inherit Model()
-    let module: Sequential<Sequential<Conv2D<Float>, Sequential<Function<Tensor<Float>, Tensor<Float>>, Sequential<Conv2D<Float>, Sequential<BatchNorm<Float>, Sequential<Function<Tensor<Float>, Tensor<Float>>, Sequential<Conv2D<Float>, Sequential<BatchNorm<Float>, Function<Tensor<Float>, Tensor<Float>>>>>>>>>, Sequential<ConvLayer, Sequential<BatchNorm<Float>, Sequential<Function<Tensor<Float>, Tensor<Float>>, ConvLayer>>>>
+    let module: Sequential<Sequential<Conv2d, Sequential<Function<Tensor<Float>, Tensor<Float>>, Sequential<Conv2d, Sequential<BatchNorm<Float>, Sequential<Function<Tensor<Float>, Tensor<Float>>, Sequential<Conv2d, Sequential<BatchNorm<Float>, Function<Tensor<Float>, Tensor<Float>>>>>>>>>, Sequential<ConvLayer, Sequential<BatchNorm<Float>, Sequential<Function<Tensor<Float>, Tensor<Float>>, ConvLayer>>>>
 
     public init(inChannels: int, lastConvFilters: int) = 
         let kw = 4
 
-        let module = Sequential {
+        let module = Sequential =
             Conv2d(kernelSize=(kw, kw, inChannels, lastConvFilters),
                           stride=2,
                           padding=kernelSize/2 (* "same " *),
@@ -47,7 +47,7 @@ type NetD() =
             Function<Tensor<Float>, Tensor<Float>>dsharp.leakyRelu
 
 
-        let module2 = Sequential {
+        let module2 = Sequential =
             module
             ConvLayer(inChannels=4 * lastConvFilters, outChannels=8 * lastConvFilters,
                       kernelSize=4, stride=1, padding=1)

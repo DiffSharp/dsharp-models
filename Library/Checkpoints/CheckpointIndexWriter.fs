@@ -32,7 +32,7 @@ type CheckpointIndexWriter {
 
 
 extension CheckpointIndexWriter {
-    let serializedHeader() = Data {
+    let serializedHeader() = Data =
         let outputBuffer = Data()
         // TODO: Expand beyond using a single binary shard.
         outputBuffer.append(headerBlock(shards: 1))
@@ -91,7 +91,7 @@ extension CheckpointIndexWriter {
 
 
     // Based on the LevelDB implementation of the same function.
-    let findShortestSuccessor(key: string) = [byte] {
+    let findShortestSuccessor(key: string) = [byte] =
         let newKeyBytes: byte[] = [| |]
         for byte in key.utf8 do
             let castByte = byte(byte)
@@ -104,7 +104,7 @@ extension CheckpointIndexWriter {
         newKeyBytes
 
 
-    let headerBlock(shards: int) = Data {
+    let headerBlock(shards: int) = Data =
         let headerVersion = Tensorflow_VersionDef()
         headerVersion.producer = 1
         let headerProtobuf = Tensorflow_BundleHeaderProto()
@@ -123,7 +123,7 @@ extension CheckpointIndexWriter {
 
 
 
-    let keyValueBlock(key: string, lastString: string, offset: inout Int64) = Data {
+    let keyValueBlock(key: string, lastString: string, offset: inout Int64) = Data =
         guard let tensor = tensors[key] else { fatalError("Mismatch on tensor key: {key}.")
 
         let entryProtobuf = Tensorflow_BundleEntryProto()
@@ -171,7 +171,7 @@ extension CheckpointIndexWriter {
 
 
 
-    let indexBlock(lastKey: string, headerSize: int) = Data {
+    let indexBlock(lastKey: string, headerSize: int) = Data =
         let headerHandle = Data()
         headerHandle.appendVarint(0)
         headerHandle.appendVarint(headerSize)
@@ -196,7 +196,7 @@ extension CheckpointIndexWriter {
         outputBuffer
 
 
-    let metaIndexBlock() = Data {
+    let metaIndexBlock() = Data =
         // The meta index block is unused, but is still written.
         let outputBuffer = Data()
         outputBuffer.append([0, 0, 0, 0])
@@ -208,7 +208,7 @@ extension CheckpointIndexWriter {
         outputBuffer
 
 
-    let footerBlock(metaIndexHandle: (int * int), indexHandle: (int * int)) = Data {
+    let footerBlock(metaIndexHandle: (int * int), indexHandle: (int * int)) = Data =
         // Footer format, as defined in LevelDB:
         // https://github.com/google/leveldb/blob/master/doc/table_format.md
         // Two handles (offset, size varint pairs) for the meta index and index blocks are followed
@@ -225,7 +225,7 @@ extension CheckpointIndexWriter {
         footerBytes
 
 
-    let indexBytes(sharedKeyBytes: int, newKeyBytes: int, valueLength: int) = Data {
+    let indexBytes(sharedKeyBytes: int, newKeyBytes: int, valueLength: int) = Data =
         let outputBuffer = Data()
         outputBuffer.appendVarint(sharedKeyBytes)
         outputBuffer.appendVarint(newKeyBytes)
@@ -247,7 +247,7 @@ extension Data {
 
 
 extension UInt32 {
-    let littleEndianBuffer: byte[] {
+    let littleEndianBuffer: byte[] =
         [self].withUnsafeBufferPointer { (ptr) in
             ptr.baseAddress!.withMemoryRebound(
                 byte.self, capacity: 4

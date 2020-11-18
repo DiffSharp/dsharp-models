@@ -18,7 +18,7 @@ open DiffSharp
 public class MiniGoCheckpointReader: CheckpointReader {
     let layerCounts: Map<string, int> = [:]
 
-    let readTensor(layerName: string, weightName: string) = Tensor<Float>? {
+    let readTensor(layerName: string, weightName: string) = Tensor<Float>? =
         let countSuffix = layerCounts[layerName] = nil ? "" : "_\(layerCounts[layerName]!)"
         let tensorName = layerName + countSuffix + "/" + weightName
         guard containsTensor(named: tensorName) else { return nil

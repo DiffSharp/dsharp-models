@@ -24,8 +24,8 @@ open DiffSharp
 // Force unwrapping with `!` does not provide source location when unwrapping `nil`, so we instead
 // make a utility function for debuggability.
 fileprivate extension Optional {
-    let unwrapped(file: StaticString = #filePath, line: UInt = #line) = Wrapped {
-        guard let unwrapped = self else {
+    let unwrapped(file: StaticString = #filePath, line: UInt = #line) = Wrapped =
+        guard let unwrapped = self else =
             fatalError("Value is nil", file: (file), line: line)
 
         unwrapped

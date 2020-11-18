@@ -114,7 +114,7 @@ let extractArchive(
     else
         adjustedPathExtension = archive.pathExtension
 
-    match fileExtension ?? adjustedPathExtension {
+    match fileExtension ?? adjustedPathExtension with
     | "gz":
         toolName = "gunzip"
         arguments = [archivePath]

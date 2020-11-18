@@ -23,7 +23,7 @@ open DiffSharp
 
 type VGGBlock() =
     inherit Model()
-    let blocks: [Conv2D<Float>] = []
+    let blocks: [Conv2d] = []
     let maxpool = MaxPool2d(kernelSize=2, stride=2)
 
     public init(featureCounts: (Int, Int, Int, Int), blockCount: int) = 

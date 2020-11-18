@@ -12,474 +12,241 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Models
+module Models.MobileNetV3
 
 open DiffSharp
+open DiffSharp.Model
 
 // Original Paper: "Searching for MobileNetV3"
 // Andrew Howard, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo Chen, Mingxing Tan, Weijun Wang,
 // Yukun Zhu, Ruoming Pang, Vijay Vasudevan, Quoc V. Le, Hartwig Adam
 // https://arxiv.org/abs/1905.02244
 
-let makeDivisible(filter: int, widthMultiplier: double = 1.0, divisor: double = 8.0)
-    -> Int
-{
-    /// Return a filter multiplied by width, evenly divisible by the divisor
-    let filterMult = double(filter) * widthMultiplier
+let makeDivisible(filter: int, width: double) =
+    let divisor = 8.0
+    /// Return a filter multiplied by width, rounded down and evenly divisible by the divisor
+    let filterMult = double(filter) * width
     let filterAdd = double(filterMult) + (divisor / 2.0)
-    let div = filterAdd / divisor
-    div |> floor
-    div = div * double(divisor)
-    let newFilterCount = max(1, int(div))
-    if newFilterCount < int(0.9 * double(filter)) then
+    let div = filterAdd / divisor |> floor
+    let div = div * double(divisor)
+    let mutable newFilterCount = max 1 (int div)
+    if newFilterCount < int(0.9 * double filter) then
         newFilterCount <- newFilterCount + int(divisor)
 
-    int(newFilterCount)
+    int newFilterCount
 
+let roundFilterPair((f1, f2), width: double) =
+    makeDivisible(f1, width),makeDivisible(f2, width)
 
-let roundFilterPair(filters: (int * int), widthMultiplier: double) = (int * int) = 
-    (
-        makeDivisible(filter: filters.0, widthMultiplier: widthMultiplier),
-        makeDivisible(filter: filters.1, widthMultiplier: widthMultiplier)
-    )
+type ActivationType =
+    | HardSwish
+    | Relu
 
-
-type ActivationType {
-    | hardSwish
-    | relu
-
-
-type SqueezeExcitationBlock() =
+type SqueezeExcitationBlock(inputOutputSize: int, reducedSize: int) =
     inherit Model()
     // https://arxiv.org/abs/1709.01507
     let averagePool = GlobalAvgPool2d()
-    let reduceConv: Conv2D<Float>
-    let expandConv: Conv2D<Float>
-    let inputOutputSize: int
 
-    public init(inputOutputSize: int, reducedSize: int) = 
-        self.inputOutputSize = inputOutputSize
-        reduceConv = Conv2d(
-            kernelSize=(1, 1, inputOutputSize, reducedSize),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-        expandConv = Conv2d(
-            kernelSize=(1, 1, reducedSize, inputOutputSize),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-
-
+    let inputOutputSize = inputOutputSize
+    let reduceConv = Conv2d(inputOutputSize, reducedSize, kernelSize=1, stride=1, padding=0 (* "same " *))
+    let expandConv = Conv2d(reducedSize, inputOutputSize, kernelSize=1, stride=1, padding=0 (* "same " *))
     
     override _.forward(input) =
-        let avgPoolReshaped = averagePool(input).view([
-            input.shape.[0], 1, 1, self.inputOutputSize,
-        ])
-        input
-            * hardSigmoid(expandConv(relu(reduceConv(avgPoolReshaped))))
+        let avgPoolReshaped = averagePool.forward(input).view([ input.shape.[0]; 1; 1; inputOutputSize ])
+        input * dsharp.hardSigmoid(expandConv.forward(dsharp.relu(reduceConv.forward(avgPoolReshaped))))
 
-
-
-type InitialInvertedResidualBlock() =
-    inherit Model()
-    let addResLayer: bool
-    let useSELayer: bool = false
-    let activation= ActivationType = .relu
-
-    let dConv: DepthwiseConv2d<Float>
-    let batchNormDConv: BatchNorm<Float>
-    let seBlock: SqueezeExcitationBlock
-    let conv2: Conv2D<Float>
-    let batchNormConv2: BatchNorm<Float>
-
-    public init(
-        filters: (int * int),
+type InitialInvertedResidualBlock(filters: (int * int),
         widthMultiplier: double,
-        strides = [Int, Int) = (1, 1),
-        kernel=(int * int) = (3, 3),
-        seLayer: bool = false,
-        activation= ActivationType = .relu
-    ) = 
-        self.useSELayer = seLayer
-        self.activation = activation
-        self.addResLayer = filters.0 = filters.1 && strides = (1, 1)
+        ?stride: int,
+        ?kernelSize: int,
+        ?useSELayer: bool,
+        ?activation) =
+    inherit Model()
+    let stride = defaultArg stride 1
+    let kernelSize = defaultArg kernelSize 3
+    let useSELayer = defaultArg useSELayer false
+    let activation = defaultArg activation Relu
+    let filters0, filters1 = filters
+    let addResLayer = filters0 = filters1 && stride = 1
 
-        let filterMult = roundFilterPair(filters: filters, widthMultiplier: widthMultiplier)
-        let hiddenDimension = filterMult.0 * 1
-        let reducedDimension = hiddenDimension / 4
+    let filterMult0, filterMult1 = roundFilterPair(filters, widthMultiplier)
+    let hiddenDimension = filterMult0 * 1
+    let reducedDimension = hiddenDimension / 4
 
-        dConv = DepthwiseConv2d(
-            kernelSize=(3, 3, filterMult.0, 1),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-        seBlock = SqueezeExcitationBlock(
-            inputOutputSize: hiddenDimension, reducedSize: reducedDimension)
-        conv2 = Conv2d(
-            kernelSize=(1, 1, hiddenDimension, filterMult.1),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-        batchNormDConv = BatchNorm2d(numFeatures=filterMult.0)
-        batchNormConv2 = BatchNorm2d(numFeatures=filterMult.1)
-
-
+    let dConv = DepthwiseConv2d(filterMult0, 1, kernelSize=kernelSize, stride=1, padding=0 (* "same " *))
+    let seBlock = SqueezeExcitationBlock(inputOutputSize=hiddenDimension, reducedSize=reducedDimension)
+    let conv2 = Conv2d(hiddenDimension, filterMult1, kernelSize=1, stride=1, padding=0 (* "same " *))
+    let batchNormDConv = BatchNorm2d(numFeatures=filterMult0)
+    let batchNormConv2 = BatchNorm2d(numFeatures=filterMult1)
     
     override _.forward(input) =
         let depthwise = batchNormDConv.forward(dConv.forward(input))
-        match self.activation {
-        | .hardSwish -> depthwise = hardSwish(depthwise)
-        | .relu -> depthwise = relu(depthwise)
+        let depthwise = 
+            match activation with
+            | HardSwish -> dsharp.hardSwish(depthwise)
+            | Relu -> dsharp.relu(depthwise)
 
-
-        let squeezeExcite: Tensor
-        if self.useSELayer then
-            squeezeExcite = seBlock(depthwise)
-        else
-            squeezeExcite = depthwise
-
+        let squeezeExcite =
+            if useSELayer then
+                seBlock.forward(depthwise)
+            else
+                depthwise
 
         let piecewiseLinear = batchNormConv2.forward(conv2.forward(squeezeExcite))
 
-        if self.addResLayer then
+        if addResLayer then
             input + piecewiseLinear
         else
             piecewiseLinear
 
-
-
-
-type InvertedResidualBlock() =
-    inherit Model()
-    let strides = [Int, Int)
-    let zeroPad = ZeroPadding2d<Float>(padding: ((0, 1), (0, 1)))
-    let addResLayer: bool
-    let activation= ActivationType = .relu
-    let useSELayer: bool
-
-    let conv1: Conv2D<Float>
-    let batchNormConv1: BatchNorm<Float>
-    let dConv: DepthwiseConv2d<Float>
-    let batchNormDConv: BatchNorm<Float>
-    let seBlock: SqueezeExcitationBlock
-    let conv2: Conv2D<Float>
-    let batchNormConv2: BatchNorm<Float>
-
-    public init(
-        filters: (int * int),
+type InvertedResidualBlock(filters: (int * int),
         widthMultiplier: double,
         expansionFactor: double,
-        strides = [Int, Int) = (1, 1),
-        kernel=(int * int) = (3, 3),
-        seLayer: bool = false,
-        activation= ActivationType = .relu
-    ) = 
-        self.strides = strides
-        self.addResLayer = filters.0 = filters.1 && strides = (1, 1)
-        self.useSELayer = seLayer
-        self.activation = activation
+        ?stride: int,
+        ?kernelSize: int,
+        ?useSELayer: bool,
+        ?activation) =
+    inherit Model()
+    let stride = defaultArg stride 1
+    let kernelSize = defaultArg kernelSize 3
+    let useSELayer = defaultArg useSELayer false
+    let activation = defaultArg activation Relu
+    let filters0, filters1 = filters
+    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
 
-        let filterMult = roundFilterPair(filters: filters, widthMultiplier: widthMultiplier)
-        let hiddenDimension = int(double(filterMult.0) * expansionFactor)
-        let reducedDimension = hiddenDimension / 4
+    let addResLayer = filters0 = filters1 && stride = 1
 
-        conv1 = Conv2d(
-            kernelSize=(1, 1, filterMult.0, hiddenDimension),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-        dConv = DepthwiseConv2d(
-            kernelSize=(kernel.0, kernel.1, hiddenDimension, 1),
-            strides=strides,
-            padding: strides = (1, 1) ? .same : .valid)
-        seBlock = SqueezeExcitationBlock(
-            inputOutputSize: hiddenDimension, reducedSize: reducedDimension)
-        conv2 = Conv2d(
-            kernelSize=(1, 1, hiddenDimension, filterMult.1),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-        batchNormConv1 = BatchNorm2d(numFeatures=hiddenDimension)
-        batchNormDConv = BatchNorm2d(numFeatures=hiddenDimension)
-        batchNormConv2 = BatchNorm2d(numFeatures=filterMult.1)
+    let filterMult0, filterMult1 = roundFilterPair(filters, widthMultiplier)
+    let hiddenDimension = int(double(filterMult0) * expansionFactor)
+    let reducedDimension = hiddenDimension / 4
 
+    let conv1 = Conv2d(filterMult0, hiddenDimension, kernelSize=1, stride=1, padding=kernelSize/2 (* "same " *))
+    let dConv = DepthwiseConv2d(hiddenDimension, 1, kernelSize=kernelSize, stride=stride (* , padding: strides = (1, 1) ? .same : .valid *) )
+    let seBlock = SqueezeExcitationBlock(inputOutputSize=hiddenDimension, reducedSize=reducedDimension)
+    let conv2 = Conv2d(hiddenDimension, filterMult1, kernelSize=1, stride=1, padding=kernelSize/2 (* "same " *))
+    let batchNormConv1 = BatchNorm2d(numFeatures=hiddenDimension)
+    let batchNormDConv = BatchNorm2d(numFeatures=hiddenDimension)
+    let batchNormConv2 = BatchNorm2d(numFeatures=filterMult1)
 
-    
     override _.forward(input) =
         let piecewise = batchNormConv1.forward(conv1.forward(input))
-        match self.activation {
-        | .hardSwish -> piecewise = hardSwish(piecewise)
-        | .relu -> piecewise = relu(piecewise)
+        let piecewise = 
+            match activation with
+            | HardSwish -> dsharp.hardSwish(piecewise)
+            | Relu -> dsharp.relu(piecewise)
 
-        let depthwise: Tensor
-        if self.strides = (1, 1) then
-            depthwise = batchNormDConv.forward(dConv.forward(piecewise))
-        else
-            depthwise = batchNormDConv.forward(dConv.forward(zeroPad.forward(piecewise)))
+        let depthwise =
+            if stride = 1 then
+                batchNormDConv.forward(dConv.forward(piecewise))
+            else
+                batchNormDConv.forward(dConv.forward(zeroPad.forward(piecewise)))
 
-        match self.activation {
-        | .hardSwish -> depthwise = hardSwish(depthwise)
-        | .relu -> depthwise = relu(depthwise)
+        let depthwise =
+            match activation with
+            | HardSwish -> dsharp.hardSwish(depthwise)
+            | Relu -> dsharp.relu(depthwise)
 
-        let squeezeExcite: Tensor
-        if self.useSELayer then
-            squeezeExcite = seBlock(depthwise)
-        else
-            squeezeExcite = depthwise
-
+        let squeezeExcite =
+            if useSELayer then
+                seBlock.forward(depthwise)
+            else
+                depthwise
 
         let piecewiseLinear = batchNormConv2.forward(conv2.forward(squeezeExcite))
 
-        if self.addResLayer then
+        if addResLayer then
             input + piecewiseLinear
         else
             piecewiseLinear
 
-
-
-
-type MobileNetV3Large() =
+type MobileNetV3Large(?classCount: int, ?widthMultiplier: double, ?dropout: double) =
     inherit Model()
-    let zeroPad = ZeroPadding2d<Float>(padding: ((0, 1), (0, 1)))
-    let inputConv: Conv2D<Float>
-    let inputConvBatchNorm: BatchNorm<Float>
-
-    let invertedResidualBlock1: InitialInvertedResidualBlock
-    let invertedResidualBlock2: InvertedResidualBlock
-    let invertedResidualBlock3: InvertedResidualBlock
-    let invertedResidualBlock4: InvertedResidualBlock
-    let invertedResidualBlock5: InvertedResidualBlock
-    let invertedResidualBlock6: InvertedResidualBlock
-    let invertedResidualBlock7: InvertedResidualBlock
-    let invertedResidualBlock8: InvertedResidualBlock
-    let invertedResidualBlock9: InvertedResidualBlock
-    let invertedResidualBlock10: InvertedResidualBlock
-    let invertedResidualBlock11: InvertedResidualBlock
-    let invertedResidualBlock12: InvertedResidualBlock
-    let invertedResidualBlock13: InvertedResidualBlock
-    let invertedResidualBlock14: InvertedResidualBlock
-    let invertedResidualBlock15: InvertedResidualBlock
-
-    let outputConv: Conv2D<Float>
-    let outputConvBatchNorm: BatchNorm<Float>
+    let classCount = defaultArg classCount 1000
+    let widthMultiplier = defaultArg widthMultiplier 1.0
+    let dropout = defaultArg dropout 0.2
+    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
 
     let avgPool = GlobalAvgPool2d()
-    let finalConv: Conv2D<Float>
-    let dropoutLayer: Dropout<Float>
-    let classiferConv: Conv2D<Float>
     let flatten = Flatten()
 
-    let lastConvChannel: int
+    let inputConv = Conv2d(3, makeDivisible(16, widthMultiplier), kernelSize=3, stride=2, padding=1 (* "same " *))
+    let inputConvBatchNorm = BatchNorm2d(makeDivisible(16, widthMultiplier))
 
-    public init(classCount: int = 1000, widthMultiplier: double = 1.0, dropout: Double = 0.2) = 
-        inputConv = Conv2d(
-            kernelSize=(3, 3, 3, makeDivisible(filter=16, widthMultiplier: widthMultiplier)),
-            stride=2,
-            padding=kernelSize/2 (* "same " *))
-        inputConvBatchNorm = BatchNorm2d((
-            featureCount: makeDivisible(filter=16, widthMultiplier: widthMultiplier))
+    let invertedResidualBlock1 = InitialInvertedResidualBlock(filters=(16, 16), widthMultiplier=widthMultiplier)
+    let invertedResidualBlock2 = InvertedResidualBlock(filters=(16, 24), widthMultiplier=widthMultiplier, expansionFactor=4.0, stride=2)
+    let invertedResidualBlock3 = InvertedResidualBlock(filters=(24, 24), widthMultiplier=widthMultiplier, expansionFactor=3.0)
+    let invertedResidualBlock4 = InvertedResidualBlock(filters=(24, 40), widthMultiplier=widthMultiplier, expansionFactor=3.0, stride=2, kernelSize=5, useSELayer=true)
+    let invertedResidualBlock5 = InvertedResidualBlock(filters=(40, 40), widthMultiplier=widthMultiplier, expansionFactor=3.0, kernelSize=5, useSELayer=true)
+    let invertedResidualBlock6 = InvertedResidualBlock(filters=(40, 40), widthMultiplier=widthMultiplier, expansionFactor=3.0, kernelSize=5, useSELayer=true)
+    let invertedResidualBlock7 = InvertedResidualBlock(filters=(40, 80), widthMultiplier=widthMultiplier, expansionFactor=6.0, stride=2, activation= HardSwish)
+    let invertedResidualBlock8 = InvertedResidualBlock(filters=(80, 80), widthMultiplier=widthMultiplier, expansionFactor=2.5, activation= HardSwish)
+    let invertedResidualBlock9 = InvertedResidualBlock(filters=(80, 80), widthMultiplier=widthMultiplier, expansionFactor=184.0 / 80.0, activation= HardSwish)
+    let invertedResidualBlock10 = InvertedResidualBlock(filters=(80, 80), widthMultiplier=widthMultiplier, expansionFactor=184.0 / 80.0, activation= HardSwish)
+    let invertedResidualBlock11 = InvertedResidualBlock(filters=(80, 112), widthMultiplier=widthMultiplier, expansionFactor=6.0, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock12 = InvertedResidualBlock(filters=(112, 112), widthMultiplier=widthMultiplier, expansionFactor=6.0, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock13 = InvertedResidualBlock(filters=(112, 160), widthMultiplier=widthMultiplier, expansionFactor=6.0, stride=2, kernelSize=5, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock14 = InvertedResidualBlock(filters=(160, 160), widthMultiplier=widthMultiplier, expansionFactor=6.0, kernelSize=5, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock15 = InvertedResidualBlock(filters=(160, 160), widthMultiplier=widthMultiplier, expansionFactor=6.0, kernelSize=5, useSELayer=true, activation= HardSwish)
 
-        invertedResidualBlock1 = InitialInvertedResidualBlock(
-            filters: (16, 16), widthMultiplier: widthMultiplier)
-        invertedResidualBlock2 = InvertedResidualBlock(
-            filters: (16, 24), widthMultiplier: widthMultiplier,
-            expansionFactor: 4, stride=2)
-        invertedResidualBlock3 = InvertedResidualBlock(
-            filters: (24, 24), widthMultiplier: widthMultiplier,
-            expansionFactor: 3)
-        invertedResidualBlock4 = InvertedResidualBlock(
-            filters: (24, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, stride=2, kernel=(5, 5), seLayer: true)
-        invertedResidualBlock5 = InvertedResidualBlock(
-            filters: (40, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, kernel=(5, 5), seLayer: true)
-        invertedResidualBlock6 = InvertedResidualBlock(
-            filters: (40, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, kernel=(5, 5), seLayer: true)
-        invertedResidualBlock7 = InvertedResidualBlock(
-            filters: (40, 80), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, stride=2, activation= .hardSwish)
-        invertedResidualBlock8 = InvertedResidualBlock(
-            filters: (80, 80), widthMultiplier: widthMultiplier,
-            expansionFactor: 2.5, activation= .hardSwish)
-        invertedResidualBlock9 = InvertedResidualBlock(
-            filters: (80, 80), widthMultiplier: widthMultiplier,
-            expansionFactor: 184 / 80.0, activation= .hardSwish)
-        invertedResidualBlock10 = InvertedResidualBlock(
-            filters: (80, 80), widthMultiplier: widthMultiplier,
-            expansionFactor: 184 / 80.0, activation= .hardSwish)
-        invertedResidualBlock11 = InvertedResidualBlock(
-            filters: (80, 112), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, seLayer: true, activation= .hardSwish)
-        invertedResidualBlock12 = InvertedResidualBlock(
-            filters: (112, 112), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, seLayer: true, activation= .hardSwish)
-        invertedResidualBlock13 = InvertedResidualBlock(
-            filters: (112, 160), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, stride=2, kernel=(5, 5), seLayer: true,
-            activation= .hardSwish)
-        invertedResidualBlock14 = InvertedResidualBlock(
-            filters: (160, 160), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
-        invertedResidualBlock15 = InvertedResidualBlock(
-            filters: (160, 160), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
+    let lastConvChannel = makeDivisible(960, widthMultiplier)
+    let outputConv = Conv2d(makeDivisible(160, widthMultiplier), lastConvChannel, kernelSize=1, stride=1, padding=0 (* "same " *))
+    let outputConvBatchNorm = BatchNorm2d(numFeatures=lastConvChannel)
 
-        lastConvChannel = makeDivisible(filter=960, widthMultiplier: widthMultiplier)
-        outputConv = Conv2d(
-            kernelSize=(
-                1, 1, makeDivisible(filter=160, widthMultiplier: widthMultiplier), lastConvChannel
-            ),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-        outputConvBatchNorm = BatchNorm2d(numFeatures=lastConvChannel)
-
-        let lastPointChannel =
-            widthMultiplier > 1.0
-            ? makeDivisible(filter=1280, widthMultiplier: widthMultiplier) : 1280
-        finalConv = Conv2d(
-            kernelSize=(1, 1, lastConvChannel, lastPointChannel),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-        dropoutLayer = Dropout(probability: dropout)
-        classiferConv = Conv2d(
-            kernelSize=(1, 1, lastPointChannel, classCount),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-
-
+    let lastPointChannel = if widthMultiplier > 1.0 then makeDivisible(1280, widthMultiplier) else 1280
+    let finalConv = Conv2d(lastConvChannel, lastPointChannel, kernelSize=1, stride=1, padding=0 (* "same " *))
+    let dropoutLayer = Dropout(dropout)
+    let classiferConv = Conv2d(lastPointChannel, classCount, kernelSize=1, stride=1, padding=0 (* "same " *))
     
     override _.forward(input) =
-        let initialConv = hardSwish(
-            input |> zeroPad, inputConv, inputConvBatchNorm))
-        let backbone1 = initialConv.sequenced(
-            through: invertedResidualBlock1,
-            invertedResidualBlock2, invertedResidualBlock3, invertedResidualBlock4,
-            invertedResidualBlock5)
-        let backbone2 = backbone1.sequenced(
-            through: invertedResidualBlock6, invertedResidualBlock7,
-            invertedResidualBlock8, invertedResidualBlock9, invertedResidualBlock10)
-        let backbone3 = backbone2.sequenced(
-            through: invertedResidualBlock11,
-            invertedResidualBlock12, invertedResidualBlock13, invertedResidualBlock14,
-            invertedResidualBlock15)
-        let outputConvResult = hardSwish(outputConvBatchNorm2d((outputConv(backbone3)))
-        let averagePool = avgPool(outputConvResult).view([
-            input.shape.[0], 1, 1, self.lastConvChannel,
-        ])
-        let finalConvResult = dropoutLayer(hardSwish(finalConv(averagePool)))
-        flatten(classiferConv(finalConvResult))
+        let initialConv = dsharp.hardSwish(input |> zeroPad.forward |> inputConv.forward |> inputConvBatchNorm.forward)
+        let backbone1 = initialConv.sequenced(invertedResidualBlock1, invertedResidualBlock2, invertedResidualBlock3, invertedResidualBlock4, invertedResidualBlock5)
+        let backbone2 = backbone1.sequenced(invertedResidualBlock6, invertedResidualBlock7, invertedResidualBlock8, invertedResidualBlock9, invertedResidualBlock10)
+        let backbone3 = backbone2.sequenced(invertedResidualBlock11, invertedResidualBlock12, invertedResidualBlock13, invertedResidualBlock14, invertedResidualBlock15)
+        let outputConvResult = dsharp.hardSwish(outputConvBatchNorm.forward(outputConv.forward(backbone3)))
+        let averagePool = avgPool.forward(outputConvResult).view([ input.shape.[0]; 1; 1; lastConvChannel ])
+        let finalConvResult = dropoutLayer.forward(dsharp.hardSwish(finalConv.forward(averagePool)))
+        dsharp.flatten(classiferConv.forward(finalConvResult))
 
-
-
-type MobileNetV3Small() =
+type MobileNetV3Small(?classCount: int, ?widthMultiplier: double, ?dropout: double) =
     inherit Model()
-    let zeroPad = ZeroPadding2d<Float>(padding: ((0, 1), (0, 1)))
-    let inputConv: Conv2D<Float>
-    let inputConvBatchNorm: BatchNorm<Float>
-
-    let invertedResidualBlock1: InitialInvertedResidualBlock
-    let invertedResidualBlock2: InvertedResidualBlock
-    let invertedResidualBlock3: InvertedResidualBlock
-    let invertedResidualBlock4: InvertedResidualBlock
-    let invertedResidualBlock5: InvertedResidualBlock
-    let invertedResidualBlock6: InvertedResidualBlock
-    let invertedResidualBlock7: InvertedResidualBlock
-    let invertedResidualBlock8: InvertedResidualBlock
-    let invertedResidualBlock9: InvertedResidualBlock
-    let invertedResidualBlock10: InvertedResidualBlock
-    let invertedResidualBlock11: InvertedResidualBlock
-
-    let outputConv: Conv2D<Float>
-    let outputConvBatchNorm: BatchNorm<Float>
+    let classCount = defaultArg classCount 10000
+    let widthMultiplier = defaultArg widthMultiplier 1.0
+    let dropout = defaultArg dropout 0.2
+    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
 
     let avgPool = GlobalAvgPool2d()
-    let finalConv: Conv2D<Float>
-    let dropoutLayer: Dropout<Float>
-    let classiferConv: Conv2D<Float>
     let flatten = Flatten()
 
-    let lastConvChannel: int
+    let inputConv = Conv2d(3, makeDivisible(16, widthMultiplier), kernelSize=3, stride=2, padding=1 (* "same " *))
+    let inputConvBatchNorm = BatchNorm2d(makeDivisible(16, widthMultiplier))
 
-    public init(classCount: int = 1000, widthMultiplier: double = 1.0, dropout: Double = 0.2) = 
-        inputConv = Conv2d(
-            kernelSize=(3, 3, 3, makeDivisible(filter=16, widthMultiplier: widthMultiplier)),
-            stride=2,
-            padding=kernelSize/2 (* "same " *))
-        inputConvBatchNorm = BatchNorm2d((
-            featureCount: makeDivisible(filter=16, widthMultiplier: widthMultiplier))
+    let invertedResidualBlock1 = InitialInvertedResidualBlock(filters=(16, 16), widthMultiplier=widthMultiplier, stride=2, useSELayer=true)
+    let invertedResidualBlock2 = InvertedResidualBlock(filters=(16, 24), widthMultiplier=widthMultiplier, expansionFactor=72.0 / 16.0, stride=2)
+    let invertedResidualBlock3 = InvertedResidualBlock(filters=(24, 24), widthMultiplier=widthMultiplier, expansionFactor=88.0 / 24.0)
+    let invertedResidualBlock4 = InvertedResidualBlock(filters=(24, 40), widthMultiplier=widthMultiplier, expansionFactor=4.0, stride=2, kernelSize=5, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock5 = InvertedResidualBlock(filters=(40, 40), widthMultiplier=widthMultiplier, expansionFactor=6.0, kernelSize=5, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock6 = InvertedResidualBlock(filters=(40, 40), widthMultiplier=widthMultiplier, expansionFactor=6.0, kernelSize=5, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock7 = InvertedResidualBlock(filters=(40, 48), widthMultiplier=widthMultiplier, expansionFactor=3.0, kernelSize=5, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock8 = InvertedResidualBlock(filters=(48, 48), widthMultiplier=widthMultiplier, expansionFactor=3.0, kernelSize=5, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock9 = InvertedResidualBlock(filters=(48, 96), widthMultiplier=widthMultiplier, expansionFactor=6.0, stride=2, kernelSize=5, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock10 = InvertedResidualBlock(filters=(96, 96), widthMultiplier=widthMultiplier, expansionFactor=6.0, kernelSize=5, useSELayer=true, activation= HardSwish)
+    let invertedResidualBlock11 = InvertedResidualBlock(filters=(96, 96), widthMultiplier=widthMultiplier, expansionFactor=6.0, kernelSize=5, useSELayer=true, activation= HardSwish)
 
-        invertedResidualBlock1 = InitialInvertedResidualBlock(
-            filters: (16, 16), widthMultiplier: widthMultiplier,
-            stride=2, seLayer: true)
-        invertedResidualBlock2 = InvertedResidualBlock(
-            filters: (16, 24), widthMultiplier: widthMultiplier,
-            expansionFactor: 72.0 / 16.0, stride=2)
-        invertedResidualBlock3 = InvertedResidualBlock(
-            filters: (24, 24), widthMultiplier: widthMultiplier,
-            expansionFactor: 88.0 / 24.0)
-        invertedResidualBlock4 = InvertedResidualBlock(
-            filters: (24, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 4, stride=2, kernel=(5, 5), seLayer: true,
-            activation= .hardSwish)
-        invertedResidualBlock5 = InvertedResidualBlock(
-            filters: (40, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
-        invertedResidualBlock6 = InvertedResidualBlock(
-            filters: (40, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
-        invertedResidualBlock7 = InvertedResidualBlock(
-            filters: (40, 48), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, kernel=(5, 5), seLayer: true, activation= .hardSwish)
-        invertedResidualBlock8 = InvertedResidualBlock(
-            filters: (48, 48), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, kernel=(5, 5), seLayer: true, activation= .hardSwish)
-        invertedResidualBlock9 = InvertedResidualBlock(
-            filters: (48, 96), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, stride=2, kernel=(5, 5), seLayer: true,
-            activation= .hardSwish)
-        invertedResidualBlock10 = InvertedResidualBlock(
-            filters: (96, 96), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
-        invertedResidualBlock11 = InvertedResidualBlock(
-            filters: (96, 96), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
+    let lastConvChannel = makeDivisible(576, widthMultiplier)
+    let outputConv = Conv2d(makeDivisible(96, widthMultiplier), lastConvChannel, kernelSize=1, stride=1, padding=0 (* "same " *))
+    let outputConvBatchNorm = BatchNorm2d(numFeatures=lastConvChannel)
 
-        lastConvChannel = makeDivisible(filter=576, widthMultiplier: widthMultiplier)
-        outputConv = Conv2d(
-            kernelSize=(
-                1, 1, makeDivisible(filter=96, widthMultiplier: widthMultiplier), lastConvChannel
-            ),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-        outputConvBatchNorm = BatchNorm2d(numFeatures=lastConvChannel)
+    let lastPointChannel =
+        if widthMultiplier > 1.0 then makeDivisible(1280, widthMultiplier) else 1280
+    let finalConv = Conv2d(lastConvChannel, lastPointChannel, kernelSize=1, stride=1, padding=0 (* "same " *))
+    let dropoutLayer = Dropout(dropout)
+    let classiferConv = Conv2d(lastPointChannel, classCount, kernelSize=1, stride=1, padding=0 (* "same " *))
 
-        let lastPointChannel =
-            widthMultiplier > 1.0
-            ? makeDivisible(filter=1280, widthMultiplier: widthMultiplier) : 1280
-        finalConv = Conv2d(
-            kernelSize=(1, 1, lastConvChannel, lastPointChannel),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-        dropoutLayer = Dropout(probability: dropout)
-        classiferConv = Conv2d(
-            kernelSize=(1, 1, lastPointChannel, classCount),
-            stride=1,
-            padding=kernelSize/2 (* "same " *))
-
-
-    
     override _.forward(input) =
-        let initialConv = hardSwish(
-            input |> zeroPad, inputConv, inputConvBatchNorm))
-        let backbone1 = initialConv.sequenced(
-            through: invertedResidualBlock1,
-            invertedResidualBlock2, invertedResidualBlock3, invertedResidualBlock4,
-            invertedResidualBlock5)
-        let backbone2 = backbone1.sequenced(
-            through: invertedResidualBlock6, invertedResidualBlock7,
-            invertedResidualBlock8, invertedResidualBlock9, invertedResidualBlock10,
-            invertedResidualBlock11)
-        let outputConvResult = hardSwish(outputConvBatchNorm2d((outputConv(backbone2)))
-        let averagePool = avgPool(outputConvResult).view([
-            input.shape.[0], 1, 1, lastConvChannel,
-        ])
-        let finalConvResult = dropoutLayer(hardSwish(finalConv(averagePool)))
-        flatten(classiferConv(finalConvResult))
-
-
+        let initialConv = dsharp.hardSwish(input |> zeroPad.forward |> inputConv.forward |> inputConvBatchNorm.forward)
+        let backbone1 = initialConv.sequenced(invertedResidualBlock1, invertedResidualBlock2, invertedResidualBlock3, invertedResidualBlock4, invertedResidualBlock5)
+        let backbone2 = backbone1.sequenced(invertedResidualBlock6, invertedResidualBlock7, invertedResidualBlock8, invertedResidualBlock9, invertedResidualBlock10, invertedResidualBlock11)
+        let outputConvResult = dsharp.hardSwish(outputConvBatchNorm.forward(outputConv.forward(backbone2)))
+        let averagePool = avgPool.forward(outputConvResult).view([ input.shape.[0]; 1; 1; lastConvChannel ])
+        let finalConvResult = dropoutLayer.forward(dsharp.hardSwish(finalConv.forward(averagePool)))
+        dsharp.flatten(classiferConv.forward(finalConvResult))

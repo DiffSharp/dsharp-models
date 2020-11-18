@@ -42,14 +42,14 @@ internal let runTraining(settings: WordSegSettings) =
 
   let modelParameters = SNLM.Parameters(
     hiddenSize: settings.hiddenSize,
-    dropoutProbability: Double(settings.dropoutProbability),
+    dropoutProbability: double(settings.dropoutProbability),
     alphabet: dataset.alphabet,
     lexicon: lexicon,
     order: settings.order
   )
 
   let device: Device
-  match settings.backend {
+  match settings.backend with
   | Eager ->
     device = Device.defaultTFEager
   | .x10 ->

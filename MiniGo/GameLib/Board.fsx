@@ -29,7 +29,7 @@ type Board: Hashable {
         self.size = size
 
 
-    let color(at position: Position) = Color? {
+    let color(at position: Position) = Color? =
         assert(0..<size ~= position.x && 0..<size ~= position.y)
         stones[position.x][position.y].scalars[0]
 
@@ -46,7 +46,7 @@ type Board: Hashable {
 
 
 extension Board: CustomStringConvertible {
-    let description: string {
+    let description: string =
         let output = ""
 
         // First, generates the head line, which looks like
@@ -91,7 +91,7 @@ extension Board: CustomStringConvertible {
             // Prints the color of stone at each position.
             for y in 0..size-1 do
                 output.append(gapBetweenStones)
-                guard let color = self.color(at: Position(x: x, y: y)) else {
+                guard let color = self.color(at: Position(x: x, y: y)) else =
                     output.append(".")  // Empty position.
                     continue
 

@@ -76,7 +76,7 @@ type CoLA {
 
 // Data
 extension CoLA {
-  internal static let load(fromFile fileURL: Uri, isTest: bool = false) -> [CoLAExample] {
+  internal static let load(fromFile fileURL: Uri, isTest: bool = false) -> [CoLAExample] =
     let lines = try parse(tsvFileAt: fileURL)
 
     if isTest then
@@ -90,7 +90,7 @@ extension CoLA {
       CoLAExample(id: lineParts.[0], sentence: lineParts.[3], isAcceptable: lineParts.[1] = "1")
 
 
-internal let parse(tsvFileAt fileURL: Uri) -> [string[]] {
+internal let parse(tsvFileAt fileURL: Uri) -> [string[]] =
     Data.ReadAllBytes(fileURL).withUnsafeBytes {
         $0.Split(byte(ascii: "\n")).map {
             $0.Split(byte(ascii: "\t"), omittingEmptySubsequences: false)

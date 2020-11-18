@@ -25,10 +25,10 @@ open DiffSharp
 type BatchNormConv2DBlock() =
     inherit Model()
     let norm1: BatchNorm<Float>
-    let conv1: Conv2D<Float>
+    let conv1: Conv2d
     let norm2: BatchNorm<Float>
-    let conv2: Conv2D<Float>
-    let shortcut: Conv2D<Float>
+    let conv2: Conv2d
+    let shortcut: Conv2d
     let isExpansion: bool
     let dropout: Dropout<Float> = Dropout2d(p=0.3)
 
@@ -55,16 +55,16 @@ type BatchNormConv2DBlock() =
 
     
     override _.forward(input) =
-        let preact1 = relu(norm1(input))
+        let preact1 = dsharp.relu(norm1(input))
         let residual = conv1.forward(preact1)
         let preact2: Tensor
         let shortcutResult: Tensor
         if isExpansion then
             shortcutResult = shortcut(preact1)
-            preact2 = relu(norm2(residual))
+            preact2 = dsharp.relu(norm2(residual))
         else 
             shortcutResult = input
-            preact2 = dropout(relu(norm2(residual)))
+            preact2 = dropout(dsharp.relu(norm2(residual)))
 
         residual = conv2.forward(preact2)
         residual + shortcutResult
@@ -95,14 +95,14 @@ type WideResNetBasicBlock() =
 
 type WideResNet() =
     inherit Model()
-    let l1: Conv2D<Float>
+    let l1: Conv2d
 
     let l2: WideResNetBasicBlock
     let l3: WideResNetBasicBlock
     let l4: WideResNetBasicBlock
 
     let norm: BatchNorm<Float>
-    let avgPool: AvgPool2D<Float>
+    let avgPool: AvgPool2d<Float>
     let flatten = Flatten()
     let classifier: Dense
 
@@ -117,14 +117,14 @@ type WideResNet() =
                                        depthFactor: depthFactor)
 
         self.norm = BatchNorm2d(numFeatures=64 * widenFactor)
-        self.avgPool = AvgPool2D(poolSize: (8, 8), strides = [8, 8))
+        self.avgPool = AvgPool2d(poolSize: (8, 8), strides = [8, 8))
         self.classifier = Linear(inFeatures=64 * widenFactor, outFeatures=10)
 
 
     
     override _.forward(input) =
         let inputLayer = input |> l1, l2, l3, l4)
-        let finalNorm = relu(norm(inputLayer))
+        let finalNorm = dsharp.relu(norm(inputLayer))
         finalNorm |> avgPool, flatten, classifier)
 
 

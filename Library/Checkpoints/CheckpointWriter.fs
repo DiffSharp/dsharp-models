@@ -68,7 +68,7 @@ open class CheckpointWriter {
         let outputBuffer = Data()
         // TODO: Write this directly to disk, rather than accumulating it in memory.
         for tensorName in tensorList do
-            guard let tensor = tensors[tensorName] else {
+            guard let tensor = tensors[tensorName] else =
                 fatalError("Mismatch in sorted tensors at name= {tensorName}.")
 
             let scalars = tensor.array.scalars

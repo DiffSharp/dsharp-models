@@ -42,7 +42,7 @@ type ModelConfiguration {
 
 type ConvBN() =
     inherit Model()
-    let conv: Conv2D<Float>
+    let conv: Conv2d
     let norm: BatchNorm<Float>
 
     init(
@@ -90,9 +90,9 @@ type ResidualIdentityBlock() =
 
     
     override _.forward(input) =
-        let tmp = relu(layer1(input))
+        let tmp = dsharp.relu(layer1(input))
         tmp = layer2(tmp)
-        relu(tmp + input)
+        dsharp.relu(tmp + input)
 
 
 
@@ -160,19 +160,19 @@ type GoModel() =
     (wrt: (self, input))
     override _.forward(input: Tensor) = GoModelOutput {
         let batchSize = input.shape.[0]
-        let output = relu(initialConv(input))
+        let output = dsharp.relu(initialConv(input))
 
         for i in 0..<configuration.boardSize do
             output = residualBlocks[i](output)
 
 
-        let policyConvOutput = relu(policyConv(output))
+        let policyConvOutput = dsharp.relu(policyConv(output))
         let logits = policyLinear(policyConvOutput.view(to:
             [batchSize,
              configuration.policyConvWidth * configuration.boardSize * configuration.boardSize]))
         let policyOutput = softmax(logits)
 
-        let valueConvOutput = relu(valueConv(output))
+        let valueConvOutput = dsharp.relu(valueConv(output))
         let valueHidden = valueDense1(valueConvOutput.view(to:
             [batchSize,
              configuration.valueConvWidth * configuration.boardSize * configuration.boardSize]))
@@ -195,7 +195,7 @@ type GoModel() =
 
 
 extension GoModel: InferenceModel {
-    let prediction(for input: Tensor) = GoModelOutput {
+    let prediction(for input: Tensor) = GoModelOutput =
         self(input)
 
 

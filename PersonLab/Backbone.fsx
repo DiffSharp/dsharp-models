@@ -22,7 +22,7 @@ open DiffSharp
 type DepthwiseSeparableConvBlock() =
   inherit Model()
   let dConv: DepthwiseConv2d<Float>
-  let conv: Conv2D<Float>
+  let conv: Conv2d
 
   public init(
     depthWiseFilter: Tensor,
@@ -58,7 +58,7 @@ type MobileNetLikeBackbone() =
   inherit Model()
   let ckpt: CheckpointReader
 
-  let convBlock0: Conv2D<Float>
+  let convBlock0: Conv2d
   let dConvBlock1: DepthwiseSeparableConvBlock
   let dConvBlock2: DepthwiseSeparableConvBlock
   let dConvBlock3: DepthwiseSeparableConvBlock

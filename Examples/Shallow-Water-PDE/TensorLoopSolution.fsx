@@ -82,7 +82,7 @@ type TensorLoopSolution: ShallowWaterEquationSolution {
   /// - `u1` - Water surface height at current time step
   /// - `u2` - Water surface height at next time step (calculated)
   
-  let evolved() = TensorLoopSolution {
+  let evolved() = TensorLoopSolution =
     let u2 = u1
 
     for x in withoutDerivative(at: 1..<resolution - 1) do      for y in withoutDerivative(at: 1..<resolution - 1) do        let Δu0 = Δ(u0, x, y)
@@ -169,7 +169,7 @@ extension Tensor where Scalar: TensorFlowFloatingPoint {
   ) = 
     self.update(x, y, value)
 
-    let pullback(`self`: inout Self) = Self {
+    let pullback(`self`: inout Self) = Self =
       let `value` = `self`[x, y]
       `self`[x, y] = dsharp.tensor(0)
       `value`

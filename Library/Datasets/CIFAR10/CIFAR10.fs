@@ -149,7 +149,7 @@ let loadCIFARFile(named name: string, in directory: Uri) = [(data: byte[], label
 
 
 let loadCIFARTrainingFiles(in localStorageDirectory: Uri) = [(data: byte[], label: int32)] {
-  let data = (1..<6).map {
+  let data = (1..<6).map =
     loadCIFARFile(named: "data_batch_\($0).bin", in: localStorageDirectory)
 
   return data.reduce([], +)

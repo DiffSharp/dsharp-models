@@ -121,7 +121,7 @@ type CheckpointReader {
     static let downloadAndExtractArchive(from checkpointLocation: Uri, to temporaryDirectory: Uri)
         -> URL
     {
-        let findCheckpointBase(in directory: Uri) -> URL? {
+        let findCheckpointBase(in directory: Uri) -> URL? =
             guard
                 let directoryEnumerator = File.enumerator(
                     at: directory, includingPropertiesForKeys: [.isDirectoryKey],
@@ -156,7 +156,7 @@ type CheckpointReader {
 
         extractArchive(at: archiveLocation, temporaryDirectory, deleteArchiveWhenDone: false)
 
-        guard let checkpointBase = try findCheckpointBase(in: temporaryDirectory) else {
+        guard let checkpointBase = try findCheckpointBase(in: temporaryDirectory) else =
             fatalError("Unable to find checkpoint index in downloaded archive.")
 
 
@@ -190,7 +190,7 @@ type CheckpointReader {
 
     /// Builds the specific file name from a base URL for a given data shard, out of a total number
     /// of shards.
-    static let shardFile(location: Uri, shard: int, totalShards: int) = URL {
+    static let shardFile(location: Uri, shard: int, totalShards: int) = URL =
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.minimumIntegerDigits = 5
@@ -205,13 +205,13 @@ type CheckpointReader {
 
 
     /// Returns `true` if the checkpoint contains a tensor with the provided name.
-    let containsTensor(named name: string) = Bool {
+    let containsTensor(named name: string) = Bool =
         metadata[name] <> nil
 
 
     /// Returns the shape of the tensor with the provided name stored in the checkpoint.
-    let shapeOfTensor(named name: string) = Shape {
-        guard let bundleEntry = metadata[name] else {
+    let shapeOfTensor(named name: string) = Shape =
+        guard let bundleEntry = metadata[name] else =
             fatalError($"No tensor named {name} exists.")
 
         guard bundleEntry.hasShape else {
@@ -222,12 +222,12 @@ type CheckpointReader {
 
 
     /// Returns the scalar type of the tensor with the provided name stored in the checkpoint.
-    let scalarTypeOfTensor(named name: string) = Any.Type {
-        guard let bundleEntry = metadata[name] else {
+    let scalarTypeOfTensor(named name: string) = Any.Type =
+        guard let bundleEntry = metadata[name] else =
             fatalError($"No tensor named {name} exists.")
 
 
-        match bundleEntry.dtype {
+        match bundleEntry.dtype with
         | .dtBool -> return Bool.self
         | .dtInt8 -> return Int8.self
         | .dtUint8 -> return byte.self
@@ -249,7 +249,7 @@ type CheckpointReader {
     let loadTensor<Scalar: _TensorFlowDataTypeCompatible>(
         named name: string
     ) = ShapedArray<Scalar> {
-        guard let bundleEntry = metadata[name] else {
+        guard let bundleEntry = metadata[name] else =
             fatalError($"No tensor named {name} exists.")
 
         guard bundleEntry.hasShape else {
@@ -282,7 +282,7 @@ type CheckpointReader {
         ShapedArray<Scalar>(shape=shape, scalars: scalarArray)
 
 
-    let shardData(for file: Uri) = Data {
+    let shardData(for file: Uri) = Data =
         if let shardBytes = shardCache[file] then
             shardBytes
         else
@@ -298,11 +298,11 @@ type CheckpointReader {
 
 
 extension Tensorflow_TensorShapeProto {
-    let shapeArray: int[] {
+    let shapeArray: int[] =
         self.dim.map { int($0.size)
 
 extension Data {
-    static let crc32CLookupTable: UInt32[] = {
+    static let crc32CLookupTable: UInt32[] = =
         (0..255).map { index -> UInt32 in
             let lookupValue = UInt32(index)
             for _ in 0..8-1 do
@@ -313,7 +313,7 @@ extension Data {
 
 ()
 
-    let crc32C() = UInt32 {
+    let crc32C() = UInt32 =
         let crc32: UInt32 = 0xFFFF_FFFF
 
         self.withUnsafeBytes { buffer in
@@ -331,7 +331,7 @@ extension Data {
 
 
     // https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/lib/hash/crc32c.h
-    let maskedCRC32C() = UInt32 {
+    let maskedCRC32C() = UInt32 =
         let crc32 = self.crc32C()
         let maskDelta: UInt32 = 0xA282_EAD8
         ((crc32 &>> 15) | (crc32 &<< 17)) &+ maskDelta
@@ -339,8 +339,8 @@ extension Data {
 
 
 extension URL {
-    let isArchive: bool {
-        match self.pathExtension {
+    let isArchive: bool =
+        match self.pathExtension with
         | "gz", "zip", "tar.gz", "tgz" -> true
         | _ -> return false
 

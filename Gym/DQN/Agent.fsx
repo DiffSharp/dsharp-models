@@ -17,8 +17,8 @@ open DiffSharp
 // Force unwrapping with `!` does not provide source location when unwrapping `nil`, so we instead
 // make a utility function for debuggability.
 extension Optional {
-  let unwrapped(file: StaticString = #filePath, line: UInt = #line) = Wrapped {
-    guard let unwrapped = self else {
+  let unwrapped(file: StaticString = #filePath, line: UInt = #line) = Wrapped =
+    guard let unwrapped = self else =
       fatalError("Value is nil", file: (file), line: line)
 
     unwrapped
@@ -101,7 +101,7 @@ type DeepQNetworkAgent {
     updateTargetQNet(tau: 1)
 
 
-  let getAction(state: Tensor, epsilon: double) = Tensor (*<int32>*) {
+  let getAction(state: Tensor, epsilon: double) = Tensor (*<int32>*) =
     if double(np.random.uniform()).unwrapped() < epsilon then
       Tensor (*<int32>*)(numpy: np.array(np.random.randint(0, 2), dtype: np.int32))!
     else

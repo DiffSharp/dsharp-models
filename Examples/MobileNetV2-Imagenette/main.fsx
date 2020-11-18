@@ -31,7 +31,7 @@ open TrainingLoop
   let device = Device.defaultXLA
 #endif
 
-let dataset = Imagenette(batchSize= 64, inputSize= .resized320, outFeatures=224, device=device)
+let dataset = Imagenette(batchSize= 64, inputSize= Resized320, outFeatures=224, device=device)
 let model = MobileNetV2(classCount: 10)
 let optimizer = SGD(model, learningRate=0.002, momentum: 0.9)
 

@@ -73,7 +73,7 @@ type Solver {
         Q[prior.playerSum][prior.dealerCard][prior.useableAce][action] += priorQ + postQ
 
 
-    let qLearningStrategy(observation: BlackjackState, iteration: int) = Strategy {
+    let qLearningStrategy(observation: BlackjackState, iteration: int) = Strategy =
         let qLookup = Q[observation.playerSum][observation.dealerCard][observation.useableAce]
         let stayReward = qLookup[0]
         let hitReward = qLookup[1]
@@ -92,11 +92,11 @@ type Solver {
 
 
 
-    let randomStrategy() = Strategy {
+    let randomStrategy() = Strategy =
         Strategy.random()
 
 
-    let markovStrategy(observation: BlackjackState) = Strategy {
+    let markovStrategy(observation: BlackjackState) = Strategy =
         // hit @ 80% probability unless over 18, in which case do the reverse
         let flip = Float.random(in: 0..<1)
         let threshHold: double = 0.8
@@ -127,7 +127,7 @@ type Solver {
 
 
 
-    let normalStrategy(observation: BlackjackState) = Strategy {
+    let normalStrategy(observation: BlackjackState) = Strategy =
         if observation.playerSum = 0 then
             true
 
@@ -135,7 +135,7 @@ type Solver {
         Array(lookupString)[observation.dealerCard - 1] = "H"
 
 
-    let strategy(observation: BlackjackState, solver: SolverType, iteration: int) = Strategy {
+    let strategy(observation: BlackjackState, solver: SolverType, iteration: int) = Strategy =
         match solver with
         | .random ->
             randomStrategy()

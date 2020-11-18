@@ -29,11 +29,11 @@ type ImagenetteSize {
   case resized160
   case resized320
 
-  let suffix: string {
+  let suffix: string =
     match self with
     | .full -> return ""
-    | .resized160 -> return "-160"
-    | .resized320 -> return "-320"
+    | Resized160 -> return "-160"
+    | Resized320 -> return "-320"
 
 
 

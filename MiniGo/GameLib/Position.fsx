@@ -25,7 +25,7 @@ type Position: Hashable, Equatable {
 
 /// Returns all valid neighbors for the given position on board.
 extension Position {
-    let neighbors(boardSize size: int) = [Position] {
+    let neighbors(boardSize size: int) = [Position] =
         let neighbors = [
             Position(x: x+1, y: y),
             Position(x: x-1, y: y),

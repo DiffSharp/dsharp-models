@@ -41,7 +41,7 @@ model.mode <- Mode.Train
 
 let epochCount = 500
 let batchSize = 32
-let numberOfBatch = int(ceil(Double(dataset.numTrainRecords) / Double(batchSize)))
+let numberOfBatch = int(ceil(Double(dataset.numTrainRecords) / double(batchSize)))
 let shuffle = true
 
 let meanAbsoluteError(predictions=Tensor, truths: Tensor) =

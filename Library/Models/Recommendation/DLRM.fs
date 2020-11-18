@@ -90,7 +90,7 @@ type DLRM(nDense: int, mSpa: int, lnEmb: int[], lnBot: int[], lnTop: int[],
         denseEmbVec:  Tensor<Float>,
         sparseEmbVecs: [Tensor<Float>]
     ) : Tensor =
-        match self.interaction {
+        match self.interaction with
         | .concatenate ->
             dsharp.tensor(concatenating: sparseEmbVecs + [denseEmbVec], alongAxis: 1)
         | let .dot(selfInteraction):

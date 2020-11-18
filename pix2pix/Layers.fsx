@@ -76,7 +76,7 @@ type ConvLayer(inChannels: int, outChannels: int, kernelSize: int, stride: int, 
 
 type UNetSkipConnectionInnermost() = 
     inherit Model()
-    let downConv: Conv2D<Float>
+    let downConv: Conv2d
     let upConv: ConvTranspose2d
     let upNorm: BatchNorm<Float>
     
@@ -101,7 +101,7 @@ type UNetSkipConnectionInnermost() =
     override _.forward(input) =
         let x = leakyRelu(input)
         x = self.downConv(x)
-        x = relu(x)
+        x = dsharp.relu(x)
         x = x |> self.upConv, self.upNorm)
 
         input.cat(x, alongAxis: 3)
@@ -110,7 +110,7 @@ type UNetSkipConnectionInnermost() =
 
 
 type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor<Float>, Sublayer.Output =: Tensor =
-    let downConv: Conv2D<Float>
+    let downConv: Conv2d
     let downNorm: BatchNorm<Float>
     let upConv: ConvTranspose2d
     let upNorm: BatchNorm<Float>
@@ -146,7 +146,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
     override _.forward(input) =
         let x = leakyRelu(input)
         x = x |> self.downConv, self.downNorm, self.submodule)
-        x = relu(x)
+        x = dsharp.relu(x)
         x = x |> self.upConv, self.upNorm)
         
         if self.useDropOut then
@@ -158,7 +158,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
 
 
 type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor<Float>, Sublayer.Output =: Tensor =
-    let downConv: Conv2D<Float>
+    let downConv: Conv2d
     let upConv: ConvTranspose2d
     
     let submodule: Sublayer
@@ -185,7 +185,7 @@ type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentV
     
     override _.forward(input) =
         let x = input |> self.downConv, self.submodule)
-        x = relu(x)
+        x = dsharp.relu(x)
         x = self.upConv(x)
 
         x

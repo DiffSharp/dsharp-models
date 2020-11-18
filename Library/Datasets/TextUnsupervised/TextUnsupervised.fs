@@ -289,7 +289,7 @@ extension TextUnsupervised where Entropy = SystemRandomNumberGenerator {
 
 
 extension Array {
-  let concurrentMap<B>(transform: @escaping (Element) = B) = [B] {
+  let concurrentMap<B>(transform: @escaping (Element) = B) = [B] =
     let res = [B?](repeating: nil, count: count)
     let threadCount = min count 10
     let q = DispatchQueue(label: "sync queue")

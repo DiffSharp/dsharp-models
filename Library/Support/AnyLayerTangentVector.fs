@@ -18,7 +18,7 @@ type TangentVectorConformances = Differentiable & VectorProtocol & ElementaryFun
 ///   - Scalar: the scalar type of the underlying tangent vector
 internal class AnyLayerTangentVectorBox<Scalar: FloatingPoint & ElementaryFunctions> {
   /// The underlying value, type-erased to `Any`.
-  let typeErasedBase: Any {
+  let typeErasedBase: Any =
     mustOverride()
 
 
@@ -29,47 +29,47 @@ internal class AnyLayerTangentVectorBox<Scalar: FloatingPoint & ElementaryFuncti
 
 
   // Creates a new box storing a copy of the underlying tangent vector, used to preserve value semantics.
-  let duplicate() = AnyLayerTangentVectorBox {
+  let duplicate() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   // `Equatable` requirements (implied by `AdditiveArithmetic`).
   /// Returns a Boolean value indicating whether two values are equal.
-  let _isEqual(to other: AnyLayerTangentVectorBox) = Bool {
+  let _isEqual(to other: AnyLayerTangentVectorBox) = Bool =
     mustOverride()
 
 
   /// Returns a Boolean value indicating whether two values are not equal.
-  let _isNotEqual(to other: AnyLayerTangentVectorBox) = Bool {
+  let _isNotEqual(to other: AnyLayerTangentVectorBox) = Bool =
     mustOverride()
 
 
   // `AdditiveArithmetic` requirements.
   /// The zero value.
-  class let _zero: AnyLayerTangentVectorBox {
+  class let _zero: AnyLayerTangentVectorBox =
     mustOverride()
 
 
   /// Adds two values and produces their sum.
-  let _add(x: AnyLayerTangentVectorBox) = AnyLayerTangentVectorBox {
+  let _add(x: AnyLayerTangentVectorBox) = AnyLayerTangentVectorBox =
     mustOverride()
 
 
   /// Subtracts one value from another and produces their difference.
-  let _subtract(x: AnyLayerTangentVectorBox) = AnyLayerTangentVectorBox {
+  let _subtract(x: AnyLayerTangentVectorBox) = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   // `VectorProtocol` requirements.
-  let _adding(x: scalar) = AnyLayerTangentVectorBox {
+  let _adding(x: scalar) = AnyLayerTangentVectorBox =
     mustOverride()
 
-  let _subtracting(x: scalar) = AnyLayerTangentVectorBox {
+  let _subtracting(x: scalar) = AnyLayerTangentVectorBox =
     mustOverride()
 
 
   /// Returns `self` multiplied by the given scalar.
-  let _scaled(by: scalar) = AnyLayerTangentVectorBox {
+  let _scaled(by: scalar) = AnyLayerTangentVectorBox =
     mustOverride()
 
 
@@ -81,158 +81,158 @@ internal class AnyLayerTangentVectorBox<Scalar: FloatingPoint & ElementaryFuncti
 
   // `EuclideanDifferentiable` requirements.
   /// The differentiable vector component of `self`.
-  let _differentiableVectorView: AnyLayerTangentVectorBox {
+  let _differentiableVectorView: AnyLayerTangentVectorBox =
     mustOverride()
 
 
   // `PointwiseMultiplicative` requirements.
   /// The one value.
   /// One is the identity element for multiplication. For any value, `x .* .one = x` and `.one .* x = x`.
-  class let _one: AnyLayerTangentVectorBox {
+  class let _one: AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The multiplicative inverse of self.
   /// For any value, `x .* x.reciprocal = .one` and `x.reciprocal .* x = .one`.
-  let _reciprocal() = AnyLayerTangentVectorBox {
+  let _reciprocal() = AnyLayerTangentVectorBox =
     mustOverride()
 
 
   /// Multiplies two values and produces their product.
-  let _pointwiseMultiply(by: AnyLayerTangentVectorBox) = AnyLayerTangentVectorBox {
+  let _pointwiseMultiply(by: AnyLayerTangentVectorBox) = AnyLayerTangentVectorBox =
     mustOverride()
 
 
   // `ElementaryFunctions` requirements.
   /// The square root of `x`.
   /// For real types, if the argument is negative, either the result is NaN or a precondition failure occurs. For complex types, this function has a branch cut along the negative real axis.
-  let _sqrt() = AnyLayerTangentVectorBox {
+  let _sqrt() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The cosine of `x`.
   /// For real types, `x` is interpreted as an angle measured in radians.
-  let _cos() = AnyLayerTangentVectorBox {
+  let _cos() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The sine of `x`.
   /// For real types, `x` is interpreted as an angle measured in radians.
-  let _sin() = AnyLayerTangentVectorBox {
+  let _sin() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The tangent of `x`.
-  let _tan() = AnyLayerTangentVectorBox {
+  let _tan() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The acos function.
-  let _acos() = AnyLayerTangentVectorBox {
+  let _acos() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The asin function.
-  let _asin() = AnyLayerTangentVectorBox {
+  let _asin() = AnyLayerTangentVectorBox =
     mustOverride()
 
  
   /// The atan function.
-  let _atan() = AnyLayerTangentVectorBox {
+  let _atan() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The cosh function.
-  let _cosh() = AnyLayerTangentVectorBox {
+  let _cosh() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The sinh function.
-  let _sinh() = AnyLayerTangentVectorBox {
+  let _sinh() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The tanh function.
-  let _tanh() = AnyLayerTangentVectorBox {
+  let _tanh() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The acosh function.
-  let _acosh() = AnyLayerTangentVectorBox {
+  let _acosh() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The asinh function.
-  let _asinh() = AnyLayerTangentVectorBox {
+  let _asinh() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The atanh function.
-  let _atanh() = AnyLayerTangentVectorBox {
+  let _atanh() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The exp function.
-  let _exp() = AnyLayerTangentVectorBox {
+  let _exp() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The exp2 function.
-  let _exp2() = AnyLayerTangentVectorBox {
+  let _exp2() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The exp10 function.
-  let _exp10() = AnyLayerTangentVectorBox {
+  let _exp10() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The expm1 function.
-  let _expm1() = AnyLayerTangentVectorBox {
+  let _expm1() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The log function.
-  let _log() = AnyLayerTangentVectorBox {
+  let _log() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The log2 function.
-  let _log2() = AnyLayerTangentVectorBox {
+  let _log2() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The log10 function.
-  let _log10() = AnyLayerTangentVectorBox {
+  let _log10() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The log1p function.
-  let _log1p() = AnyLayerTangentVectorBox {
+  let _log1p() = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// `exp(y log(x))` computed without loss of intermediate precision.
   /// For real types, if `x` is negative the result is NaN, even if `y` has an integral value. For complex types, there is a branch cut on the negative real axis.
-  let _pow(y: AnyLayerTangentVectorBox) = AnyLayerTangentVectorBox {
+  let _pow(y: AnyLayerTangentVectorBox) = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// `x` raised to the `n`th power.
-  let _pow(n: int) = AnyLayerTangentVectorBox {
+  let _pow(n: int) = AnyLayerTangentVectorBox =
     mustOverride()
 
   
   /// The `n`th root of `x`.
   /// For real types, if `x` is negative and `n` is even, the result is NaN. For complex types, there is a branch cut along the negative real axis.
-  let _root(n: int) = AnyLayerTangentVectorBox {
+  let _root(n: int) = AnyLayerTangentVectorBox =
     mustOverride()
 
 
 
 extension AnyLayerTangentVectorBox {
   /// Optionally returns the underlying scalar if the wrapped value has type `AnyLayerTangentVector.OpaqueScalar`.
-  let getOpaqueScalar() = Scalar? {
+  let getOpaqueScalar() = Scalar? =
     unboxed(as: AnyLayerTangentVector<Scalar>.OpaqueScalar.self)?.value
 
 
@@ -248,7 +248,7 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
 
 
   /// The underlying tangent vector, type-erased to `Any`.
-  override let typeErasedBase: Any {
+  override let typeErasedBase: Any =
     underlying
 
 
@@ -257,12 +257,12 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
     (self as? ConcreteAnyLayerTangentVectorBox<U>)?.underlying
 
 
-  override let duplicate() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let duplicate() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox(underlying)
 
 
   // `Equatable` requirements (implied by `AdditiveArithmetic`).
-  override let _isEqual(to other: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = Bool {
+  override let _isEqual(to other: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = Bool =
     if let otherScalar = other.getOpaqueScalar() then
       if let scalar = getOpaqueScalar() then
         scalar = otherScalar
@@ -276,7 +276,7 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
 
 
 
-  override let _isNotEqual(to other: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = Bool {
+  override let _isNotEqual(to other: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = Bool =
     if let otherScalar = other.getOpaqueScalar() then
       if let scalar = getOpaqueScalar() then
         scalar <> otherScalar
@@ -291,11 +291,11 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
 
 
   // `AdditiveArithmetic` requirements.
-  override class let _zero: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override class let _zero: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox(Underlying.zero)
 
 
-  override let _add(x: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _add(x: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     if let scalar = getOpaqueScalar() then
       // use the associative property, self + x = x + self
       x._adding(scalar)
@@ -306,13 +306,13 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
       self._adding(scalar)
 
 
-    guard let xBase = x.unboxed(as: Underlying.self) else {
+    guard let xBase = x.unboxed(as: Underlying.self) else =
       derivativeTypeMismatch(got: type(of: x.typeErasedBase), expected=Underlying.self)
 
     ConcreteAnyLayerTangentVectorBox(underlying + xBase)
 
 
-  override let _subtract(x: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _subtract(x: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     if let scalar = getOpaqueScalar() then
       // expand by definition of opqaue scalars and perform the original operation
       AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>._one._scaled(by: scalar)._subtract(x)
@@ -323,107 +323,107 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
       self._subtracting(scalar)
 
 
-    guard let xBase = x.unboxed(as: Underlying.self) else {
+    guard let xBase = x.unboxed(as: Underlying.self) else =
       derivativeTypeMismatch(got: type(of: x.typeErasedBase), expected=Underlying.self)
 
     ConcreteAnyLayerTangentVectorBox(underlying - xBase)
 
   
   // `VectorProtocol` requirements.
-  override let _adding(x: Underlying.VectorSpaceScalar) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _adding(x: Underlying.VectorSpaceScalar) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(underlying.adding(x))
 
-  override let _subtracting(x: Underlying.VectorSpaceScalar) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _subtracting(x: Underlying.VectorSpaceScalar) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(underlying.subtracting(x))
 
-  override let _scaled(by: Underlying.VectorSpaceScalar) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _scaled(by: Underlying.VectorSpaceScalar) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(underlying.scaled(by: by))
 
 
   // `PointwiseMultiplicative` requirements.
-  override class let _one: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override class let _one: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.one)
 
 
-  override let _reciprocal() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _reciprocal() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(underlying.reciprocal)
 
 
-  override let _pointwiseMultiply(by: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _pointwiseMultiply(by: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(underlying .* by.unboxed(as: Underlying.self)!)
 
 
   // `ElementaryFunctions` requirements.
-  override let _sqrt() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _sqrt() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.sqrt(underlying));
 
-  override let _cos() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _cos() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.cos(underlying));
 
-  override let _sin() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _sin() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.sin(underlying));
 
-  override let _tan() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _tan() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.tan(underlying));
 
-  override let _acos() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _acos() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.acos(underlying));
 
-  override let _asin() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _asin() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.asin(underlying));
 
-  override let _atan() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _atan() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.atan(underlying));
 
-  override let _cosh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _cosh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.cosh(underlying));
 
-  override let _sinh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _sinh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.sinh(underlying));
 
-  override let _tanh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _tanh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.tanh(underlying));
 
-  override let _acosh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _acosh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.acosh(underlying));
 
-  override let _asinh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _asinh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.asinh(underlying));
 
-  override let _atanh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _atanh() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.atanh(underlying));
 
-  override let _exp() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _exp() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.exp(underlying));
 
-  override let _exp2() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _exp2() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.exp2(underlying));
 
-  override let _exp10() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _exp10() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.exp10(underlying));
 
-  override let _expm1() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _expm1() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.expm1(underlying));
 
-  override let _log() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _log() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.log(underlying));
 
-  override let _log2() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _log2() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.log2(underlying));
 
-  override let _log10() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _log10() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.log10(underlying));
 
-  override let _log1p() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _log1p() = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.log1p(underlying));
 
-  override let _pow(y: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _pow(y: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar>) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.pow(underlying, y.unboxed(as: Underlying.self)!));
 
-  override let _pow(n: int) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _pow(n: int) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.pow(underlying, n));
 
-  override let _root(n: int) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _root(n: int) = AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     ConcreteAnyLayerTangentVectorBox<Underlying>(Underlying.root(underlying, n));
 
 
@@ -441,7 +441,7 @@ where Underlying.TangentVector = Underlying, Underlying.VectorSpaceScalar: Float
 
 
   // `EuclideanDifferentiable` requirements.
-  override let _differentiableVectorView: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> {
+  override let _differentiableVectorView: AnyLayerTangentVectorBox<Underlying.VectorSpaceScalar> =
     self
 
 
@@ -467,7 +467,7 @@ type AnyLayerTangentVector<F: FloatingPoint & ElementaryFunctions>: KeyPathItera
   /// The underlying base tangent vector.
   /// This will either be an instance of the underlying layer's tangent vector type,
   /// or just a scalar when the tangent vector contains only elements with that value.
-  let base: Any {
+  let base: Any =
     if let scalar = box.getOpaqueScalar() then
       scalar
     else
@@ -522,136 +522,136 @@ type AnyLayerTangentVector<F: FloatingPoint & ElementaryFunctions>: KeyPathItera
 
 
     // `VectorProtocol` requirements.
-    @usableFromInline let adding(x: F) = OpaqueScalar {
+    @usableFromInline let adding(x: F) = OpaqueScalar =
       OpaqueScalar(value + x)
 
 
-    @usableFromInline let subtracting(x: F) = OpaqueScalar {
+    @usableFromInline let subtracting(x: F) = OpaqueScalar =
       OpaqueScalar(value - x)
 
 
-    @usableFromInline let scaled(by: F) = OpaqueScalar {
+    @usableFromInline let scaled(by: F) = OpaqueScalar =
       OpaqueScalar(value * by)
 
 
     // `PointwiseMultiplicative` requirements.
-    @usableFromInline static let one: OpaqueScalar {
+    @usableFromInline static let one: OpaqueScalar =
       OpaqueScalar(F(1))
 
 
-    @usableFromInline let reciprocal: OpaqueScalar {
+    @usableFromInline let reciprocal: OpaqueScalar =
       OpaqueScalar(F(1) / value)
 
 
-    @usableFromInline static let .* (lhs: OpaqueScalar, rhs: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let .* (lhs: OpaqueScalar, rhs: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(lhs.value * rhs.value)
 
 
     // `ElementaryFunctions` requirements.
-    @usableFromInline static let sqrt(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let sqrt(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.sqrt(x.value))
 
 
-    @usableFromInline static let cos(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let cos(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.cos(x.value))
 
 
-    @usableFromInline static let sin(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let sin(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.sin(x.value))
 
 
-    @usableFromInline static let tan(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let tan(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.tan(x.value))
 
 
-    @usableFromInline static let acos(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let acos(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.acos(x.value))
 
 
-    @usableFromInline static let asin(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let asin(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.asin(x.value))
 
 
-    @usableFromInline static let atan(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let atan(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.atan(x.value))
 
 
-    @usableFromInline static let cosh(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let cosh(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.cosh(x.value))
 
 
-    @usableFromInline static let sinh(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let sinh(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.sinh(x.value))
 
 
-    @usableFromInline static let tanh(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let tanh(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.tanh(x.value))
 
 
-    @usableFromInline static let acosh(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let acosh(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.acosh(x.value))
 
 
-    @usableFromInline static let asinh(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let asinh(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.asinh(x.value))
 
 
-    @usableFromInline static let atanh(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let atanh(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.atanh(x.value))
 
 
-    @usableFromInline static let exp(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let exp(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.exp(x.value))
 
 
-    @usableFromInline static let exp2(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let exp2(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.exp2(x.value))
 
 
-    @usableFromInline static let exp10(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let exp10(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.exp10(x.value))
 
 
-    @usableFromInline static let expm1(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let expm1(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.expm1(x.value))
 
 
-    @usableFromInline static let log(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let log(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.log(x.value))
 
 
-    @usableFromInline static let log2(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let log2(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.log2(x.value))
 
 
-    @usableFromInline static let log10(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let log10(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.log10(x.value))
 
 
-    @usableFromInline static let log1p(x: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let log1p(x: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.log1p(x.value))
 
 
-    @usableFromInline static let pow(x: OpaqueScalar, _ y: OpaqueScalar) = OpaqueScalar {
+    @usableFromInline static let pow(x: OpaqueScalar, _ y: OpaqueScalar) = OpaqueScalar =
       OpaqueScalar(F.pow(x.value, y.value))
 
 
-    @usableFromInline static let pow(x: OpaqueScalar, _ n: int) = OpaqueScalar {
+    @usableFromInline static let pow(x: OpaqueScalar, _ n: int) = OpaqueScalar =
       OpaqueScalar(F.pow(x.value, n))
 
 
-    @usableFromInline static let root(x: OpaqueScalar, _ n: int) = OpaqueScalar {
+    @usableFromInline static let root(x: OpaqueScalar, _ n: int) = OpaqueScalar =
       OpaqueScalar(F.root(x.value, n))
 
 
 
 
 extension AnyLayerTangentVector: Equatable {
-  public static let = (lhs: AnyLayerTangentVector, rhs: AnyLayerTangentVector) = Bool {
+  public static let = (lhs: AnyLayerTangentVector, rhs: AnyLayerTangentVector) = Bool =
     lhs.box._isEqual(rhs.box)
 
   
-  public static let <> (lhs: AnyLayerTangentVector, rhs: AnyLayerTangentVector) = Bool {
+  public static let <> (lhs: AnyLayerTangentVector, rhs: AnyLayerTangentVector) = Bool =
     lhs.box._isNotEqual(rhs.box)
 
 
@@ -667,13 +667,13 @@ extension AnyLayerTangentVector: Differentiable {
 
 
 extension AnyLayerTangentVector: EuclideanDifferentiable {
-  let differentiableVectorView: TangentVector {
+  let differentiableVectorView: TangentVector =
     self
 
 
 
 extension AnyLayerTangentVector: AdditiveArithmetic {
-  public static let zero: AnyLayerTangentVector {
+  public static let zero: AnyLayerTangentVector =
     .init(
       box: ConcreteAnyLayerTangentVectorBox<OpaqueScalar>._zero)
 
@@ -726,104 +726,104 @@ extension AnyLayerTangentVector: AdditiveArithmetic {
 extension AnyLayerTangentVector: VectorProtocol {
   type VectorSpaceScalar = F
 
-  let adding(x: VectorSpaceScalar) = Self {
+  let adding(x: VectorSpaceScalar) = Self =
     .init(box: box._adding(x));
 
 
-  let subtracting(x: VectorSpaceScalar) = Self {
+  let subtracting(x: VectorSpaceScalar) = Self =
     .init(box: box._subtracting(x));
 
 
-  let scaled(by scalar: VectorSpaceScalar) = Self {
+  let scaled(by scalar: VectorSpaceScalar) = Self =
     .init(box: box._scaled(by: scalar))
 
 
 
 extension AnyLayerTangentVector: PointwiseMultiplicative {
-  public static let one: AnyLayerTangentVector {
+  public static let one: AnyLayerTangentVector =
     .init(box: ConcreteAnyLayerTangentVectorBox<OpaqueScalar>._one)
 
 
-  let reciprocal: AnyLayerTangentVector {
+  let reciprocal: AnyLayerTangentVector =
     .init(box: box._reciprocal())
 
 
-  public static let .* (lhs: Self, rhs: Self) = Self {
+  public static let .* (lhs: Self, rhs: Self) = Self =
     .init(box: lhs.box._pointwiseMultiply(by: rhs.box))
 
 
 
 extension AnyLayerTangentVector: ElementaryFunctions {
-  public static let sqrt(x: Self) = Self {
+  public static let sqrt(x: Self) = Self =
     .init(box: x.box._sqrt())
 
-  public static let cos(x: Self) = Self {
+  public static let cos(x: Self) = Self =
     .init(box: x.box._cos())
 
-  public static let sin(x: Self) = Self {
+  public static let sin(x: Self) = Self =
     .init(box: x.box._sin())
 
-  public static let tan(x: Self) = Self {
+  public static let tan(x: Self) = Self =
     .init(box: x.box._tan())
 
-  public static let acos(x: Self) = Self {
+  public static let acos(x: Self) = Self =
     .init(box: x.box._acos())
 
-  public static let asin(x: Self) = Self {
+  public static let asin(x: Self) = Self =
     .init(box: x.box._asin())
 
-  public static let atan(x: Self) = Self {
+  public static let atan(x: Self) = Self =
     .init(box: x.box._atan())
 
-  public static let cosh(x: Self) = Self {
+  public static let cosh(x: Self) = Self =
     .init(box: x.box._cosh())
 
-  public static let sinh(x: Self) = Self {
+  public static let sinh(x: Self) = Self =
     .init(box: x.box._sinh())
 
-  public static let tanh(x: Self) = Self {
+  public static let tanh(x: Self) = Self =
     .init(box: x.box._tanh())
 
-  public static let acosh(x: Self) = Self {
+  public static let acosh(x: Self) = Self =
     .init(box: x.box._acosh())
 
-  public static let asinh(x: Self) = Self {
+  public static let asinh(x: Self) = Self =
     .init(box: x.box._asinh())
 
-  public static let atanh(x: Self) = Self {
+  public static let atanh(x: Self) = Self =
     .init(box: x.box._atanh())
 
-  public static let exp(x: Self) = Self {
+  public static let exp(x: Self) = Self =
     .init(box: x.box._exp())
 
-  public static let exp2(x: Self) = Self {
+  public static let exp2(x: Self) = Self =
     .init(box: x.box._exp2())
 
-  public static let exp10(x: Self) = Self {
+  public static let exp10(x: Self) = Self =
     .init(box: x.box._exp10())
 
-  public static let expm1(x: Self) = Self {
+  public static let expm1(x: Self) = Self =
     .init(box: x.box._expm1())
 
-  public static let log(x: Self) = Self {
+  public static let log(x: Self) = Self =
     .init(box: x.box._log())
 
-  public static let log2(x: Self) = Self {
+  public static let log2(x: Self) = Self =
     .init(box: x.box._log2())
 
-  public static let log10(x: Self) = Self {
+  public static let log10(x: Self) = Self =
     .init(box: x.box._log10())
 
-  public static let log1p(x: Self) = Self {
+  public static let log1p(x: Self) = Self =
     .init(box: x.box._log1p())
 
-  public static let pow(x: Self, _ y: Self) = Self {
+  public static let pow(x: Self, _ y: Self) = Self =
     .init(box: x.box._pow(y.box))
 
-  public static let pow(x: Self, _ n: int) = Self {
+  public static let pow(x: Self, _ n: int) = Self =
     .init(box: x.box._pow(n))
 
-  public static let root(x: Self, _ n: int) = Self {
+  public static let root(x: Self, _ n: int) = Self =
     .init(box: x.box._root(n))
 
 

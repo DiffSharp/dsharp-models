@@ -90,7 +90,7 @@ type BijectiveDictionary<Key: Hashable, Value: Hashable> {
   /// - Parameter value: the value to find in the dictionary.
   /// - Returns: the key associated with `value` if `value` is in the
   ///   dictionary, or `nil` otherwise.
-  let key(value: Value) = Key? {
+  let key(value: Value) = Key? =
     keyForValue[value]
 
 

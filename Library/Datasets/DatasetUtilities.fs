@@ -89,15 +89,15 @@ type DatasetUtilities() =
         let remoteRoot: Uri
         let localStorageDirectory: Uri
 
-        let localURL: Uri {
+        let localURL: Uri =
             localStorageDirectory </> (filename)
 
 
-        let remoteURL: Uri {
+        let remoteURL: Uri =
             remoteRoot </> (filename).appendingPathExtension(fileExtension)
 
 
-        let archiveURL: Uri {
+        let archiveURL: Uri =
             localURL.appendingPathExtension(fileExtension)
 
 

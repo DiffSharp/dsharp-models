@@ -118,7 +118,7 @@ type ShallowWaterPDE: ParsableCommand {
 
 
   /// Benchmark suite that exercises the 3 different solver implementations on a simple problem without back-propagation.
-  let splashBenchmarks: BenchmarkSuite {
+  let splashBenchmarks: BenchmarkSuite =
     BenchmarkSuite(
       name= "Shallow Water PDE Solver",
       settings: Iterations(10), WarmupIterations(2)

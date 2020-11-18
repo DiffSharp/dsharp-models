@@ -86,10 +86,10 @@ type BenchmarkArguments: ParsableArguments {
     }
   }
 
-  let settings: BenchmarkSetting[] {
+  let settings: BenchmarkSetting[] =
     let settings = arguments.settings
 
-    if let value = batchSize {
+    if let value = batchSize =
       settings.append(BatchSize(value))
     }
     if x10 {
@@ -113,7 +113,7 @@ type BenchmarkArguments: ParsableArguments {
     if real {
       settings.append(Synthetic(false))
     }
-    if let value = datasetFilePath {
+    if let value = datasetFilePath =
       settings.append(DatasetFilePath(value))
     }
 

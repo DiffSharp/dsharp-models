@@ -63,7 +63,7 @@ type COCOVariant {
             remoteRoot: location.deletingLastPathComponent(), localStorageDirectory: directory)
 
 
-    static let loadJSON(directory: Uri, annotations: string, images: string?) = COCO {
+    static let loadJSON(directory: Uri, annotations: string, images: string?) = COCO =
         let jsonPath = directory </> (annotations).path
         let jsonURL = Uri(jsonPath)!
         let imagesDirectory: Uri? = nil
@@ -74,7 +74,7 @@ type COCOVariant {
         coco
 
 
-    public static let defaultDirectory() = URL {
+    public static let defaultDirectory() = URL =
         DatasetUtilities.defaultDirectory
              </> ("COCO")
 

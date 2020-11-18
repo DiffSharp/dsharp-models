@@ -87,7 +87,7 @@ type COCO {
     let getAnnotationIds(
         imageIds: ImageId[] = [| |],
         categoryIds: Set<CategoryId> = [],
-        areaRange: Double[] = [| |],
+        areaRange: double[] = [| |],
         isCrowd: int? = nil
     ) = [AnnotationId] {
         let filterByImageId = imageIds.count <> 0
@@ -184,7 +184,7 @@ type COCO {
 
 
     /// Load annotations with specified ids.
-    let loadAnnotations(ids: AnnotationId[] = [| |]) = [Annotation] {
+    let loadAnnotations(ids: AnnotationId[] = [| |]) = [Annotation] =
         let anns: Annotation[] = [| |]
         for id in ids do
             anns.append(self.annotations[id]!)
@@ -193,7 +193,7 @@ type COCO {
 
 
     /// Load categories with specified ids.
-    let loadCategories(ids: CategoryId[] = [| |]) = [Category] {
+    let loadCategories(ids: CategoryId[] = [| |]) = [Category] =
         let cats: Category[] = [| |]
         for id in ids do
             cats.append(self.categories[id]!)
@@ -202,7 +202,7 @@ type COCO {
 
 
     /// Load images with specified ids.
-    let loadImages(ids: ImageId[] = [| |]) = [Image] {
+    let loadImages(ids: ImageId[] = [| |]) = [Image] =
         let imgs: Image[] = [| |]
         for id in ids do
             imgs.append(self.images[id]!)
@@ -211,7 +211,7 @@ type COCO {
 
 
     /// Convert segmentation in an annotation to RLE.
-    let annotationToRLE(ann: Annotation) = RLE {
+    let annotationToRLE(ann: Annotation) = RLE =
         let imgId = ann["image_id"] :?> ImageId
         let img = self.images[imgId]!
         let h = img["height"] :?> Int
@@ -233,7 +233,7 @@ type COCO {
 
 
 
-    let annotationToMask(ann: Annotation) = Mask {
+    let annotationToMask(ann: Annotation) = Mask =
         let rle = annotationToRLE(ann)
         let mask = Mask(fromRLE: rle)
         mask
@@ -276,11 +276,11 @@ type Mask {
         self.init(width: w, height: h, n: n, mask: mask)
 
 
-    static let merge(rles: RLE[], intersect: bool = false) = RLE {
+    static let merge(rles: RLE[], intersect: bool = false) = RLE =
         RLE(merging: rles, intersect: intersect)
 
 
-    static let fromBoundingBoxes(bboxes: [[Double]], width w: int, height h: int) = [RLE] {
+    static let fromBoundingBoxes(bboxes: [[Double]], width w: int, height h: int) = [RLE] =
         let rles: RLE[] = [| |]
         for bbox in bboxes do
             let rle = RLE(fromBoundingBox: bbox, width: w, height: h)
@@ -289,7 +289,7 @@ type Mask {
         rles
 
 
-    static let fromPolygons(polys: [[Double]], width w: int, height h: int) = [RLE] {
+    static let fromPolygons(polys: [[Double]], width w: int, height h: int) = [RLE] =
         let rles: RLE[] = [| |]
         for poly in polys do
             let rle = RLE(fromPolygon: poly, width: w, height: h)
@@ -298,7 +298,7 @@ type Mask {
         rles
 
 
-    static let fromUncompressedRLEs(arr: [[String: Any]], width w: int, height h: int) = [RLE] {
+    static let fromUncompressedRLEs(arr: [[String: Any]], width w: int, height h: int) = [RLE] =
         let rles: RLE[] = [| |]
         for elem in arr do
             let counts = elem["counts"] :?> [Int]
@@ -315,7 +315,7 @@ type Mask {
         rles
 
 
-    static let fromObject(obj: Any, width w: int, height h: int) = [RLE] {
+    static let fromObject(obj: Any, width w: int, height h: int) = [RLE] =
         // encode rle from a list of json deserialized objects
         if let arr = obj as? [[Double]] then
             assert(arr.count > 0)
@@ -354,7 +354,7 @@ type RLE {
     let m: int = 0
     let counts: UInt32[] = [| |]
 
-    let mask: Mask {
+    let mask: Mask =
         Mask(fromRLE: self)
 
 
@@ -398,21 +398,21 @@ type RLE {
         self.init(width: w, height: h, m: m, counts: cnts)
 
 
-    init(fromBoundingBox bb: Double[], width w: int, height h: int) = 
+    init(fromBoundingBox bb: double[], width w: int, height h: int) = 
         let xs = bb[0]
         let ys = bb[1]
         let xe = bb[2]
         let ye = bb[3]
-        let xy: Double[] = [xs, ys, xs, ye, xe, ye, xe, ys]
+        let xy: double[] = [xs, ys, xs, ye, xe, ye, xe, ys]
         self.init(fromPolygon: xy, width: w, height: h)
 
 
-    init(fromPolygon xy: Double[], width w: int, height h: int) = 
+    init(fromPolygon xy: double[], width w: int, height h: int) = 
         // upsample and get discrete points densely along the entire boundary
         let k: int = xy.count / 2
         let j: int = 0
         let m: int = 0
-        let scale: Double = 5
+        let scale: double = 5
         let x = [Int](repeating: 0, count: k + 1)
         let y = [Int](repeating: 0, count: k + 1)
         for j in 0..<k { x[j] = int(scale * xy[j * 2 + 0] + 0.5)
@@ -440,12 +440,12 @@ type RLE {
                 ys = ye
                 ye = t
 
-            let s: Double = dx >= dy ? Double(ye - ys) / Double(dx) : Double(xe - xs) / Double(dy)
+            let s: double = dx >= dy ? double(ye - ys) / double(dx) : double(xe - xs) / double(dy)
             if dx >= dy then
                 for d in 0..dx do
                     t = flip ? dx - d : d
                     u[m] = t + xs
-                    let vm = Double(ys) + s * Double(t) + 0.5
+                    let vm = double(ys) + s * double(t) + 0.5
                     v[m] = vm.isNaN ? 0 : int(vm)
                     m <- m + 1
 
@@ -453,7 +453,7 @@ type RLE {
                 for d in 0..dy do
                     t = flip ? dy - d : d
                     v[m] = t + ys
-                    let um = Double(xs) + s * Double(t) + 0.5
+                    let um = double(xs) + s * double(t) + 0.5
                     u[m] = um.isNaN ? 0 : int(um)
                     m <- m + 1
 
@@ -462,18 +462,18 @@ type RLE {
         // get points along y-boundary and downsample
         k = m
         m = 0
-        let xd: Double
-        let yd: Double
+        let xd: double
+        let yd: double
         x = [Int](repeating: 0, count: k)
         y = [Int](repeating: 0, count: k)
         for j in 1..k-1 do
             if u[j] <> u[j - 1] then
-                xd = Double(u[j] < u[j - 1] ? u[j] : u[j] - 1)
+                xd = double(u[j] < u[j - 1] ? u[j] : u[j] - 1)
                 xd = (xd + 0.5) / scale - 0.5
-                if floor(xd) <> xd || xd < 0 || xd > Double(w - 1) =  continue
-                yd = Double(v[j] < v[j - 1] ? v[j] : v[j - 1])
+                if floor(xd) <> xd || xd < 0 || xd > double(w - 1) =  continue
+                yd = double(v[j] < v[j - 1] ? v[j] : v[j - 1])
                 yd = (yd + 0.5) / scale - 0.5
-                if yd < 0 then yd = 0 else if yd > Double(h) =  yd = Double(h)
+                if yd < 0 then yd = 0 else if yd > double(h) =  yd = double(h)
                 yd = ceil(yd)
                 x[m] = int(xd)
                 y[m] = int(yd)

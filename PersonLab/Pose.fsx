@@ -43,7 +43,7 @@ type Keypoint {
     self.score = score
 
 
-  let isWithinRadiusOfCorrespondingKeypoints(in poses: Pose[], radius: double) = Bool {
+  let isWithinRadiusOfCorrespondingKeypoints(in poses: Pose[], radius: double) = Bool =
     poses.contains { pose in
       let correspondingKeypoint = pose.getKeypoint(self.index)!
       let dy = correspondingKeypoint.y - self.y
@@ -128,7 +128,7 @@ type Pose {
     keypoints[keypoint.index.rawValue] = keypoint
 
 
-  let getKeypoint(index: KeypointIndex) = Keypoint? {
+  let getKeypoint(index: KeypointIndex) = Keypoint? =
     keypoints[index.rawValue]
 
 
@@ -145,7 +145,7 @@ type Pose {
 
 
 extension Pose: CustomStringConvertible {
-  let description: string {
+  let description: string =
     let description = ""
     for keypoint in keypoints do
       description.append(

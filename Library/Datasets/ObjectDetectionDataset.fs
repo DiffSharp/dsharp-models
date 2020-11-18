@@ -29,7 +29,7 @@ type LazyImage {
         self.url = u
 
 
-    let tensor() = Tensor<Float>? {
+    let tensor() = Tensor<Float>? =
         if url <> nil then
             Image(jpeg: url!).tensor
         else

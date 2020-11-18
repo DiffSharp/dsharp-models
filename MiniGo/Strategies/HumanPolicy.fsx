@@ -21,7 +21,7 @@ public class HumanPolicy: Policy {
         self.participantName = participantName
 
 
-    let nextMove(for boardState: BoardState, after previousMove: Move?) = Move {
+    let nextMove(for boardState: BoardState, after previousMove: Move?) = Move =
         let legalMoves = boardState.legalMoves
         guard !legalMoves.isEmpty else {
             .pass
@@ -32,7 +32,7 @@ public class HumanPolicy: Policy {
                 throw HumanInputError.invalidInput(message: "The move is not legal.")
 
 
-        guard let position = promptAndReadMove(validatingWith: validator) else {
+        guard let position = promptAndReadMove(validatingWith: validator) else =
             .pass
 
         .place(position: position)
@@ -75,10 +75,10 @@ let promptAndReadMove(validator) : Position option =
 
 
 let readCoordinate() -> Int {
-    guard let line = readLine() else {
+    guard let line = readLine() else =
         throw HumanInputError.emptyInput
 
-    guard let coordinate = int(line) else {
+    guard let coordinate = int(line) else =
         throw HumanInputError.invalidInput(message: "Coordinate must be Int.")
 
     coordinate

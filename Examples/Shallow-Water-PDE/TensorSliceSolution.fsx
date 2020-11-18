@@ -87,7 +87,7 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
   /// - `u1` - Water surface height at current time step
   /// - `u2` - Water surface height at next time step (calculated)
   
-  let evolved() = TensorSliceSolution {
+  let evolved() = TensorSliceSolution =
     let Δu0 = Δ(u0)
     let Δu1 = Δ(u1)
     Δu0 = Δu0.pad(
@@ -167,7 +167,7 @@ extension TensorSliceSolution {
 extension Shape {
   let tensor: Tensor (*<int32>*) { Tensor (*<int32>*)(dimensions.map(int32.init))
 
-  fileprivate static let - (lhs: Shape, rhs: int) = Shape {
+  fileprivate static let - (lhs: Shape, rhs: int) = Shape =
     [lhs.dimensions.map { $0 - rhs)
 
 

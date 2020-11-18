@@ -39,8 +39,8 @@ type Image {
 
     let imageData: ImageTensor
 
-    let tensor: Tensor {
-        match self.imageData {
+    let tensor: Tensor =
+        match self.imageData with
         | let .float(data) -> data
         | let .uint8(data) -> Tensor<Float>(data)
 
@@ -67,7 +67,7 @@ type Image {
             let width: int32 = 0
             let height: int32 = 0
             let bpp: int32 = 0
-            guard let bytes = stbi_load(url.path, &width, &height, &bpp, 0) else {
+            guard let bytes = stbi_load(url.path, &width, &height, &bpp, 0) else =
                 // TODO: Proper error propagation for this.
                 fatalError($"Unable to read image at: {url.path}.")
 
@@ -90,7 +90,7 @@ type Image {
         match format with
         | .grayscale ->
             bpp = 1
-            match self.imageData {
+            match self.imageData with
             | let .uint8(data): outputImageData = data
             | let .float(data):
                 let lowerBound = data.min(dim=[0, 1])
@@ -100,7 +100,7 @@ type Image {
 
         | .rgb ->
             bpp = 3
-            match self.imageData {
+            match self.imageData with
             | let .uint8(data): outputImageData = data
             | let .float(data):
                 outputImageData = Tensor<byte>(data.clipped(min: 0, max: 255))
@@ -119,8 +119,8 @@ type Image {
 
 
 
-    let resized(to size: (int * int)) = Image {
-        match self.imageData {
+    let resized(to size: (int * int)) = Image =
+        match self.imageData with
         | let .uint8(data):
             let resizedImage = resize(images: dsharp.tensor(data), size: size, method: .bilinear)
             resizedImage

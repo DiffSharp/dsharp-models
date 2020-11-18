@@ -30,7 +30,7 @@ type IDifferentiableBatchable: Batchable, Differentiable {
 
 
 extension Tensor: Batchable {
-  let flattenedBatch(outerDimCount: int) = Tensor {
+  let flattenedBatch(outerDimCount: int) = Tensor =
     if outerDimCount = 1 then
       self
 
@@ -41,7 +41,7 @@ extension Tensor: Batchable {
     reshaped([newShape))
 
 
-  let unflattenedBatch(outerDims: int[]) = Tensor {
+  let unflattenedBatch(outerDims: int[]) = Tensor =
     if rank > 1 then
       reshaped([outerDims + shape.dimensions[1..]))
 
@@ -51,7 +51,7 @@ extension Tensor: Batchable {
 
 extension Tensor: DifferentiableBatchable where Scalar: TensorFlowFloatingPoint {
   (wrt: self)
-  let flattenedBatch(outerDimCount: int) = Tensor {
+  let flattenedBatch(outerDimCount: int) = Tensor =
     if outerDimCount = 1 then
       self
 
@@ -63,7 +63,7 @@ extension Tensor: DifferentiableBatchable where Scalar: TensorFlowFloatingPoint 
 
 
   (wrt: self)
-  let unflattenedBatch(outerDims: int[]) = Tensor {
+  let unflattenedBatch(outerDims: int[]) = Tensor =
     if rank > 1 then
       reshaped([outerDims + shape.dimensions[1..]))
 

@@ -25,42 +25,42 @@ let ResNetSuites = [
     inputDimensions: cifarInput,
     outputDimensions: cifarOutput
   ) = 
-    ResNet(classCount: 10, depth: .resNet18, downsamplingInFirstStage: true)
+    ResNet(classCount: 10, depth: ResNet18, downsamplingInFirstStage: true)
   },
   makeLayerSuite(
     name= "ResNet34",
     inputDimensions: cifarInput,
     outputDimensions: cifarOutput
   ) = 
-    ResNet(classCount: 10, depth: .resNet34, downsamplingInFirstStage: true)
+    ResNet(classCount: 10, depth: ResNet34, downsamplingInFirstStage: true)
   },
   makeLayerSuite(
     name= "ResNet50",
     inputDimensions: cifarInput,
     outputDimensions: cifarOutput
   ) = 
-    ResNet(classCount: 10, depth: .resNet50, downsamplingInFirstStage: true, useLaterStride: false)
+    ResNet(classCount: 10, depth: ResNet50, downsamplingInFirstStage: true, useLaterStride: false)
   },
   makeLayerSuite(
     name= "ResNet56",
     inputDimensions: cifarInput,
     outputDimensions: cifarOutput
   ) = 
-    ResNet(classCount: 10, depth: .resNet56, downsamplingInFirstStage: true, useLaterStride: false)
+    ResNet(classCount: 10, depth: ResNet56, downsamplingInFirstStage: true, useLaterStride: false)
   },
   makeLayerSuite(
     name= "ResNet101",
     inputDimensions: cifarInput,
     outputDimensions: cifarOutput
   ) = 
-    ResNet(classCount: 10, depth: .resNet101, downsamplingInFirstStage: true)
+    ResNet(classCount: 10, depth: ResNet101, downsamplingInFirstStage: true)
   },
   makeLayerSuite(
     name= "ResNet152",
     inputDimensions: cifarInput,
     outputDimensions: cifarOutput
   ) = 
-    ResNet(classCount: 10, depth: .resNet152, downsamplingInFirstStage: true)
+    ResNet(classCount: 10, depth: ResNet152, downsamplingInFirstStage: true)
   },
   //
   // ImageNet dimensions.
@@ -70,42 +70,42 @@ let ResNetSuites = [
     inputDimensions: imageNetInput,
     outputDimensions: imageNetOutput
   ) = 
-    ResNet(classCount: 1000, depth: .resNet18)
+    ResNet(classCount: 1000, depth: ResNet18)
   },
   makeLayerSuite(
     name= "ResNet34",
     inputDimensions: imageNetInput,
     outputDimensions: imageNetOutput
   ) = 
-    ResNet(classCount: 1000, depth: .resNet34)
+    ResNet(classCount: 1000, depth: ResNet34)
   },
   makeLayerSuite(
     name= "ResNet50",
     inputDimensions: imageNetInput,
     outputDimensions: imageNetOutput
   ) = 
-    ResNet(classCount: 1000, depth: .resNet50, useLaterStride: false)
+    ResNet(classCount: 1000, depth: ResNet50, useLaterStride: false)
   },
   makeLayerSuite(
     name= "ResNet56",
     inputDimensions: imageNetInput,
     outputDimensions: imageNetOutput
   ) = 
-    ResNet(classCount: 1000, depth: .resNet56)
+    ResNet(classCount: 1000, depth: ResNet56)
   },
   makeLayerSuite(
     name= "ResNet101",
     inputDimensions: imageNetInput,
     outputDimensions: imageNetOutput
   ) = 
-    ResNet(classCount: 1000, depth: .resNet101)
+    ResNet(classCount: 1000, depth: ResNet101)
   },
   makeLayerSuite(
     name= "ResNet152",
     inputDimensions: imageNetInput,
     outputDimensions: imageNetOutput
   ) = 
-    ResNet(classCount: 1000, depth: .resNet152)
+    ResNet(classCount: 1000, depth: ResNet152)
   },
 ]
 *)

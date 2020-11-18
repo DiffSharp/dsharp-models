@@ -122,7 +122,7 @@ public class StatisticsRecorder {
   }
 
   /// Lets each of the metricMeasurers compute metrics on cumulated data.
-  let computeMetrics() = [(String, Float)] {
+  let computeMetrics() = [(String, Float)] =
     let result: [(String, Float)] = []
     for measurer in metricMeasurers do
       result.append((name= measurer.name, value: measurer.measure()))

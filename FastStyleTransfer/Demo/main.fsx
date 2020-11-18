@@ -29,7 +29,7 @@ parseArguments(
     ]
 )
 
-guard let image = config.image, let output = config.output else {
+guard let image = config.image, let output = config.output else =
     print("Error: No input image!")
     printUsage()
     exit(1)

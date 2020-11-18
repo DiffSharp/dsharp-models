@@ -45,15 +45,15 @@ type ChannelShuffle: ParameterlessLayer {
 type InvertedResidual() =
     inherit Model()
     let includeBranch: bool = true
-    let zeropad: ZeroPadding2d = ZeroPadding2d<Float>(padding: ((1, 1), (1, 1)))
+    let zeropad: ZeroPadding2d = ZeroPadding2d(((1, 1), (1, 1)))
     
-    let branch: Sequential<ZeroPadding2d<Float>, Sequential<DepthwiseConv2d<Float>,
-    Sequential<BatchNorm<Float>, Sequential<Conv2D<Float>, BatchNorm<Float>>>>>
-    let conv1: Conv2D<Float>
+    let branch: Sequential<ZeroPadding2d, Sequential<DepthwiseConv2d<Float>,
+    Sequential<BatchNorm<Float>, Sequential<Conv2d, BatchNorm<Float>>>>>
+    let conv1: Conv2d
     let batchNorm1: BatchNorm<Float>
     let depthwiseConv: DepthwiseConv2d<Float>
     let batchNorm2: BatchNorm<Float>
-    let conv2: Conv2D<Float>
+    let conv2: Conv2d
     let batchNorm3: BatchNorm<Float>
     
     public init(filters: (int * int), stride: int) = 
@@ -63,7 +63,7 @@ type InvertedResidual() =
         
         let branchChannels = filters.1 / 2
         branch = Sequential {
-            ZeroPadding2d<Float>(padding: ((1, 1), (1, 1)))
+            ZeroPadding2d(((1, 1), (1, 1)))
             DepthwiseConv2d(
                 kernelSize=(3, 3, filters.0, 1), strides = [stride, stride),
                 padding="valid"
@@ -98,14 +98,14 @@ type InvertedResidual() =
             let splitInput = input.split(count: 2, alongAxis: 3)
             let input1 = splitInput[0]
             let input2 = splitInput[1]
-            let output2 = relu(input2 |> conv1, batchNorm1))
-            output2 = relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
+            let output2 = dsharp.relu(input2 |> conv1, batchNorm1))
+            output2 = dsharp.relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
                                              batchNorm3))
             ChannelShuffle()(input1.cat(output2, alongAxis: 3))
         else
             let output1 = branch(input)
-            let output2 = relu(input |> conv1, batchNorm1))
-            output2 = relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
+            let output2 = dsharp.relu(input |> conv1, batchNorm1))
+            output2 = dsharp.relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
                                              batchNorm3))
             ChannelShuffle()(output1.cat(output2, alongAxis: 3))
 
@@ -116,15 +116,15 @@ type InvertedResidual() =
 
 type ShuffleNetV2() =
     inherit Model()
-    let zeroPad: ZeroPadding2d<Float> = ZeroPadding2d<Float>(padding: ((1, 1), (1, 1)))
+    let zeroPad: ZeroPadding2d = ZeroPadding2d(((1, 1), (1, 1)))
     
-    let conv1: Conv2D<Float>
+    let conv1: Conv2d
     let batchNorm1: BatchNorm<Float>
     let maxPool: MaxPool2d
     let invertedResidualBlocksStage1: InvertedResidual[]
     let invertedResidualBlocksStage2: InvertedResidual[]
     let invertedResidualBlocksStage3: InvertedResidual[]
-    let conv2: Conv2D<Float>
+    let conv2: Conv2d
     let globalPool: GlobalAvgPool2d<Float> = GlobalAvgPool2d()
     let dense: Dense
     
@@ -135,7 +135,7 @@ type ShuffleNetV2() =
         conv1 = Conv2d(
             kernelSize=(3, 3, inputChannels, outputChannels), stride=1
         )
-        maxPool = MaxPool2D(poolSize: (3, 3), stride=2)
+        maxPool = MaxPool2d((3, 3), stride=2)
         conv2 = Conv2d(
             kernelSize=(1, 1, stagesOutputChannels.3, stagesOutputChannels.4), stride=1,
             useBias: false
@@ -174,11 +174,11 @@ type ShuffleNetV2() =
     
     
     override _.forward(input) =
-        let output = relu(input |> zeroPad, conv1, batchNorm1, zeroPad, maxPool))
+        let output = dsharp.relu(input |> zeroPad, conv1, batchNorm1, zeroPad, maxPool))
         output = invertedResidualBlocksStage1.differentiableReduce(output) = $1($0)
         output = invertedResidualBlocksStage2.differentiableReduce(output) = $1($0)
         output = invertedResidualBlocksStage3.differentiableReduce(output) = $1($0)
-        output = relu(conv2.forward(output))
+        output = dsharp.relu(conv2.forward(output))
         output |> globalPool, dense)
 
 

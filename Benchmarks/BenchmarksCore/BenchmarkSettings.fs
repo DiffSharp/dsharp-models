@@ -70,39 +70,39 @@ type DatasetFilePath: BenchmarkSetting {
 }
 
 extension BenchmarkSettings {
-  let batchSize: int? {
+  let batchSize: int? =
     self[BatchSize.self]?.value
   }
 
-  let length: int? {
+  let length: int? =
     self[Length.self]?.value
   }
 
-  let synthetic: bool {
-    if let value = self[Synthetic.self]?.value {
+  let synthetic: bool =
+    if let value = self[Synthetic.self]?.value =
       value
     else
       fatalError("Synthetic setting must have a default.")
     }
   }
 
-  let backend: Backend.Value {
-    if let value = self[Backend.self]?.value {
+  let backend: Backend.Value =
+    if let value = self[Backend.self]?.value =
       value
     else
       fatalError("Backend setting must have a default.")
     }
   }
 
-  let platform: Platform.Value {
-    if let value = self[Platform.self]?.value {
+  let platform: Platform.Value =
+    if let value = self[Platform.self]?.value =
       value
     else
       fatalError("Platform setting must have a default.")
     }
   }
 
-  let device: Device {
+  let device: Device =
     // Note: The line is needed, or all GPU memory
     // will be exhausted on initial allocation of the model.
     // TODO: Remove the following tensor workaround when above is fixed.
@@ -126,7 +126,7 @@ extension BenchmarkSettings {
     }
   }
 
-  let datasetFilePath: string? {
+  let datasetFilePath: string? =
     self[DatasetFilePath.self]?.value
   }
 }

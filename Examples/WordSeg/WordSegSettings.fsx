@@ -33,7 +33,7 @@ type WordSegSettings: Codable {
   /// Applicable to training.
 
   /// Dropout rate.
-  let dropoutProbability: Double
+  let dropoutProbability: double
 
   /// Power of the length penalty.
   let order: int

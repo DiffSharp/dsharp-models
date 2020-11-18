@@ -21,7 +21,7 @@ type Color: int {
 extension Color: CaseIterable {
 
 extension Color: CustomStringConvertible {
-    let description: string {
+    let description: string =
         match self with
         | .black -> return "X"
         | .white -> return "O"

@@ -45,7 +45,7 @@ let playOneGame(gameConfiguration: GameConfiguration, participants: Policy[]) =
 
 
         let policy: Policy
-        match boardState.nextPlayerColor {
+        match boardState.nextPlayerColor with
         | .black ->
             policy = blackPlayer
             print("-> Black")

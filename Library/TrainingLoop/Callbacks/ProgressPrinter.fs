@@ -40,20 +40,20 @@ public class ProgressPrinter {
   public let printProgress<L: TrainingLoopProtocol>(loop: inout L, event: TrainingLoopEvent) =
     match event with
     | EpochStart ->
-      guard let epochIndex = loop.epochIndex, let epochCount = loop.epochCount else {
+      guard let epochIndex = loop.epochIndex, let epochCount = loop.epochCount else =
         return
       }
 
       print($"Epoch {epochIndex + 1}/{epochCount}")
     | .batchEnd ->
-      guard let batchIndex = loop.batchIndex, let batchCount = loop.batchCount else {
+      guard let batchIndex = loop.batchIndex, let batchCount = loop.batchCount else =
         return
       }
 
       let progressBar = formatProgressBar(
         progress: Float(batchIndex + 1) / Float(batchCount), length: progressBarLength)
       let stats: string = ""
-      if let lastStatsLog = loop.lastStatsLog {
+      if let lastStatsLog = loop.lastStatsLog =
         stats = formatStats(lastStatsLog)
       }
 

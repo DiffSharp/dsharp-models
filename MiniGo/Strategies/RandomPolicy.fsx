@@ -21,7 +21,7 @@ public class RandomPolicy: Policy {
         self.participantName = participantName
 
 
-    let nextMove(for boardState: BoardState, after previousMove: Move?) = Move {
+    let nextMove(for boardState: BoardState, after previousMove: Move?) = Move =
         let legalMoves = boardState.legalMoves
         guard !legalMoves.isEmpty else {
             .pass
@@ -35,13 +35,13 @@ public class RandomPolicy: Policy {
             chooseMoveWithoutLoweringScore(boardState)
 
 
-        guard let randomMove = legalMoves.randomElement() else {
+        guard let randomMove = legalMoves.randomElement() else =
             fatalError($"randomElement should not return nil for non-empty legal moves: {legalMoves}.")
 
         .place(position: randomMove)
 
 
-    let chooseMoveWithoutLoweringScore(for boardState: BoardState) = Move {
+    let chooseMoveWithoutLoweringScore(for boardState: BoardState) = Move =
         let legalMoves = boardState.legalMoves
         Debug.Assert(!legalMoves.isEmpty)
 

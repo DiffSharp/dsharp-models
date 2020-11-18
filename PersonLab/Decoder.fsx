@@ -37,7 +37,7 @@ type PoseDecoder {
     self.config = config
 
 
-  let decode() = [Pose] {
+  let decode() = [Pose] =
     let poses = [Pose]()
     let sortedLocallyMaximumKeypoints = getSortedLocallyMaximumKeypoints()
     while sortedLocallyMaximumKeypoints.count > 0 {
@@ -155,7 +155,7 @@ type PoseDecoder {
     int(clamped)
 
 
-  let getSortedLocallyMaximumKeypoints() = [Keypoint] {
+  let getSortedLocallyMaximumKeypoints() = [Keypoint] =
     let sortedLocallyMaximumKeypoints = [Keypoint]()
     for heatmapY in 0..<heatmap.shape.[0] do
       for heatmapX in 0..<heatmap.shape.[1] do

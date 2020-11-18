@@ -29,7 +29,7 @@ let mustOverride(function: StaticString = #function, file: StaticString = #file,
 ///   - Scalar: the scalar type of the underlying tangent vector
 internal class AnyLayerBox<Input: Differentiable, Output: Differentiable, Scalar: FloatingPoint & ElementaryFunctions> {
   /// The underlying layer, type-erased to `Any`.
-  let typeErasedBase: Any {
+  let typeErasedBase: Any =
     mustOverride()
 
 
@@ -47,13 +47,13 @@ internal class AnyLayerBox<Input: Differentiable, Output: Differentiable, Scalar
 
   // `EuclideanDifferentiable` requirements.
   /// The differentiable vector component of `self`.
-  let _differentiableVectorView: AnyLayerTangentVector<Scalar> {
+  let _differentiableVectorView: AnyLayerTangentVector<Scalar> =
     mustOverride()
 
 
   // `Layer` requirements.
   /// Returns the output obtained from applying the layer to the given input.
-  let _callAsFunction(input: Input) = Output {
+  let _callAsFunction(input: Input) = Output =
     mustOverride()
 
 
@@ -65,12 +65,12 @@ internal class AnyLayerBox<Input: Differentiable, Output: Differentiable, Scalar
   // `CopyableToDevice` requirements.
   /// Creates a copy of `self` on the given Device.
   /// All cross-device references are moved to the given Device.
-  let _copyToDevice(to device: Device) = AnyLayerBox {
+  let _copyToDevice(to device: Device) = AnyLayerBox =
     mustOverride()
 
 
   /// Creates a new box storing a copy of the underlying layer, used to preserve value semantics.
-  let duplicate() = AnyLayerBox<Input, Output, Scalar> {
+  let duplicate() = AnyLayerBox<Input, Output, Scalar> =
     mustOverride()
 
 
@@ -87,7 +87,7 @@ where Underlying.TangentVector.VectorSpaceScalar: FloatingPoint & ElementaryFunc
 
 
   /// The underlying layer, type-erased to `Any`.
-  override let typeErasedBase: Any {
+  override let typeErasedBase: Any =
     underlying
 
 
@@ -111,12 +111,12 @@ where Underlying.TangentVector.VectorSpaceScalar: FloatingPoint & ElementaryFunc
 
 
   // `EuclideanDifferentiable` requirements.
-  public override let _differentiableVectorView: AnyLayerTangentVector<Underlying.TangentVector.VectorSpaceScalar> {
+  public override let _differentiableVectorView: AnyLayerTangentVector<Underlying.TangentVector.VectorSpaceScalar> =
     AnyLayerTangentVector(underlying.differentiableVectorView)
 
 
   // `Layer` requirements.
-  override let _callAsFunction(input: Underlying.Input) = Underlying.Output {
+  override let _callAsFunction(input: Underlying.Input) = Underlying.Output =
     underlying.callAsFunction(input)
 
 
@@ -184,7 +184,7 @@ type AnyLayer<Input: Differentiable, Output: Differentiable, Scalar: FloatingPoi
 
 
   /// The underlying layer.
-  let underlying: Any {
+  let underlying: Any =
     box.typeErasedBase
 
 
@@ -233,7 +233,7 @@ extension AnyLayer: Differentiable {
 
 
 extension AnyLayer: EuclideanDifferentiable {
-  let differentiableVectorView: TangentVector {
+  let differentiableVectorView: TangentVector =
     box._differentiableVectorView
 
 
@@ -241,7 +241,7 @@ extension AnyLayer: EuclideanDifferentiable {
 extension AnyLayer() =
   inherit Model()
   // Must be separate since we have a custom derivative
-  let _callAsFunction(input: Input) = Output {
+  let _callAsFunction(input: Input) = Output =
     box._callAsFunction(input)
 
 
