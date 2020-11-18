@@ -24,21 +24,21 @@ open DiffSharp.ShapeChecking
 /// Creates a instance normalization 2D Layer.
 ///
 /// - Parameters:
-///   - featureCount: Size of the channel axis in the expected input.
+///   - numFeatures: Size of the channel axis in the expected input.
 ///   - epsilon: Small scalar added for numerical stability.
 ///
 /// Reference: [Instance Normalization](https://arxiv.org/abs/1607.08022)
-type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
+type InstanceNorm2d(numFeatures: int, ?epsilon: Tensor) =
     inherit Model()
 
     /// Small value added in denominator for numerical stability.
     let epsilon = defaultArg epsilon (dsharp.scalar 1e-5)
 
     /// Learnable parameter scale for affine transformation.
-    let scale = dsharp.ones [featureCount] |> Parameter
+    let scale = dsharp.ones [numFeatures] |> Parameter
 
     /// Learnable parameter offset for affine transformation.
-    let offset = dsharp.zeros [featureCount] |> Parameter
+    let offset = dsharp.zeros [numFeatures] |> Parameter
 
     do base.add([scale; offset])
 
@@ -49,20 +49,20 @@ type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
         let mean = input.mean(dims=[2; 3])
         let variance = input.variance(dims=[2; 3])
         let norm = (input - mean) * dsharp.rsqrt(variance + epsilon)
-        let res = norm * scale.value.view([featureCount;1;1]) + offset.value.view([featureCount;1;1])
+        let res = norm * scale.value.view([numFeatures;1;1]) + offset.value.view([numFeatures;1;1])
         res
 
-    override _.ToString() = sprintf "InstanceNorm2D(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon
+    override _.ToString() = sprintf "InstanceNorm2d(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon
 
 [<ShapeCheck>]
 type ResNetBlock(channels: int, ?useDropOut: bool) =
     inherit Model()
     let useDropOut = defaultArg useDropOut false
     let conv1 = Conv2d(channels, channels, kernelSize=3, bias=true, padding=1 )
-    let norm1 = InstanceNorm2D(featureCount=channels)
+    let norm1 = InstanceNorm2d(numFeatures=channels)
 
     let conv2 = Conv2d(channels, channels, kernelSize=3, bias=true, padding=1)
-    let norm2 = InstanceNorm2D(featureCount=channels)
+    let norm2 = InstanceNorm2d(numFeatures=channels)
 
     let dropOut = Dropout(0.5)
     do base.add([conv1; norm1; conv2; norm2])

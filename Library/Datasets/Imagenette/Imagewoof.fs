@@ -84,7 +84,7 @@ type Imagewoof {
 
       training = TrainingEpochs(samples: trainingSamples, batchSize= batchSize, entropy: entropy)
          |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
-          return batches |> Seq.map {
+          batches |> Seq.map {
             makeImagenetteBatch(
               samples: $0, outFeatures=outputSize, mean: mean, standardDeviation=standardDeviation,
               device=device)

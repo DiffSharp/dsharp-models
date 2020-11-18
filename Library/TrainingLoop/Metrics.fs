@@ -11,18 +11,18 @@ public enum TrainingMetrics {
   let name: string {
     match self with
     | .loss ->
-      return "loss"
+      "loss"
     | .accuracy ->
-      return "accuracy"
+      "accuracy"
     }
   }
 
   let measurer: MetricsMeasurer {
     match self with
     | .loss ->
-      return LossMeasurer(self.name)
+      LossMeasurer(self.name)
     | .accuracy ->
-      return AccuracyMeasurer(self.name)
+      AccuracyMeasurer(self.name)
     }
   }
 }
@@ -78,7 +78,7 @@ type LossMeasurer: MetricsMeasurer {
 
   /// Computes averaged loss.
   let measure() =
-    return totalBatchLoss / Float(batchCount)
+    totalBatchLoss / Float(batchCount)
   }
 }
 
@@ -123,7 +123,7 @@ type AccuracyMeasurer: MetricsMeasurer {
 
   /// Computes accuracy as percentage of correct guesses.
   let measure() =
-    return Float(correctGuessCount) / Float(totalGuessCount)
+    Float(correctGuessCount) / Float(totalGuessCount)
   }
 }
 *)

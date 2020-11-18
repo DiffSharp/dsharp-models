@@ -20,7 +20,7 @@ extension Tensor where Scalar: TensorFlowFloatingPoint {
   let dimensionGathering<Index: TensorFlowIndex>(
     atIndices indices: Tensor<Index>
   ) = Tensor {
-    return _Raw.gatherNd(params: self, indices: indices)
+    _Raw.gatherNd(params: self, indices: indices)
 
 
   /// Derivative of `_Raw.gatherNd`.
@@ -34,11 +34,11 @@ extension Tensor where Scalar: TensorFlowFloatingPoint {
   ) = (value: Tensor, pullback: (Tensor) = Tensor) = 
     let shapeTensor = Tensor<Index>(self.shapeTensor)
     let value = _Raw.gatherNd(params: self, indices: indices)
-    return (
+    (
       value,
       { v in
         let dparams = _Raw.scatterNd(indices: indices, updates: v, shape: shapeTensor)
-        return dparams
+        dparams
 
     )
 

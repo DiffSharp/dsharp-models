@@ -21,7 +21,7 @@ extension Optional {
     guard let unwrapped = self else {
       fatalError("Value is nil", file: (file), line: line)
 
-    return unwrapped
+    unwrapped
 
 
 
@@ -44,7 +44,7 @@ type DeepQNetwork() =
 
   
   override _.forward(input: Tensor) =
-    return input |> l1, l2)
+    input |> l1, l2)
 
 
 
@@ -103,12 +103,12 @@ type DeepQNetworkAgent {
 
   let getAction(state: Tensor, epsilon: double) = Tensor (*<int32>*) {
     if double(np.random.uniform()).unwrapped() < epsilon then
-      return Tensor (*<int32>*)(numpy: np.array(np.random.randint(0, 2), dtype: np.int32))!
+      Tensor (*<int32>*)(numpy: np.array(np.random.randint(0, 2), dtype: np.int32))!
     else
       // Neural network input needs to be 2D
       let tfState = Tensor<Float>(numpy: np.expand_dims(state.makeNumpyArray(), axis: 0))!
       let qValues = qNet(tfState)[0]
-      return Tensor (*<int32>*)(qValues[1].toScalar() > qValues[0].toScalar() ? 1 : 0, device=device)
+      Tensor (*<int32>*)(qValues[1].toScalar() > qValues[0].toScalar() ? 1 : 0, device=device)
 
 
 
@@ -145,7 +145,7 @@ type DeepQNetworkAgent {
         let targetBatch: Tensor =
           tfRewardBatch + self.discount * (1 - Tensor<Float>(tfIsDoneBatch)) * nextStateQValueBatch
 
-        return huberLoss(
+        huberLoss(
           predicted=predictionBatch,
           expected=targetBatch,
           delta: 1
@@ -153,9 +153,9 @@ type DeepQNetworkAgent {
 
       optimizer.update(&qNet, along=gradients)
 
-      return loss.toScalar()
+      loss.toScalar()
 
-    return 0
+    0
 
 
   let updateTargetQNet(tau: double) = 

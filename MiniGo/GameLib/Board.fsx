@@ -31,7 +31,7 @@ type Board: Hashable {
 
     let color(at position: Position) = Color? {
         assert(0..<size ~= position.x && 0..<size ~= position.y)
-        return stones[position.x][position.y].scalars[0]
+        stones[position.x][position.y].scalars[0]
 
 
     mutating let placeStone(at position: Position, withColor color: Color) = 
@@ -65,7 +65,7 @@ extension Board: CustomStringConvertible {
         // single-digit numbers are larger.
         //
         //   x/y  0  1  2  3  4  5  6  7  8  9 10 11
-        for y in 0..<size {
+        for y in 0..size-1 do
             if size >= 11 then
                 output.append(" ")
 
@@ -80,7 +80,7 @@ extension Board: CustomStringConvertible {
 
         // Similarly, we need two spaces between stones for size >= 11, but one space for small board.
         let gapBetweenStones = size <= 10 ? " " : "  "
-        for x in 0..<size {
+        for x in 0..size-1 do
             // Prints row index.
             if x < 10 then
                 output.append($"  {x}")  // Two leading spaces.
@@ -89,7 +89,7 @@ extension Board: CustomStringConvertible {
 
 
             // Prints the color of stone at each position.
-            for y in 0..<size {
+            for y in 0..size-1 do
                 output.append(gapBetweenStones)
                 guard let color = self.color(at: Position(x: x, y: y)) else {
                     output.append(".")  // Empty position.
@@ -99,6 +99,6 @@ extension Board: CustomStringConvertible {
 
             output.append("\n")
 
-        return output
+        output
 
 

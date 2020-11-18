@@ -75,14 +75,14 @@ type Pix2PixDataset(?rootDirPath: string,
             localStorageDirectory: directory)
         print($"{rootDirPath} downloaded.")
 
-        return rootDirPath
+        rootDirPath
 
 
     static member loadSortedSamples(
         from directory: Uri, 
         fileIndexRetriever: string
     ) : Tensor =
-        return try File
+        try File
             .contentsOfDirectory(
                 at: directory,
                 includingPropertiesForKeys: [.isDirectoryKey],

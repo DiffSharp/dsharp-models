@@ -53,7 +53,7 @@ type TextBatch(tokenIds: Tensor (*<int32>*), tokenTypeIds: Tensor (*<int32>*), m
 //    let maxLength = maxLength ?? self.map (fun x -> x.tokenIds.shape.[1].max()!)
 //    let paddedTexts = self.map { text -> TextBatch in
 //      let paddingSize = maxLength - text.tokenIds.shape.[1]
-//      return TextBatch(
+//      TextBatch(
 //        tokenIds: dsharp.tensor(copying: text.tokenIds.pad(forSizes: [
 //          (before: 0, after: 0),
 //          (before: 0, after: paddingSize)]), device),
@@ -66,6 +66,6 @@ type TextBatch(tokenIds: Tensor (*<int32>*), tokenTypeIds: Tensor (*<int32>*), m
 //
 
 //    if count = 1 then return paddedTexts.first!
-//    return paddedTexts.collated
+//    paddedTexts.collated
 //
 //

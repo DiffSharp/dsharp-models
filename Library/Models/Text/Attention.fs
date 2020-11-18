@@ -12,17 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
-#r @"System.Runtime.Extensions.dll"
-#load "Utilities.fsx"
+module Models.Attention
 
 open System.Diagnostics
 open DiffSharp
 open DiffSharp.Model
 open DiffSharp.ShapeChecking
-open global.Utilities
+open Models.Utilities
 
 [<AutoOpen>]
 module Defaults =

@@ -32,6 +32,6 @@ extension Position {
             Position(x: x, y: y+1),
             Position(x: x, y: y-1),
         ]
-        return neighbors.filter { 0..<size ~= $0.x && 0..<size ~= $0.y
+        neighbors.filter { 0..<size ~= $0.x && 0..<size ~= $0.y
 
 

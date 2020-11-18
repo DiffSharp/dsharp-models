@@ -110,7 +110,7 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
     let u2 = u1twice + cΔu1 - u0 - cΔu0
 
     LazyTensorBarrier(wait: true)
-    return TensorSliceSolution(u0: u1, u1: u2, t: t + Δt)
+    TensorSliceSolution(u0: u1, u1: u2, t: t + Δt)
 
 
   /// Constructs intermediate solution with previous water level `u0`, current water level `u1` and time `t`.
@@ -144,7 +144,7 @@ type TensorSliceSolution: ShallowWaterEquationSolution {
     let finiteDifference = left + right + up + down - center4
     let Δu = finiteDifference / Δx / Δx
 
-    return Δu
+    Δu
 
 
 
@@ -158,7 +158,7 @@ extension TensorSliceSolution {
     assert(target.shape.[0] = resolution && target.shape.[1] = resolution)
 
     let error = u1 - target
-    return error.squared().mean().toScalar()
+    error.squared().mean().toScalar()
 
 
 

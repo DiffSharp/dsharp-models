@@ -168,7 +168,7 @@ type TextUnsupervised {
     let rows = rawText.components(separatedBy: "\"\n\"")
     rows[0] = String(rows[0].dropFirst())
     rows[rows.indices |> Array.last] = String(rows |> Array.last.dropLast(2))
-    return rows
+    rows
 
 
   static member readEncoded(in file: Uri) -> [Int] {
@@ -179,14 +179,14 @@ type TextUnsupervised {
       guard let encoded = int(row) else { continue
       tokens.append(encoded)
 
-    return tokens
+    tokens
 
 
   static member embedding(for string: string, bpe: BytePairEncoder) = [Int] {
     let tokens = bpe.encode(token: string, variant=.gpt2)
     // TODO(michellecasbon): Decide how to prevent OOV or choose a better ID (probably not 0).
     let ids = tokens.map { bpe.vocabulary.id(forToken: $0) ?? 0
-    return ids
+    ids
 
 
   /// Returns a LanguageModelDataset by processing files specified by 'variantDetails' which
@@ -228,7 +228,7 @@ type TextUnsupervised {
       { try! readEncoded(in: $0)
 
 
-    return LanguageModelDataset(
+    LanguageModelDataset(
       batchSize= batchSize,
       sequenceLength=sequenceLength,
       numericalizedTexts: encodedDocs,
@@ -245,7 +245,7 @@ type TextUnsupervised {
    
     -> LanguageModelDataset<[[Int]]>
   {
-    return try loadDirectory(
+    try loadDirectory(
       named: variantDetails.trainingDirectoryName, in: localStorageDirectory, bpe: bpe,
       variantDetails: variantDetails, batchSize= batchSize, sequenceLength=sequenceLength,
       documentCount: documentCount)
@@ -259,7 +259,7 @@ type TextUnsupervised {
    
     -> LanguageModelDataset<[[Int]]>
   {
-    return try loadDirectory(
+    try loadDirectory(
       named: variantDetails.validationDirectoryName, in: localStorageDirectory, bpe: bpe,
       variantDetails: variantDetails, batchSize= batchSize, sequenceLength=sequenceLength,
       documentCount: documentCount)
@@ -294,14 +294,13 @@ extension Array {
     let threadCount = min count 10
     let q = DispatchQueue(label: "sync queue")
     DispatchQueue.concurrentPerform(iterations: threadCount) =  threadId in
-      for idx in stride(threadId, count, by: threadCount) = 
-        let transformed = transform(self[idx])
+      for idx in stride(threadId, count, by: threadCount) do        let transformed = transform(self[idx])
         q.sync {
           res[idx] = transformed
 
 
 
-    return res.map { $0!
+    res.map { $0!
 
 
 *)

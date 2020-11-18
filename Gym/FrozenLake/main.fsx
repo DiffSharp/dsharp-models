@@ -28,7 +28,7 @@ fileprivate extension Optional {
         guard let unwrapped = self else {
             fatalError("Value is nil", file: (file), line: line)
 
-        return unwrapped
+        unwrapped
 
 
 
@@ -83,7 +83,7 @@ type Agent {
         else
             state = State(newState).unwrapped()
 
-        return (oldState,
+        (oldState,
                 int(action).unwrapped(),
                 double(reward).unwrapped(),
                 State(newState).unwrapped())
@@ -92,7 +92,7 @@ type Agent {
     let bestValueAndAction(state: State) = (bestValue: double, bestAction: Action) = 
         let bestValue: double = 0.0
         let bestAction: Action = -1  // Initialize to an invalid value
-        for action in 0..<actionCount {
+        for action in 0..actionCount-1 do
             let stateAction = StateAction(state: state, action: action)
             let actionValue = actionValues[stateAction] ?? 0.0
             if action = 0 || bestValue < actionValue then
@@ -100,7 +100,7 @@ type Agent {
                 bestAction = action
 
 
-        return (bestValue, bestAction)
+        (bestValue, bestAction)
 
 
     let updateActionValue(state: State, action: int, reward: double, nextState: State) = 
@@ -123,7 +123,7 @@ type Agent {
 
             testState = State(newState).unwrapped()
 
-        return totalReward
+        totalReward
 
 
 
@@ -141,7 +141,7 @@ while true do
     agent.updateActionValue(state: state, action: action, reward=reward, nextState: nextState)
 
     let testReward: double = 0.0
-    for _ in 0..<testEpisodeCount {
+    for _ in 0..testEpisodeCount-1 do
         testReward <- testReward + agent.playEpisode(testEnvironment: testEnvironment)
 
     testReward /= double(testEpisodeCount)

@@ -130,6 +130,8 @@ module DiffSharpExtensions =
 
         static member sigmoidCrossEntropy(logits:Tensor, labels:Tensor, ?reduction:string) = logits.oneLike()
 
+        static member swish(input:Tensor) : Tensor = failwith "tbd"
+
     type Model with 
         member m.grad(input, loss) = 
             m.reverseDiff()
@@ -138,11 +140,19 @@ module DiffSharpExtensions =
             m.reverseDiff()
             dsharp.gradv (fun t -> loss (m.forward t)) input
 
-    type ZeroPadding2D(padding: (int*int) * (int * int)) =
+    type ZeroPadding2d(padding: (int*int) * (int * int)) =
        inherit Model()
        override m.forward(value) = value // TBD
 
-    type UpSampling2D(size: int) =
+    type AvgPool2d(kernelSize: int, stride: int, padding: int) =
+       inherit Model()
+       override m.forward(value) = value // TBD
+
+    type GlobalAvgPool2d() =
+       inherit Model()
+       override m.forward(value) = value // TBD
+
+    type UpSampling2d(size: int) =
        inherit Model()
        override m.forward(value) = value // TBD
 
@@ -154,7 +164,11 @@ module DiffSharpExtensions =
        member _.scale = p_scale
        override m.forward(value) = value // TBD
 
-    type MaxPool2d(kernelSize: int, stride: int) =
+    type MaxPool2d(kernelSize: int, stride: int, ?padding: int) =
+       inherit Model()
+       override m.forward(value) = value // TBD
+
+    type DepthwiseConv2d(inChannels: int, outChannels: int, ?kernelSize: int, ?kernelSizes: seq<int>, ?stride: int, ?padding: int, ?strides: seq<int>, ?paddings: seq<int>) =
        inherit Model()
        override m.forward(value) = value // TBD
 
@@ -169,10 +183,25 @@ module DiffSharpExtensions =
         /// <summary>TBD</summary>
         override o.updateRule name t = failwith "tbd"
 
+    type OptimizerWeightStepState() =
+        member this.Item with get (parameter: Parameter) : Tensor = failwith "tbd"
+        member this.weight : Tensor = failwith "tbd" 
+        member this.grad : Tensor = failwith "tbd" 
+        member this.step with get () : Tensor = failwith "tbd"  and set (v: Tensor) = failwith "tbd"
+    type OptimizerState() =
+        member this.Item 
+            with get (state: OptimizerWeightStepState, parameter: Parameter) : Tensor = failwith "tbd"
+            and set (state: OptimizerWeightStepState, parameter: Parameter) (v: Tensor) = failwith "tbd"
     type ParameterGroupOptimizer() =
         inherit Optimizer()
         /// <summary>TBD</summary>
         override o.updateRule name t = failwith "tbd"
+
+    type ParameterGroupOptimizerBuilder() =
+        member _.makeParameter(name: string, initial: Tensor) : Parameter = failwith "tbd"
+        member _.makeStateParameter(name: string) : Parameter = failwith "tbd"
+        member _.appendCallback(callback: OptimizerWeightStepState * OptimizerState -> unit) = ()
+        member _.makeOptimizer() = ()
 
     let scalar (x: scalar) : scalar = x
 

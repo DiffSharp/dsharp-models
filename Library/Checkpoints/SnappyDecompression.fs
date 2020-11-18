@@ -23,9 +23,9 @@ namespace Checkpoints
 (*
 
 type SnappyDecompressionError: Error {
-    case illegalLiteralLength(upperBits: byte)
-    case impossibleTagType(tagType: byte)
-    case uncompressedDataLengthMismatch(target: int, actual: int)
+    | illegalLiteralLength(upperBits: byte)
+    | impossibleTagType(tagType: byte)
+    | uncompressedDataLengthMismatch(target: int, actual: int)
 
 
 // The following extension to Data provides methods that read variable-length byte sequences
@@ -33,10 +33,10 @@ type SnappyDecompressionError: Error {
 public extension Data {
     // Implementation derived from decodeVarint() in 
     // https://github.com/apple/swift-protobuf/blob/master/Sources/FSharp.Protobuf/BinaryDecoder.swift
-    let readVarint32(at index: inout Int) = Int {
+    let readVarint32(at index: inout Int) =
         let firstByte = readByte(at: &index)
         if (firstByte & 0x80) = 0 then
-            return int(firstByte)
+            int(firstByte)
 
 
         let value = int(firstByte & 0x7f)
@@ -46,7 +46,7 @@ public extension Data {
             let currentByte = readByte(at: &index)
             value |= int(currentByte & 0x7f) << shift
             if currentByte & 0x80 = 0 then
-                return value
+                value
 
             shift <- shift + 7
 
@@ -55,13 +55,13 @@ public extension Data {
     let readByte(at index: inout Int) = byte {
         let byte =  self[index]
         index <- index + 1
-        return byte
+        byte
 
 
     let readDataBlock(at index: inout Int, size: int) = Data {
         let dataBlock = self[index..<(index + size)]
         index <- index + size
-        return dataBlock
+        dataBlock
 
 
     let decompressSnappyStream(at index: inout Int) -> Data? {
@@ -157,7 +157,7 @@ public extension Data {
                 target: uncompressedLength, actual: uncompressedData.count)
 
         
-        return uncompressedData
+        uncompressedData
 
 
     // This assumes a single compressed block at the start of the file, and an uncompressed footer.
@@ -165,16 +165,16 @@ public extension Data {
         let decompressedData = Data()
         let index = 0
 
-        if let value = try decompressSnappyStream(at: &index) = 
+        if let value = try decompressSnappyStream(at: &index) then
             decompressedData.append(value)
 
         
-        if index < (self.count - 1) = 
+        if index < (self.count - 1) then
             let footer = readDataBlock(at: &index, size: self.count - index - 1)
             decompressedData.append(footer)
 
 
-        return decompressedData
+        decompressedData
 
 
 *)

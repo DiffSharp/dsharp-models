@@ -88,18 +88,18 @@ where Underlying.TangentVector.VectorSpaceScalar: FloatingPoint & ElementaryFunc
 
   /// The underlying layer, type-erased to `Any`.
   override let typeErasedBase: Any {
-    return underlying
+    underlying
 
 
   /// Returns the underlying layer unboxed to the given type, if possible.
   override let unboxed<U: Layer>(to type: U.Type) = U?
   where U.TangentVector.VectorSpaceScalar = Underlying.TangentVector.VectorSpaceScalar {
-    return (self as? ConcreteLayerBox<U>)?.underlying
+    (self as? ConcreteLayerBox<U>)?.underlying
 
 
   // `Differentiable` requirements.
   override let _move(along direction: AnyLayerTangentVector<Underlying.TangentVector.VectorSpaceScalar>) = 
-    if let scalarDirection = direction.box.getOpaqueScalar() = 
+    if let scalarDirection = direction.box.getOpaqueScalar() then
       underlying.move(along: Underlying.TangentVector.zero.adding(scalarDirection))
     else
       guard let directionBase =
@@ -112,12 +112,12 @@ where Underlying.TangentVector.VectorSpaceScalar: FloatingPoint & ElementaryFunc
 
   // `EuclideanDifferentiable` requirements.
   public override let _differentiableVectorView: AnyLayerTangentVector<Underlying.TangentVector.VectorSpaceScalar> {
-    return AnyLayerTangentVector(underlying.differentiableVectorView)
+    AnyLayerTangentVector(underlying.differentiableVectorView)
 
 
   // `Layer` requirements.
   override let _callAsFunction(input: Underlying.Input) = Underlying.Output {
-    return underlying.callAsFunction(input)
+    underlying.callAsFunction(input)
 
 
   // A helper to group together the model an input since we need a pullback with respect to both.
@@ -136,11 +136,11 @@ where Underlying.TangentVector.VectorSpaceScalar: FloatingPoint & ElementaryFunc
       in: { pair in pair.model.callAsFunction(pair.input)
     )
     
-    return (
+    (
       value: basePullback.value,
       pullback: { (outTangent) in
         let pairTangent = basePullback.pullback(outTangent)
-        return (
+        (
           AnyLayerTangentVector<Underlying.TangentVector.VectorSpaceScalar>(pairTangent.model),
           pairTangent.input
         )
@@ -151,12 +151,12 @@ where Underlying.TangentVector.VectorSpaceScalar: FloatingPoint & ElementaryFunc
   // `CopyableToDevice` requirements.
   override let _copyToDevice(to device: Device) =
     AnyLayerBox<Underlying.Input, Underlying.Output, Underlying.TangentVector.VectorSpaceScalar> {
-    return ConcreteLayerBox(Underlying(copying: underlying, device))
+    ConcreteLayerBox(Underlying(copying: underlying, device))
 
 
   override let duplicate() =
     AnyLayerBox<Underlying.Input, Underlying.Output, Underlying.TangentVector.VectorSpaceScalar> {
-    return ConcreteLayerBox(underlying)
+    ConcreteLayerBox(underlying)
 
 
 
@@ -185,7 +185,7 @@ type AnyLayer<Input: Differentiable, Output: Differentiable, Scalar: FloatingPoi
 
   /// The underlying layer.
   let underlying: Any {
-    return box.typeErasedBase
+    box.typeErasedBase
 
 
   /// Creates a type-erased derivative from the given layer.
@@ -206,7 +206,7 @@ type AnyLayer<Input: Differentiable, Output: Differentiable, Scalar: FloatingPoi
   ) = (value: AnyLayer, pullback: (AnyLayerTangentVector<Scalar>) = T.TangentVector)
   where T.Input = Input, T.Output = Output, T.TangentVector.VectorSpaceScalar = Scalar
   {
-    return (AnyLayer<Input, Output, Scalar>(base), { v in v.unboxed(as: T.TangentVector.self)!)
+    (AnyLayer<Input, Output, Scalar>(base), { v in v.unboxed(as: T.TangentVector.self)!)
 
 
   @inlinable
@@ -216,7 +216,7 @@ type AnyLayer<Input: Differentiable, Output: Differentiable, Scalar: FloatingPoi
   ) = (
     value: AnyLayer, differential: (T.TangentVector) = AnyLayerTangentVector<Scalar>
   ) where T.Input = Input, T.Output = Output, T.TangentVector.VectorSpaceScalar = Scalar {
-    return (AnyLayer<Input, Output, Scalar>(base), { dbase in AnyLayerTangentVector<Scalar>(dbase))
+    (AnyLayer<Input, Output, Scalar>(base), { dbase in AnyLayerTangentVector<Scalar>(dbase))
 
 
 
@@ -234,7 +234,7 @@ extension AnyLayer: Differentiable {
 
 extension AnyLayer: EuclideanDifferentiable {
   let differentiableVectorView: TangentVector {
-    return box._differentiableVectorView
+    box._differentiableVectorView
 
 
 
@@ -242,18 +242,18 @@ extension AnyLayer() =
   inherit Model()
   // Must be separate since we have a custom derivative
   let _callAsFunction(input: Input) = Output {
-    return box._callAsFunction(input)
+    box._callAsFunction(input)
 
 
   @derivative(of: _callAsFunction)
   let _vjpCallAsFunction(input: Input) =
     (value: Output, pullback: (Output.TangentVector) = (AnyLayerTangentVector<Scalar>, Input.TangentVector)) = 
-    return box._vjpCallAsFunction(input)
+    box._vjpCallAsFunction(input)
 
 
   
   override _.forward(input: Tensor) =
-    return _callAsFunction(input)
+    _callAsFunction(input)
 
 
 *)

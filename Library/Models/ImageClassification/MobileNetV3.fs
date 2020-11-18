@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 // Original Paper: "Searching for MobileNetV3"
@@ -26,31 +28,31 @@ let makeDivisible(filter: int, widthMultiplier: double = 1.0, divisor: double = 
     let filterMult = double(filter) * widthMultiplier
     let filterAdd = double(filterMult) + (divisor / 2.0)
     let div = filterAdd / divisor
-    div.round(.down)
+    div |> floor
     div = div * double(divisor)
     let newFilterCount = max(1, int(div))
-    if newFilterCount < int(0.9 * double(filter)) = 
+    if newFilterCount < int(0.9 * double(filter)) then
         newFilterCount <- newFilterCount + int(divisor)
 
-    return int(newFilterCount)
+    int(newFilterCount)
 
 
 let roundFilterPair(filters: (int * int), widthMultiplier: double) = (int * int) = 
-    return (
+    (
         makeDivisible(filter: filters.0, widthMultiplier: widthMultiplier),
         makeDivisible(filter: filters.1, widthMultiplier: widthMultiplier)
     )
 
 
 type ActivationType {
-    case hardSwish
-    case relu
+    | hardSwish
+    | relu
 
 
 type SqueezeExcitationBlock() =
     inherit Model()
     // https://arxiv.org/abs/1709.01507
-    let averagePool = GlobalAvgPool2D<Float>()
+    let averagePool = GlobalAvgPool2d()
     let reduceConv: Conv2D<Float>
     let expandConv: Conv2D<Float>
     let inputOutputSize: int
@@ -58,13 +60,13 @@ type SqueezeExcitationBlock() =
     public init(inputOutputSize: int, reducedSize: int) = 
         self.inputOutputSize = inputOutputSize
         reduceConv = Conv2d(
-            filterShape=(1, 1, inputOutputSize, reducedSize),
+            kernelSize=(1, 1, inputOutputSize, reducedSize),
             stride=1,
-            padding="same")
+            padding=kernelSize/2 (* "same " *))
         expandConv = Conv2d(
-            filterShape=(1, 1, reducedSize, inputOutputSize),
+            kernelSize=(1, 1, reducedSize, inputOutputSize),
             stride=1,
-            padding="same")
+            padding=kernelSize/2 (* "same " *))
 
 
     
@@ -72,7 +74,7 @@ type SqueezeExcitationBlock() =
         let avgPoolReshaped = averagePool(input).view([
             input.shape.[0], 1, 1, self.inputOutputSize,
         ])
-        return input
+        input
             * hardSigmoid(expandConv(relu(reduceConv(avgPoolReshaped))))
 
 
@@ -83,7 +85,7 @@ type InitialInvertedResidualBlock() =
     let useSELayer: bool = false
     let activation= ActivationType = .relu
 
-    let dConv: DepthwiseConv2D<Float>
+    let dConv: DepthwiseConv2d<Float>
     let batchNormDConv: BatchNorm<Float>
     let seBlock: SqueezeExcitationBlock
     let conv2: Conv2D<Float>
@@ -93,7 +95,7 @@ type InitialInvertedResidualBlock() =
         filters: (int * int),
         widthMultiplier: double,
         strides = [Int, Int) = (1, 1),
-        kernel: (int * int) = (3, 3),
+        kernel=(int * int) = (3, 3),
         seLayer: bool = false,
         activation= ActivationType = .relu
     ) = 
@@ -105,23 +107,23 @@ type InitialInvertedResidualBlock() =
         let hiddenDimension = filterMult.0 * 1
         let reducedDimension = hiddenDimension / 4
 
-        dConv = DepthwiseConv2D<Float>(
-            filterShape=(3, 3, filterMult.0, 1),
+        dConv = DepthwiseConv2d(
+            kernelSize=(3, 3, filterMult.0, 1),
             stride=1,
-            padding="same")
+            padding=kernelSize/2 (* "same " *))
         seBlock = SqueezeExcitationBlock(
             inputOutputSize: hiddenDimension, reducedSize: reducedDimension)
         conv2 = Conv2d(
-            filterShape=(1, 1, hiddenDimension, filterMult.1),
+            kernelSize=(1, 1, hiddenDimension, filterMult.1),
             stride=1,
-            padding="same")
-        batchNormDConv = BatchNorm(featureCount=filterMult.0)
-        batchNormConv2 = BatchNorm(featureCount=filterMult.1)
+            padding=kernelSize/2 (* "same " *))
+        batchNormDConv = BatchNorm2d(numFeatures=filterMult.0)
+        batchNormConv2 = BatchNorm2d(numFeatures=filterMult.1)
 
 
     
     override _.forward(input) =
-        let depthwise = batchNormDConv(dConv(input))
+        let depthwise = batchNormDConv.forward(dConv.forward(input))
         match self.activation {
         | .hardSwish -> depthwise = hardSwish(depthwise)
         | .relu -> depthwise = relu(depthwise)
@@ -134,12 +136,12 @@ type InitialInvertedResidualBlock() =
             squeezeExcite = depthwise
 
 
-        let piecewiseLinear = batchNormConv2(conv2(squeezeExcite))
+        let piecewiseLinear = batchNormConv2.forward(conv2.forward(squeezeExcite))
 
         if self.addResLayer then
-            return input + piecewiseLinear
+            input + piecewiseLinear
         else
-            return piecewiseLinear
+            piecewiseLinear
 
 
 
@@ -147,14 +149,14 @@ type InitialInvertedResidualBlock() =
 type InvertedResidualBlock() =
     inherit Model()
     let strides = [Int, Int)
-    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d<Float>(padding: ((0, 1), (0, 1)))
     let addResLayer: bool
     let activation= ActivationType = .relu
     let useSELayer: bool
 
     let conv1: Conv2D<Float>
     let batchNormConv1: BatchNorm<Float>
-    let dConv: DepthwiseConv2D<Float>
+    let dConv: DepthwiseConv2d<Float>
     let batchNormDConv: BatchNorm<Float>
     let seBlock: SqueezeExcitationBlock
     let conv2: Conv2D<Float>
@@ -165,7 +167,7 @@ type InvertedResidualBlock() =
         widthMultiplier: double,
         expansionFactor: double,
         strides = [Int, Int) = (1, 1),
-        kernel: (int * int) = (3, 3),
+        kernel=(int * int) = (3, 3),
         seLayer: bool = false,
         activation= ActivationType = .relu
     ) = 
@@ -179,36 +181,36 @@ type InvertedResidualBlock() =
         let reducedDimension = hiddenDimension / 4
 
         conv1 = Conv2d(
-            filterShape=(1, 1, filterMult.0, hiddenDimension),
+            kernelSize=(1, 1, filterMult.0, hiddenDimension),
             stride=1,
-            padding="same")
-        dConv = DepthwiseConv2D<Float>(
-            filterShape=(kernel.0, kernel.1, hiddenDimension, 1),
-            strides: strides,
+            padding=kernelSize/2 (* "same " *))
+        dConv = DepthwiseConv2d(
+            kernelSize=(kernel.0, kernel.1, hiddenDimension, 1),
+            strides=strides,
             padding: strides = (1, 1) ? .same : .valid)
         seBlock = SqueezeExcitationBlock(
             inputOutputSize: hiddenDimension, reducedSize: reducedDimension)
         conv2 = Conv2d(
-            filterShape=(1, 1, hiddenDimension, filterMult.1),
+            kernelSize=(1, 1, hiddenDimension, filterMult.1),
             stride=1,
-            padding="same")
-        batchNormConv1 = BatchNorm(featureCount=hiddenDimension)
-        batchNormDConv = BatchNorm(featureCount=hiddenDimension)
-        batchNormConv2 = BatchNorm(featureCount=filterMult.1)
+            padding=kernelSize/2 (* "same " *))
+        batchNormConv1 = BatchNorm2d(numFeatures=hiddenDimension)
+        batchNormDConv = BatchNorm2d(numFeatures=hiddenDimension)
+        batchNormConv2 = BatchNorm2d(numFeatures=filterMult.1)
 
 
     
     override _.forward(input) =
-        let piecewise = batchNormConv1(conv1(input))
+        let piecewise = batchNormConv1.forward(conv1.forward(input))
         match self.activation {
         | .hardSwish -> piecewise = hardSwish(piecewise)
         | .relu -> piecewise = relu(piecewise)
 
         let depthwise: Tensor
-        if self.strides = (1, 1) = 
-            depthwise = batchNormDConv(dConv(piecewise))
+        if self.strides = (1, 1) then
+            depthwise = batchNormDConv.forward(dConv.forward(piecewise))
         else
-            depthwise = batchNormDConv(dConv(zeroPad(piecewise)))
+            depthwise = batchNormDConv.forward(dConv.forward(zeroPad.forward(piecewise)))
 
         match self.activation {
         | .hardSwish -> depthwise = hardSwish(depthwise)
@@ -221,19 +223,19 @@ type InvertedResidualBlock() =
             squeezeExcite = depthwise
 
 
-        let piecewiseLinear = batchNormConv2(conv2(squeezeExcite))
+        let piecewiseLinear = batchNormConv2.forward(conv2.forward(squeezeExcite))
 
         if self.addResLayer then
-            return input + piecewiseLinear
+            input + piecewiseLinear
         else
-            return piecewiseLinear
+            piecewiseLinear
 
 
 
 
 type MobileNetV3Large() =
     inherit Model()
-    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>
 
@@ -256,7 +258,7 @@ type MobileNetV3Large() =
     let outputConv: Conv2D<Float>
     let outputConvBatchNorm: BatchNorm<Float>
 
-    let avgPool = GlobalAvgPool2D<Float>()
+    let avgPool = GlobalAvgPool2d()
     let finalConv: Conv2D<Float>
     let dropoutLayer: Dropout<Float>
     let classiferConv: Conv2D<Float>
@@ -266,11 +268,11 @@ type MobileNetV3Large() =
 
     public init(classCount: int = 1000, widthMultiplier: double = 1.0, dropout: Double = 0.2) = 
         inputConv = Conv2d(
-            filterShape=(3, 3, 3, makeDivisible(filter: 16, widthMultiplier: widthMultiplier)),
+            kernelSize=(3, 3, 3, makeDivisible(filter=16, widthMultiplier: widthMultiplier)),
             stride=2,
-            padding="same")
-        inputConvBatchNorm = BatchNorm(
-            featureCount: makeDivisible(filter: 16, widthMultiplier: widthMultiplier))
+            padding=kernelSize/2 (* "same " *))
+        inputConvBatchNorm = BatchNorm2d((
+            featureCount: makeDivisible(filter=16, widthMultiplier: widthMultiplier))
 
         invertedResidualBlock1 = InitialInvertedResidualBlock(
             filters: (16, 16), widthMultiplier: widthMultiplier)
@@ -282,13 +284,13 @@ type MobileNetV3Large() =
             expansionFactor: 3)
         invertedResidualBlock4 = InvertedResidualBlock(
             filters: (24, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, stride=2, kernel: (5, 5), seLayer: true)
+            expansionFactor: 3, stride=2, kernel=(5, 5), seLayer: true)
         invertedResidualBlock5 = InvertedResidualBlock(
             filters: (40, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, kernel: (5, 5), seLayer: true)
+            expansionFactor: 3, kernel=(5, 5), seLayer: true)
         invertedResidualBlock6 = InvertedResidualBlock(
             filters: (40, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, kernel: (5, 5), seLayer: true)
+            expansionFactor: 3, kernel=(5, 5), seLayer: true)
         invertedResidualBlock7 = InvertedResidualBlock(
             filters: (40, 80), widthMultiplier: widthMultiplier,
             expansionFactor: 6, stride=2, activation= .hardSwish)
@@ -309,36 +311,36 @@ type MobileNetV3Large() =
             expansionFactor: 6, seLayer: true, activation= .hardSwish)
         invertedResidualBlock13 = InvertedResidualBlock(
             filters: (112, 160), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, stride=2, kernel: (5, 5), seLayer: true,
+            expansionFactor: 6, stride=2, kernel=(5, 5), seLayer: true,
             activation= .hardSwish)
         invertedResidualBlock14 = InvertedResidualBlock(
             filters: (160, 160), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel: (5, 5), seLayer: true, activation= .hardSwish)
+            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
         invertedResidualBlock15 = InvertedResidualBlock(
             filters: (160, 160), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel: (5, 5), seLayer: true, activation= .hardSwish)
+            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
 
-        lastConvChannel = makeDivisible(filter: 960, widthMultiplier: widthMultiplier)
+        lastConvChannel = makeDivisible(filter=960, widthMultiplier: widthMultiplier)
         outputConv = Conv2d(
-            filterShape=(
-                1, 1, makeDivisible(filter: 160, widthMultiplier: widthMultiplier), lastConvChannel
+            kernelSize=(
+                1, 1, makeDivisible(filter=160, widthMultiplier: widthMultiplier), lastConvChannel
             ),
             stride=1,
-            padding="same")
-        outputConvBatchNorm = BatchNorm(featureCount=lastConvChannel)
+            padding=kernelSize/2 (* "same " *))
+        outputConvBatchNorm = BatchNorm2d(numFeatures=lastConvChannel)
 
         let lastPointChannel =
             widthMultiplier > 1.0
-            ? makeDivisible(filter: 1280, widthMultiplier: widthMultiplier) : 1280
+            ? makeDivisible(filter=1280, widthMultiplier: widthMultiplier) : 1280
         finalConv = Conv2d(
-            filterShape=(1, 1, lastConvChannel, lastPointChannel),
+            kernelSize=(1, 1, lastConvChannel, lastPointChannel),
             stride=1,
-            padding="same")
+            padding=kernelSize/2 (* "same " *))
         dropoutLayer = Dropout(probability: dropout)
         classiferConv = Conv2d(
-            filterShape=(1, 1, lastPointChannel, classCount),
+            kernelSize=(1, 1, lastPointChannel, classCount),
             stride=1,
-            padding="same")
+            padding=kernelSize/2 (* "same " *))
 
 
     
@@ -356,18 +358,18 @@ type MobileNetV3Large() =
             through: invertedResidualBlock11,
             invertedResidualBlock12, invertedResidualBlock13, invertedResidualBlock14,
             invertedResidualBlock15)
-        let outputConvResult = hardSwish(outputConvBatchNorm(outputConv(backbone3)))
+        let outputConvResult = hardSwish(outputConvBatchNorm2d((outputConv(backbone3)))
         let averagePool = avgPool(outputConvResult).view([
             input.shape.[0], 1, 1, self.lastConvChannel,
         ])
         let finalConvResult = dropoutLayer(hardSwish(finalConv(averagePool)))
-        return flatten(classiferConv(finalConvResult))
+        flatten(classiferConv(finalConvResult))
 
 
 
 type MobileNetV3Small() =
     inherit Model()
-    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d<Float>(padding: ((0, 1), (0, 1)))
     let inputConv: Conv2D<Float>
     let inputConvBatchNorm: BatchNorm<Float>
 
@@ -386,7 +388,7 @@ type MobileNetV3Small() =
     let outputConv: Conv2D<Float>
     let outputConvBatchNorm: BatchNorm<Float>
 
-    let avgPool = GlobalAvgPool2D<Float>()
+    let avgPool = GlobalAvgPool2d()
     let finalConv: Conv2D<Float>
     let dropoutLayer: Dropout<Float>
     let classiferConv: Conv2D<Float>
@@ -396,11 +398,11 @@ type MobileNetV3Small() =
 
     public init(classCount: int = 1000, widthMultiplier: double = 1.0, dropout: Double = 0.2) = 
         inputConv = Conv2d(
-            filterShape=(3, 3, 3, makeDivisible(filter: 16, widthMultiplier: widthMultiplier)),
+            kernelSize=(3, 3, 3, makeDivisible(filter=16, widthMultiplier: widthMultiplier)),
             stride=2,
-            padding="same")
-        inputConvBatchNorm = BatchNorm(
-            featureCount: makeDivisible(filter: 16, widthMultiplier: widthMultiplier))
+            padding=kernelSize/2 (* "same " *))
+        inputConvBatchNorm = BatchNorm2d((
+            featureCount: makeDivisible(filter=16, widthMultiplier: widthMultiplier))
 
         invertedResidualBlock1 = InitialInvertedResidualBlock(
             filters: (16, 16), widthMultiplier: widthMultiplier,
@@ -413,52 +415,52 @@ type MobileNetV3Small() =
             expansionFactor: 88.0 / 24.0)
         invertedResidualBlock4 = InvertedResidualBlock(
             filters: (24, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 4, stride=2, kernel: (5, 5), seLayer: true,
+            expansionFactor: 4, stride=2, kernel=(5, 5), seLayer: true,
             activation= .hardSwish)
         invertedResidualBlock5 = InvertedResidualBlock(
             filters: (40, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel: (5, 5), seLayer: true, activation= .hardSwish)
+            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
         invertedResidualBlock6 = InvertedResidualBlock(
             filters: (40, 40), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel: (5, 5), seLayer: true, activation= .hardSwish)
+            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
         invertedResidualBlock7 = InvertedResidualBlock(
             filters: (40, 48), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, kernel: (5, 5), seLayer: true, activation= .hardSwish)
+            expansionFactor: 3, kernel=(5, 5), seLayer: true, activation= .hardSwish)
         invertedResidualBlock8 = InvertedResidualBlock(
             filters: (48, 48), widthMultiplier: widthMultiplier,
-            expansionFactor: 3, kernel: (5, 5), seLayer: true, activation= .hardSwish)
+            expansionFactor: 3, kernel=(5, 5), seLayer: true, activation= .hardSwish)
         invertedResidualBlock9 = InvertedResidualBlock(
             filters: (48, 96), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, stride=2, kernel: (5, 5), seLayer: true,
+            expansionFactor: 6, stride=2, kernel=(5, 5), seLayer: true,
             activation= .hardSwish)
         invertedResidualBlock10 = InvertedResidualBlock(
             filters: (96, 96), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel: (5, 5), seLayer: true, activation= .hardSwish)
+            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
         invertedResidualBlock11 = InvertedResidualBlock(
             filters: (96, 96), widthMultiplier: widthMultiplier,
-            expansionFactor: 6, kernel: (5, 5), seLayer: true, activation= .hardSwish)
+            expansionFactor: 6, kernel=(5, 5), seLayer: true, activation= .hardSwish)
 
-        lastConvChannel = makeDivisible(filter: 576, widthMultiplier: widthMultiplier)
+        lastConvChannel = makeDivisible(filter=576, widthMultiplier: widthMultiplier)
         outputConv = Conv2d(
-            filterShape=(
-                1, 1, makeDivisible(filter: 96, widthMultiplier: widthMultiplier), lastConvChannel
+            kernelSize=(
+                1, 1, makeDivisible(filter=96, widthMultiplier: widthMultiplier), lastConvChannel
             ),
             stride=1,
-            padding="same")
-        outputConvBatchNorm = BatchNorm(featureCount=lastConvChannel)
+            padding=kernelSize/2 (* "same " *))
+        outputConvBatchNorm = BatchNorm2d(numFeatures=lastConvChannel)
 
         let lastPointChannel =
             widthMultiplier > 1.0
-            ? makeDivisible(filter: 1280, widthMultiplier: widthMultiplier) : 1280
+            ? makeDivisible(filter=1280, widthMultiplier: widthMultiplier) : 1280
         finalConv = Conv2d(
-            filterShape=(1, 1, lastConvChannel, lastPointChannel),
+            kernelSize=(1, 1, lastConvChannel, lastPointChannel),
             stride=1,
-            padding="same")
+            padding=kernelSize/2 (* "same " *))
         dropoutLayer = Dropout(probability: dropout)
         classiferConv = Conv2d(
-            filterShape=(1, 1, lastPointChannel, classCount),
+            kernelSize=(1, 1, lastPointChannel, classCount),
             stride=1,
-            padding="same")
+            padding=kernelSize/2 (* "same " *))
 
 
     
@@ -473,11 +475,11 @@ type MobileNetV3Small() =
             through: invertedResidualBlock6, invertedResidualBlock7,
             invertedResidualBlock8, invertedResidualBlock9, invertedResidualBlock10,
             invertedResidualBlock11)
-        let outputConvResult = hardSwish(outputConvBatchNorm(outputConv(backbone2)))
+        let outputConvResult = hardSwish(outputConvBatchNorm2d((outputConv(backbone2)))
         let averagePool = avgPool(outputConvResult).view([
             input.shape.[0], 1, 1, lastConvChannel,
         ])
         let finalConvResult = dropoutLayer(hardSwish(finalConv(averagePool)))
-        return flatten(classiferConv(finalConvResult))
+        flatten(classiferConv(finalConvResult))
 
 

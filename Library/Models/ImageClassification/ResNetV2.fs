@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 // Original Paper:
@@ -39,14 +41,14 @@ type ConvBNV2() =
         isLast: bool = false
     ) = 
         self.conv = Conv2d(
-            filterShape=(kernelSize, kernelSize, inFilters, outFilters), 
+            kernelSize=(kernelSize, kernelSize, inFilters, outFilters), 
             strides = [stride, stride), 
             padding: padding,
             useBias: false)
         self.isLast = isLast
         if isLast then
             //Initialize the last BatchNorm layer to scale zero
-            self.norm = BatchNorm(
+            self.norm = BatchNorm2d((
                  axis = -1, 
                  momentum: 0.9, 
                  offset: dsharp.zeros([outFilters]),
@@ -55,14 +57,14 @@ type ConvBNV2() =
                  runningMean: dsharp.tensor(0),
                  runningVariance: dsharp.tensor(1))
         else
-            self.norm = BatchNorm(featureCount=outFilters, momentum: 0.9, epsilon: 1e-5)
+            self.norm = BatchNorm2d(numFeatures=outFilters, momentum: 0.9, epsilon: 1e-5)
 
 
 
     
     override _.forward(input) =
         let convResult = input |> conv, norm)
-        return isLast ? convResult : relu(convResult)
+        isLast ? convResult : relu(convResult)
 
 
 
@@ -91,7 +93,7 @@ type Shortcut() =
         let res = input
         if needsProjection then res = projection(res)
         if needsPool       then res = avgPool(res)
-        return res
+        res
 
 
 
@@ -121,7 +123,7 @@ type ResidualBlockV2() =
     
     override _.forward(input) =
         let convResult = convs.differentiableReduce(input) =  $1($0)
-        return relu(convResult + shortcut(input))
+        relu(convResult + shortcut(input))
 
 
 
@@ -131,7 +133,7 @@ type ResNetV2() =
     let inputStem: ConvBNV2[]
     let maxPool: MaxPool2d
     let residualBlocks: ResidualBlockV2[] = [| |]
-    let avgPool = GlobalAvgPool2D<Float>()
+    let avgPool = GlobalAvgPool2d()
     let flatten = Flatten()
     let classifier: Dense
 
@@ -154,11 +156,11 @@ type ResNetV2() =
         inputStem = Array(0..<3).map { i in
             ConvBNV2(inFilters: filters[i], outFilters: filters[i+1], kernelSize: 3, stride: i==0 ? 2 : 1)
 
-        maxPool = MaxPool2D(poolSize: (3, 3), stride=2, padding="same")
+        maxPool = MaxPool2D(poolSize: (3, 3), stride=2, padding=kernelSize/2 (* "same " *))
         let sizes = [64 / depth.expansion, 64, 128, 256, 512]
         for (iBlock, nBlocks) in depth.layerBlockSizes.enumerated() do
             let (nIn, nOut) = (sizes[iBlock] * depth.expansion, sizes[iBlock+1] * depth.expansion)
-            for j in 0..<nBlocks {
+            for j in 0..nBlocks-1 do
                 residualBlocks.append(ResidualBlockV2(
                     inFilters: j==0 ? nIn : nOut,  
                     outFilters: nOut, 
@@ -174,21 +176,21 @@ type ResNetV2() =
     override _.forward(input) =
         let inputLayer = maxPool(inputStem.differentiableReduce(input) =  $1($0))
         let blocksReduced = residualBlocks.differentiableReduce(inputLayer) =  $1($0)
-        return blocksReduced |> avgPool, flatten, classifier)
+        blocksReduced |> avgPool, flatten, classifier)
 
 
 
 extension ResNetV2 {
     type Depth {
-        case resNet18
-        case resNet34
-        case resNet50
-        case resNet101
-        case resNet152
+        | resNet18
+        | resNet34
+        | resNet50
+        | resNet101
+        | resNet152
 
         let expansion: int {
             match self with
-            case .resNet18, .resNet34 -> 1
+            | .resNet18, .resNet34 -> 1
             | _ -> return 4
 
 

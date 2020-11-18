@@ -45,7 +45,7 @@ let numberOfBatch = int(ceil(Double(dataset.numTrainRecords) / Double(batchSize)
 let shuffle = true
 
 let meanAbsoluteError(predictions=Tensor, truths: Tensor) =
-    return abs(Tensor<Float>(predictions - truths)).mean().toScalar()
+    abs(Tensor<Float>(predictions - truths)).mean().toScalar()
 
 
 print("Starting training..")
@@ -68,7 +68,7 @@ for epoch in 1..epochCount do
         let batchEnd = min(dataset.numTrainRecords, batchStart + batchSize)
         let (loss, grad) = valueWithGradient<| fun model -> =  (model: RegressionModel) = Tensor<Float> in
             let logits = model(dataset.xTrain[batchStart..<batchEnd])
-            return meanSquaredError(predicted=logits, expected=dataset.yTrain[batchStart..<batchEnd])
+            meanSquaredError(predicted=logits, expected=dataset.yTrain[batchStart..<batchEnd])
 
         optimizer.update(&model, along=grad)
         

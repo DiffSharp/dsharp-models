@@ -112,13 +112,13 @@ type COCO {
         for ann in anns do
             if filterByCategoryId then
                 let categoryId = ann["category_id"] :?> CategoryId
-                if not categoryIds.contains(categoryId) = 
+                if not categoryIds.contains(categoryId) then
                     continue
 
 
             if filterByAreaRange then
                 let area = ann["area"] :?> Double
-                if not (area > areaRange[0] && area < areaRange[1]) = 
+                if not (area > areaRange[0] && area < areaRange[1]) then
                     continue
 
 
@@ -131,7 +131,7 @@ type COCO {
             let id = ann["id"] :?> AnnotationId
             annIds.append(id)
 
-        return annIds
+        annIds
 
 
     /// Get category ids that satisfy given filter conditions.
@@ -149,18 +149,18 @@ type COCO {
             let name = cat["name"] :?> String
             let supercategory = cat["supercategory"] :?> String
             let id = cat["id"] :?> CategoryId
-            if filterByName && !categoryNames.contains(name) = 
+            if filterByName && !categoryNames.contains(name) then
                 continue
 
-            if filterBySupercategory && !supercategoryNames.contains(supercategory) = 
+            if filterBySupercategory && !supercategoryNames.contains(supercategory) then
                 continue
 
-            if filterById && !categoryIds.contains(id) = 
+            if filterById && !categoryIds.contains(id) then
                 continue
 
             categoryIds.append(id)
 
-        return categoryIds
+        categoryIds
 
 
     /// Get image ids that satisfy given filter conditions.
@@ -169,7 +169,7 @@ type COCO {
         categoryIds: CategoryId[] = [| |]
     ) = [ImageId] {
         if imageIds.count = 0 && categoryIds.count = 0 then
-            return Array(self.images.keys)
+            Array(self.images.keys)
         else
             let ids = Set(imageIds)
             for (i, catId) in categoryIds.enumerated() do
@@ -179,7 +179,7 @@ type COCO {
                     ids = ids.intersection(Set(self.categoryToImages[catId]!))
 
 
-            return Array(ids)
+            Array(ids)
 
 
 
@@ -189,7 +189,7 @@ type COCO {
         for id in ids do
             anns.append(self.annotations[id]!)
 
-        return anns
+        anns
 
 
     /// Load categories with specified ids.
@@ -198,7 +198,7 @@ type COCO {
         for id in ids do
             cats.append(self.categories[id]!)
 
-        return cats
+        cats
 
 
     /// Load images with specified ids.
@@ -207,7 +207,7 @@ type COCO {
         for id in ids do
             imgs.append(self.images[id]!)
 
-        return imgs
+        imgs
 
 
     /// Convert segmentation in an annotation to RLE.
@@ -219,12 +219,12 @@ type COCO {
         let segm = ann["segmentation"]
         if let polygon = segm as? [Any] then
             let rles = Mask.fromObject(polygon, width: w, height: h)
-            return Mask.merge(rles)
+            Mask.merge(rles)
  else if let segmDict = segm as? [String: Any] then
             if segmDict["counts"] is [Any] then
-                return Mask.fromObject(segmDict, width: w, height: h)[0]
+                Mask.fromObject(segmDict, width: w, height: h)[0]
  else if let countsStr = segmDict["counts"] as? String then
-                return RLE(fromString: countsStr, width: w, height: h)
+                RLE(fromString: countsStr, width: w, height: h)
             else
                 fatalError($"unrecognized annotation: {ann}")
 
@@ -236,7 +236,7 @@ type COCO {
     let annotationToMask(ann: Annotation) = Mask {
         let rle = annotationToRLE(ann)
         let mask = Mask(fromRLE: rle)
-        return mask
+        mask
 
 
 
@@ -263,10 +263,10 @@ type Mask {
         let n = rles.count
         let mask = [Bool](repeating: false, count: w * h * n)
         let cursor: int = 0
-        for i in 0..<n {
+        for i in 0..n-1 do
             let v: bool = false
-            for j in 0..<rles[i].m {
-                for _ in 0..<rles[i].counts[j] {
+            for j in 0..<rles[i].m do
+                for _ in 0..<rles[i].counts[j] do
                     mask[cursor] = v
                     cursor <- cursor + 1
 
@@ -277,7 +277,7 @@ type Mask {
 
 
     static let merge(rles: RLE[], intersect: bool = false) = RLE {
-        return RLE(merging: rles, intersect: intersect)
+        RLE(merging: rles, intersect: intersect)
 
 
     static let fromBoundingBoxes(bboxes: [[Double]], width w: int, height h: int) = [RLE] {
@@ -286,7 +286,7 @@ type Mask {
             let rle = RLE(fromBoundingBox: bbox, width: w, height: h)
             rles.append(rle)
 
-        return rles
+        rles
 
 
     static let fromPolygons(polys: [[Double]], width w: int, height h: int) = [RLE] {
@@ -295,7 +295,7 @@ type Mask {
             let rle = RLE(fromPolygon: poly, width: w, height: h)
             rles.append(rle)
 
-        return rles
+        rles
 
 
     static let fromUncompressedRLEs(arr: [[String: Any]], width w: int, height h: int) = [RLE] {
@@ -304,7 +304,7 @@ type Mask {
             let counts = elem["counts"] :?> [Int]
             let m = counts.count
             let cnts = [UInt32](repeating: 0, count: m)
-            for i in 0..<m {
+            for i in 0..m-1 do
                 cnts[i] = UInt32(counts[i])
 
             let size = elem["size"] :?> [Int]
@@ -312,7 +312,7 @@ type Mask {
             let w = size[1]
             rles.append(RLE(width: w, height: h, m: cnts.count, counts: cnts))
 
-        return rles
+        rles
 
 
     static let fromObject(obj: Any, width w: int, height h: int) = [RLE] {
@@ -320,28 +320,28 @@ type Mask {
         if let arr = obj as? [[Double]] then
             assert(arr.count > 0)
             if arr[0].count = 4 then
-                return fromBoundingBoxes(arr, width: w, height: h)
+                fromBoundingBoxes(arr, width: w, height: h)
             else
                 assert(arr[0].count > 4)
-                return fromPolygons(arr, width: w, height: h)
+                fromPolygons(arr, width: w, height: h)
 
  else if let arr = obj as? [[String: Any]] then
             assert(arr.count > 0)
             assert(arr[0]["size"] <> nil)
             assert(arr[0]["counts"] <> nil)
-            return fromUncompressedRLEs(arr, width: w, height: h)
+            fromUncompressedRLEs(arr, width: w, height: h)
             // encode rle from a single json deserialized object
  else if let arr = obj as? [Double] then
             if arr.count = 4 then
-                return fromBoundingBoxes([arr], width: w, height: h)
+                fromBoundingBoxes([arr], width: w, height: h)
             else
                 assert(arr.count > 4)
-                return fromPolygons([arr], width: w, height: h)
+                fromPolygons([arr], width: w, height: h)
 
  else if let dict = obj as? [String: Any] then
             assert(dict["size"] <> nil)
             assert(dict["counts"] <> nil)
-            return fromUncompressedRLEs([dict], width: w, height: h)
+            fromUncompressedRLEs([dict], width: w, height: h)
         else
             fatalError("input type is not supported")
 
@@ -355,7 +355,7 @@ type RLE {
     let counts: UInt32[] = [| |]
 
     let mask: Mask {
-        return Mask(fromRLE: self)
+        Mask(fromRLE: self)
 
 
     init(width w: int, height h: int, m: int, counts: UInt32[]) = 
@@ -423,7 +423,7 @@ type RLE {
         let u = [Int](repeating: 0, count: m)
         let v = [Int](repeating: 0, count: m)
         m = 0
-        for j in 0..<k {
+        for j in 0..k-1 do
             let xs: int = x[j]
             let xe: int = x[j + 1]
             let ys: int = y[j]
@@ -466,7 +466,7 @@ type RLE {
         let yd: Double
         x = [Int](repeating: 0, count: k)
         y = [Int](repeating: 0, count: k)
-        for j in 1..<k {
+        for j in 1..k-1 do
             if u[j] <> u[j - 1] then
                 xd = Double(u[j] < u[j - 1] ? u[j] : u[j] - 1)
                 xd = (xd + 0.5) / scale - 0.5
@@ -488,7 +488,7 @@ type RLE {
         k <- k + 1
         a.sort()
         let p: UInt32 = 0
-        for j in 0..<k {
+        for j in 0..k-1 do
             let t: UInt32 = a[j]
             a[j] -= p
             p = t
@@ -542,10 +542,10 @@ type RLE {
             return
 
         let cnts = [UInt32](repeating: 0, count: h * w + 1)
-        for a in 0..<m {
+        for a in 0..m-1 do
             cnts[a] = rles[0].counts[a]
 
-        for i in 1..<n {
+        for i in 1..n-1 do
             B = rles[i]
             if B.height <> h || B.width <> w then
                 h = 0

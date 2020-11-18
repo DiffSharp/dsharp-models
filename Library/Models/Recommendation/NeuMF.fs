@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
+open DiffSharp.Model
 
 /// NeuMF is a recommendation model that combines matrix factorization and a multi-layer perceptron.
 ///
@@ -21,77 +24,50 @@ open DiffSharp
 /// Xiangnan He, Lizi Liao, Hanwang Zhang, Liqiang Nie, Xia Hu, Tat-Seng Chua
 /// https://arxiv.org/pdf/1708.05031.pdf
 
-type NeuMF: Module {
+/// Initializes a NeuMF model as per the dataset from the given hyperparameters.
+///
+/// -Parameters
+/// - numUsers: Total number of users in the dataset.
+/// - numItems: Total number of items in the dataset.
+/// - numLatentFeatures: Embedding size of the matrix factorization model.
+/// - matrixRegularization: Regularization for the matrix factorization embeddings.
+/// - mlpLayerSizes: The sizes of the layers in the multi-layer perceptron model.
+/// - mlpRegularizations: Regularization for each multi-layer perceptron layer.
+///
+///  Note: The first MLP layer is the concatenation of user and item embeddings, so mlpLayerSizes.[0]/2 is the embedding size.
 
-    type Scalar = Float
-    let numUsers: int
-    let numItems: int
-    let numLatentFeatures: int
-    let matrixRegularization: scalar
-    let mlpLayerSizes: int[] = [64, 32, 16, 8]
-    let mlpRegularizations: scalar[] = [0, 0, 0, 0]
+type NeuMF(numUsers: int,
+        numItems: int,
+        numLatentFeatures: int,
+        matrixRegularization: double,
+        mlpLayerSizes: int[],
+        mlpRegularizations: double[]) =
 
-    let mfUserEmbedding: Embedding<Scalar>
-    let mfItemEmbedding: Embedding<Scalar>
+    inherit Model()
 
-    let mlpUserEmbedding: Embedding<Scalar>
-    let mlpItemEmbedding: Embedding<Scalar>
-    let mlpLayers: [Dense<Scalar>]
-
-    let neuMFLayer: Dense<Scalar>
-
-    /// Initializes a NeuMF model as per the dataset from the given hyperparameters.
-    ///
-    /// -Parameters
-    /// - numUsers: Total number of users in the dataset.
-    /// - numItems: Total number of items in the dataset.
-    /// - numLatentFeatures: Embedding size of the matrix factorization model.
-    /// - matrixRegularization: Regularization for the matrix factorization embeddings.
-    /// - mlpLayerSizes: The sizes of the layers in the multi-layer perceptron model.
-    /// - mlpRegularizations: Regularization for each multi-layer perceptron layer.
-    ///
-    ///  Note: The first MLP layer is the concatenation of user and item embeddings, so mlpLayerSizes[0]/2 is the embedding size.
-    public init(
-        numUsers : int,
-        numItems : int,
-        numLatentFeatures : int,
-        matrixRegularization : double,
-        mlpLayerSizes : int[],
-        mlpRegularizations : double[]
-    ) = 
-
-        Debug.Assert(mlpLayerSizes[0] % 2 = 0, "Input of first MLP layers must be multiple of 2")
+    do
+        Debug.Assert(mlpLayerSizes.[0] % 2 = 0, "Input of first MLP layers must be multiple of 2")
         Debug.Assert(
             mlpLayerSizes.count = mlpRegularizations.count,
             "Size of MLP layers and MLP regularization must be equal")
 
-        self.numUsers = numUsers
-        self.numItems = numItems
-        self.numLatentFeatures = numLatentFeatures
-        self.matrixRegularization = matrixRegularization
-        self.mlpLayerSizes = mlpLayerSizes
-        self.mlpRegularizations = mlpRegularizations
-        mlpLayers = []
+    let mlpLayerSizes: int[] = [64, 32, 16, 8]
+    let mlpRegularizations: scalar[] = [0, 0, 0, 0]
 
-        // TODO: regularization
-        // Embedding Layer
-        mfUserEmbedding = Embedding<Scalar>(
-            vocabularySize=self.numUsers, embeddingSize=self.numLatentFeatures)
-        mfItemEmbedding = Embedding<Scalar>(
-            vocabularySize=self.numItems, embeddingSize=self.numLatentFeatures)
-        mlpUserEmbedding = Embedding<Scalar>(
-            vocabularySize=self.numUsers, embeddingSize=self.mlpLayerSizes[0] / 2)
-        mlpItemEmbedding = Embedding<Scalar>(
-            vocabularySize=self.numItems, embeddingSize=self.mlpLayerSizes[0] / 2)
+    let mlpLayers = []
 
-        for (inputSize, outputSize) in zip(mlpLayerSizes, mlpLayerSizes[1..]) = 
-            mlpLayers.append(Linear(inFeatures=inputSize, outFeatures=outputSize, activation= dsharp.relu))
+    // TODO: regularization
+    // Embedding Layer
+    let mfUserEmbedding = Embedding<Scalar>(vocabularySize=self.numUsers, embeddingSize=self.numLatentFeatures)
+    let mfItemEmbedding = Embedding<Scalar>(vocabularySize=self.numItems, embeddingSize=self.numLatentFeatures)
+    let mlpUserEmbedding = Embedding<Scalar>(vocabularySize=self.numUsers, embeddingSize=self.mlpLayerSizes.[0] / 2)
+    let mlpItemEmbedding = Embedding<Scalar>(vocabularySize=self.numItems, embeddingSize=self.mlpLayerSizes.[0] / 2)
 
+    do for (inputSize, outputSize) in zip(mlpLayerSizes, mlpLayerSizes.[1..]) do
+         mlpLayers.append(Linear(inFeatures=inputSize, outFeatures=outputSize, activation= dsharp.relu))
 
-        neuMFLayer = Linear(inFeatures=(self.mlpLayerSizes |> Array.last + self.numLatentFeatures), outFeatures=1)
+    let neuMFLayer = Linear(inFeatures=(self.mlpLayerSizes |> Array.last + self.numLatentFeatures), outFeatures=1)
 
-
-    
     override _.forward(input: Tensor (*<int32>*)) : Tensor =
         // Extracting user and item from dataset
         let userIndices = input.unstacked(alongAxis: 1)[0]
@@ -114,6 +90,6 @@ type NeuMF: Module {
         let vector = mlpVector.cat(mfVector, alongAxis: -1)
 
         // Final prediction layer
-        return neuMFLayer(vector)
+        neuMFLayer.forward(vector)
 
 

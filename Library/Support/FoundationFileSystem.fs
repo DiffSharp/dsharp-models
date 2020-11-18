@@ -28,7 +28,7 @@ type FoundationFileSystem: FileSystem {
 
 
   let open(filename: string) = File {
-    return FoundationFile(path: filename)
+    FoundationFile(path: filename)
 
     
   let copy(source: Uri, dest: Uri) =
@@ -44,12 +44,12 @@ type FoundationFile: File {
 
   
   let read() -> Data {
-    return Data.ReadAllBytes(location, options: .alwaysMapped)
+    Data.ReadAllBytes(location, options: .alwaysMapped)
 
   
   let read(position: int, count: int) -> Data {
     // TODO: Incorporate file offset.
-    return Data.ReadAllBytes(location, options: .alwaysMapped)
+    Data.ReadAllBytes(location, options: .alwaysMapped)
 
 
   let write(value: Data) =

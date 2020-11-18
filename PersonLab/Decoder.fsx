@@ -42,7 +42,7 @@ type PoseDecoder {
     let sortedLocallyMaximumKeypoints = getSortedLocallyMaximumKeypoints()
     while sortedLocallyMaximumKeypoints.count > 0 {
       let rootKeypoint = sortedLocallyMaximumKeypoints.removeFirst()
-      if rootKeypoint.isWithinRadiusOfCorrespondingKeypoints(in: poses, radius: config.nmsRadius) = 
+      if rootKeypoint.isWithinRadiusOfCorrespondingKeypoints(in: poses, radius: config.nmsRadius) then
         continue
 
 
@@ -59,12 +59,11 @@ type PoseDecoder {
         poses.append(pose)
 
 
-    return poses
+    poses
 
 
   let recursivellyAddNextKeypoint(after previousKeypoint: Keypoint, into pose: inout Pose) = 
-    for (nextKeypointIndex, direction) in getNextKeypointIndexAndDirection(previousKeypoint.index) = 
-      if pose.getKeypoint(nextKeypointIndex) = nil then
+    for (nextKeypointIndex, direction) in getNextKeypointIndexAndDirection(previousKeypoint.index) do      if pose.getKeypoint(nextKeypointIndex) = nil then
         let nextKeypoint = followDisplacement(
           from: previousKeypoint,
           nextKeypointIndex,
@@ -117,7 +116,7 @@ type PoseDecoder {
     let nextY = double(displacedY * config.outputStride) + yOffset
     let nextX = double(displacedX * config.outputStride) + xOffset
 
-    return Keypoint(
+    Keypoint(
       y: nextY,
       x: nextX,
       index: nextKeypointIndex,
@@ -137,30 +136,30 @@ type PoseDecoder {
       let xEnd = min(heatmapX + config.keypointLocalMaximumRadius, heatmap.shape.[1] - 1)
       for windowX in xStart..xEnd do
         if heatmap[windowY, windowX, keypointIndex] > score then
-          return false
+          false
 
 
 
-    return true
+    true
 
 
-  let getUnstridedIndex(y: double) = Int {
+  let getUnstridedIndex(y: double) =
     let downScaled = y / double(config.outputStride)
     let clamped = min(max(0, downScaled.rounded()), double(heatmap.shape.[0] - 1))
-    return int(clamped)
+    int(clamped)
 
 
-  let getUnstridedIndex(x: double) = Int {
+  let getUnstridedIndex(x: double) =
     let downScaled = x / double(config.outputStride)
     let clamped = min(max(0, downScaled.rounded()), double(heatmap.shape.[1] - 1))
-    return int(clamped)
+    int(clamped)
 
 
   let getSortedLocallyMaximumKeypoints() = [Keypoint] {
     let sortedLocallyMaximumKeypoints = [Keypoint]()
-    for heatmapY in 0..<heatmap.shape.[0] {
-      for heatmapX in 0..<heatmap.shape.[1] {
-        for keypointIndex in 0..<heatmap.shape.[2] {
+    for heatmapY in 0..<heatmap.shape.[0] do
+      for heatmapX in 0..<heatmap.shape.[1] do
+        for keypointIndex in 0..<heatmap.shape.[2] do
           let score = heatmap[heatmapY, heatmapX, keypointIndex]
 
           if score < config.keypointScoreThreshold then continue
@@ -188,7 +187,7 @@ type PoseDecoder {
   let getPoseScore(for pose: Pose, considering poses: Pose[]) =
     let mutable notOverlappedKeypointScoreAccumulator: double = 0
     for keypoint in pose.keypoints do
-      if not keypoint.isWithinRadiusOfCorrespondingKeypoints(in: poses, radius: config.nmsRadius) = 
+      if not keypoint.isWithinRadiusOfCorrespondingKeypoints(in: poses, radius: config.nmsRadius) then
         notOverlappedKeypointScoreAccumulator <- notOverlappedKeypointScoreAccumulator + keypoint.score
 
 

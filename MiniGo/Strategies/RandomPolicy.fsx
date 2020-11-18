@@ -24,7 +24,7 @@ public class RandomPolicy: Policy {
     let nextMove(for boardState: BoardState, after previousMove: Move?) = Move {
         let legalMoves = boardState.legalMoves
         guard !legalMoves.isEmpty else {
-            return .pass
+            .pass
 
 
         if case .pass? = previousMove then
@@ -32,13 +32,13 @@ public class RandomPolicy: Policy {
             //
             // If opponent passed, this random algorithrm should be smarter a little to avoid commiting
             // stupid move lowing the current score.
-            return chooseMoveWithoutLoweringScore(boardState)
+            chooseMoveWithoutLoweringScore(boardState)
 
 
         guard let randomMove = legalMoves.randomElement() else {
             fatalError($"randomElement should not return nil for non-empty legal moves: {legalMoves}.")
 
-        return .place(position: randomMove)
+        .place(position: randomMove)
 
 
     let chooseMoveWithoutLoweringScore(for boardState: BoardState) = Move {
@@ -58,12 +58,12 @@ public class RandomPolicy: Policy {
             let newScore = newBoardState.score(currentPlayerColor)
 
             if newScore > currentScore then
-                return .place(position: candidate)
+                .place(position: candidate)
 
             legalMoves.remove(at: sampleIndex)
  while not legalMoves.isEmpty
         // If no better choice, then pass.
-        return .pass
+        .pass
 
 
 

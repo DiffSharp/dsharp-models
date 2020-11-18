@@ -23,7 +23,7 @@ public extension ImportableLayer {
             let m = Mirror(reflecting: obj)
             for child in m.children do
                 let keypath = (parent <> nil ? parent! + "." : "") + child.label!
-                if (child.value is T) = 
+                if (child.value is T) then
                     out.append(keypath)
 
                 _get(child.value, keypath, out: &out)
@@ -32,7 +32,7 @@ public extension ImportableLayer {
 
         let labels = ResizeArray<string>()
         _get(self, out: &labels)
-        return labels
+        labels
 
 
     /// Returns map of all recursive properties name to keypath.
@@ -41,13 +41,12 @@ public extension ImportableLayer {
     ) = [String: WritableKeyPath<Self, T>] {
         let labels = getRecursiveProperties(ofType: T.self)
         let keys = self.recursivelyAllWritableKeyPaths(T.self)
-        return Dictionary(uniqueKeysWithValues: zip(labels, keys))
+        Dictionary(uniqueKeysWithValues: zip(labels, keys))
 
 
     /// Updates model parameters with values from `parameters`, according to `ImportMap`.
     mutating let unsafeImport(parameters: [String: Tensor], map: ImportMap) = 
-        for (label, keyPath) in getRecursiveNamedKeyPaths(ofType: Tensor.self) = 
-            let shape = self[keyPath: keyPath].shape
+        for (label, keyPath) in getRecursiveNamedKeyPaths(ofType: Tensor.self) do            let shape = self[keyPath: keyPath].shape
             if let mapping = map[label], let weights = parameters[mapping.0] then
                 if let permutes = mapping.1 then
                     weights = weights.permute(permutes)
@@ -69,7 +68,7 @@ public extension ImportableLayer {
     /// Updates model parameters with values from V2 checkpoint, according to `ImportMap`.
     mutating let unsafeImport(from reader: CheckpointReader, map: ImportMap) = 
         let parameters: [String: Tensor] = [:]
-        for (name, _) in map.values {
+        for (name, _) in map.values do
             parameters[name] = Tensor<Float>(reader.loadTensor(named: name))
 
         unsafeImport(parameters: parameters, map: map)

@@ -69,7 +69,7 @@ type PersonLab {
       )
 
 
-    return poses
+    poses
 
 
 

@@ -64,7 +64,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         let scaledImages = _Raw.resizeNearestNeighbor(images: concatanatedImages, size: [286, 286])
         let croppedImages = scaledImages.slice(lowerBounds: Tensor (*<int32>*)([0, int32(random() % 30), int32(random() % 30), 0]),
                                                sizes=[2, 256, 256, 3])
-        if Bool.random() = 
+        if Bool.random() then
             croppedImages = _Raw.reverse(croppedImages, dims: [false, false, true, false])
 
         
@@ -82,7 +82,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
                                            expected=targetImages) * lambdaL1
             
             generatorTotalLoss <- generatorTotalLoss + ganLoss + l1Loss
-            return ganLoss + l1Loss
+            ganLoss + l1Loss
 
         
         let fakeImages = generator(sourceImages)
@@ -101,7 +101,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
             
             discriminatorTotalLoss <- discriminatorTotalLoss + (fakeLoss + realLoss) * 0.5
             
-            return (fakeLoss + realLoss) * 0.5
+            (fakeLoss + realLoss) * 0.5
 
         
         optimizerG.update(&generator, along=generatorGradient)

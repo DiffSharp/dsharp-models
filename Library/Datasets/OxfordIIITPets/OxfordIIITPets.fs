@@ -78,7 +78,7 @@ type OxfordIIITPets {
 
       training = TrainingEpochs(samples: trainingSamples, batchSize= batchSize, entropy: entropy)
          |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
-          return batches |> Seq.map {
+          batches |> Seq.map {
             makeBatch(samples: $0, imageSize: imageSize, device=device)
 
 
@@ -153,7 +153,7 @@ let getImageURLs(filename: string, directory: Uri) = [URL] {
   let imageDetails = fileContents!.Split("\n")
   return imageDetails.map {
     let imagename = String($0[..<$0.firstIndex(of: " ")!])
-    return imagesRootDirectory </> ($"{imagename}.jpg")
+    imagesRootDirectory </> ($"{imagename}.jpg")
 
 
 

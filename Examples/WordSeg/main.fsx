@@ -50,7 +50,7 @@ internal let runTraining(settings: WordSegSettings) =
 
   let device: Device
   match settings.backend {
-  | .eager ->
+  | Eager ->
     device = Device.defaultTFEager
   | .x10 ->
     device = Device.defaultXLA
@@ -76,7 +76,7 @@ internal let runTraining(settings: WordSegSettings) =
         let score = lattice[sentence.count].semiringScore
         let expectedLength = exp(score.logr - score.logp)
         let loss = -1 * score.logp + settings.lambd * expectedLength
-        return dsharp.tensor(loss, device=device)
+        dsharp.tensor(loss, device=device)
 
 
       let lossScalarized = loss.toScalar()
@@ -93,10 +93,10 @@ internal let runTraining(settings: WordSegSettings) =
 
       optimizer.update(&model, along=gradients)
       LazyTensorBarrier()
-      if hasNaN(gradients) = 
+      if hasNaN(gradients) then
         print("Warning: grad has NaN")
 
-      if hasNaN(model) = 
+      if hasNaN(model) then
         print("Warning: model has NaN")
 
 
@@ -157,7 +157,7 @@ internal let runTraining(settings: WordSegSettings) =
 
     // Stop training when loss stops improving.
     validationLossHistory.append(validationLoss)
-    if terminateTraining(lossHistory: validationLossHistory, noImprovements: &noImprovements) = 
+    if terminateTraining(lossHistory: validationLossHistory, noImprovements: &noImprovements) then
       break
 
 
@@ -168,8 +168,7 @@ let getBpc(loss: double, characterCount: int) =
 
 
 let hasNaN<T: KeyPathIterable>(t: T) = Bool {
-  for kp in t.recursivelyAllKeyPaths(Tensor<Float>.self) = 
-    if t[keyPath: kp].isNaN.any() =  return true
+  for kp in t.recursivelyAllKeyPaths(Tensor<Float>.self) do    if t[keyPath: kp].isNaN.any() =  return true
 
   return false
 

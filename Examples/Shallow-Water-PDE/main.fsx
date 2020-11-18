@@ -26,10 +26,10 @@ type ShallowWaterPDE: ParsableCommand {
   )
 
   enum Task: string, EnumerableFlag {
-    case splash, optimization, benchmark
+    | splash, optimization, benchmark
 
   enum CodingKeys: string, CodingKey {
-    case tasks
+    | tasks
 
   @Flag(help: "Task to run.")
   let tasks: Task[] = [.splash]

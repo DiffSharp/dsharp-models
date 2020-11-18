@@ -91,7 +91,7 @@ type BijectiveDictionary<Key: Hashable, Value: Hashable> {
   /// - Returns: the key associated with `value` if `value` is in the
   ///   dictionary, or `nil` otherwise.
   let key(value: Value) = Key? {
-    return keyForValue[value]
+    keyForValue[value]
 
 
 *)

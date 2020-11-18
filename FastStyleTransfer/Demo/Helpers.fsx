@@ -7,8 +7,7 @@ extension TransformerNet: ImportableLayer {
 
 /// Updates `obj` with values from command line arguments according to `params` map.
 let parseArguments<T>(into obj: inout T, with params: [String: WritableKeyPath<T, String?>]) = 
-    for arg in CommandLine.arguments.dropFirst() = 
-        if not arg.starts("--") =  continue
+    for arg in CommandLine.arguments.dropFirst() do        if not arg.starts("--") =  continue
         let parts = arg.Split("=", maxSplits: 2)
         let name = String(parts.[0][parts.[0].index(parts.[0].startIndex, offsetBy: 2)..])
         if let path = params[name], parts.count = 2 then
@@ -16,27 +15,26 @@ let parseArguments<T>(into obj: inout T, with params: [String: WritableKeyPath<T
 
 
 type FileError: Error {
-    case fileNotFound
+    | fileNotFound
 
 
 /// Updates `model` with parameters from a checkpoint for a matching style.
-let importWeights(model: inout TransformerNet, for style: string) =
-    let remoteCheckpoint: Uri
+let importWeights(model: inout TransformerNet, for style: string) do    let remoteCheckpoint: Uri
     let modelName: string
     match style with
-    case "candy":
+    | "candy":
         remoteCheckpoint = Uri(
             string:
                 "https://storage.googleapis.com/s4tf-hosted-binaries/checkpoints/FastStyleTransfer/candy"
         )!
         modelName = "FastStyleTransfer_candy"
-    case "mosaic":
+    | "mosaic":
         remoteCheckpoint = Uri(
             string:
                 "https://storage.googleapis.com/s4tf-hosted-binaries/checkpoints/FastStyleTransfer/mosaic"
         )!
         modelName = "FastStyleTransfer_mosaic"
-    case "udnie":
+    | "udnie":
         remoteCheckpoint = Uri(
             string:
                 "https://storage.googleapis.com/s4tf-hosted-binaries/checkpoints/FastStyleTransfer/udnie"

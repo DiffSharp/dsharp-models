@@ -12,42 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
+open DiffSharp.Model
 
 // Original Paper:
 // "Learning Spatiotemporal Features with 3D Convolutional Networks"
 // Du Tran, Lubomir Bourdev, Rob Fergus, Lorenzo Torresani, Manohar Paluri
 // https://arxiv.org/pdf/1412.0767.pdf
 
-type C3D() =
+type C3D(classCount: int) =
     inherit Model()
     
     // Model presumes input of [[1, 12, 256, 256, 3])
     
-    let conv1 = Conv3D<Float>(filterShape=(3, 3, 3, 3, 32), activation= dsharp.relu)
-    let conv2 = Conv3D<Float>(filterShape=(3, 3, 3, 32, 64), activation= dsharp.relu)
-    let conv3 = Conv3D<Float>(filterShape=(3, 3, 3, 64, 128), activation= dsharp.relu)
-    let conv4 = Conv3D<Float>(filterShape=(3, 3, 3, 128, 128), activation= dsharp.relu)
-    let conv5 = Conv3D<Float>(filterShape=(2, 2, 2, 128, 256), activation= dsharp.relu)
-    let conv6 = Conv3D<Float>(filterShape=(2, 2, 2, 256, 256), activation= dsharp.relu)
+    let conv1 = Conv3d(3, 32, kernelSize=3, activation= dsharp.relu)
+    let conv2 = Conv3d(32, 64, kernelSize=3, activation= dsharp.relu)
+    let conv3 = Conv3d(64, 128, kernelSize=3, activation= dsharp.relu)
+    let conv4 = Conv3d(128, 128, kernelSize=3, activation= dsharp.relu)
+    let conv5 = Conv3d(128, 256, kernelSize=2, activation= dsharp.relu)
+    let conv6 = Conv3d(256, 256, kernelSize=2, activation= dsharp.relu)
     
-    let pool = MaxPool3D<Float>(poolSize: (1, 2, 2), strides = [1, 2, 2))
+    let pool = MaxPool3d(poolSize: (1, 2, 2), strides = [1; 2; 2])
     let flatten = Flatten()
     let dropout = Dropout2d(p=0.5)
     
     let dense1 = Linear(inFeatures=86528, outFeatures=1024)
     let dense2 = Linear(inFeatures=1024, outFeatures=1024)
-    let output: Dense
-    
-    public init(classCount: int) = 
-        self.output = Linear(inFeatures=1024, outFeatures=classCount)
-
-    
+    let output = Linear(inFeatures=1024, outFeatures=classCount)
     
     override _.forward(input) =
-        return input
-             |> conv1, pool, conv2, pool)
-             |> conv3, conv4, pool, conv5, conv6, pool)
-             |> flatten, dense1, dropout, dense2, output)
+        input
+        |> conv1.forward |> pool.forward |> conv2.forward |> pool.forward
+        |> conv3.forward |> conv4.forward |> pool.forward |> conv5.forward |> conv6.forward |> pool.forward
+        |> flatten.forward |> dense1.forward |> dropout.forward |> dense2.forward |> output.forward
 
 

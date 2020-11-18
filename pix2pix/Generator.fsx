@@ -44,6 +44,6 @@ type NetG(inputChannels: int, outputChannels: int, ngf: int, useDropout: bool = 
                                                 submodule: module6)
 
     override _.forward(input) =
-        return self.module(input)
+        self.module(input)
 
 

@@ -87,7 +87,7 @@ extension CheckpointIndexWriter {
                 metaIndexHandle: (metaIndexOffset, metaIndexSize),
                 indexHandle: (indexOffset, indexSize)))
 
-        return outputBuffer
+        outputBuffer
 
 
     // Based on the LevelDB implementation of the same function.
@@ -97,11 +97,11 @@ extension CheckpointIndexWriter {
             let castByte = byte(byte)
             if castByte <> 0xFF then
                 newKeyBytes.append(castByte + 1)
-                return newKeyBytes
+                newKeyBytes
 
             newKeyBytes.append(castByte)
 
-        return newKeyBytes
+        newKeyBytes
 
 
     let headerBlock(shards: int) = Data {
@@ -117,7 +117,7 @@ extension CheckpointIndexWriter {
                 sharedKeyBytes: 0, newKeyBytes: 0, valueLength: headerValue.count)
             outputBuffer.append(headerValue)
 
-            return outputBuffer
+            outputBuffer
         with e ->
             fatalError("Could not serialize header protobuf: {error}.")
 
@@ -131,7 +131,7 @@ extension CheckpointIndexWriter {
         shape.dim = tensor.shape.dimensions.map { size -> Tensorflow_TensorShapeProto.Dim in
             let dim = Tensorflow_TensorShapeProto.Dim()
             dim.size = Int64(size)
-            return dim
+            dim
 
 
         let tensorSize: Int64 = Int64(
@@ -165,7 +165,7 @@ extension CheckpointIndexWriter {
             let suffix = key.suffix(newCharacters).utf8
             outputBuffer.append(suffix)
             outputBuffer.append(entryValue)
-            return outputBuffer
+            outputBuffer
         with e ->
             fatalError("Could not serialize header protobuf: {error}.")
 
@@ -193,7 +193,7 @@ extension CheckpointIndexWriter {
         let crc32C = outputBuffer.maskedCRC32C()
         outputBuffer.append(crc32C.littleEndianBuffer)
 
-        return outputBuffer
+        outputBuffer
 
 
     let metaIndexBlock() = Data {
@@ -205,7 +205,7 @@ extension CheckpointIndexWriter {
         let crc32C = outputBuffer.maskedCRC32C()
         outputBuffer.append(crc32C.littleEndianBuffer)
 
-        return outputBuffer
+        outputBuffer
 
 
     let footerBlock(metaIndexHandle: (int * int), indexHandle: (int * int)) = Data {
@@ -222,7 +222,7 @@ extension CheckpointIndexWriter {
         footerBytes.append(Data(count: footerSize - 8 - footerBytes.count))
         let magicNumber: byte[] = [0x57, 0xFB, 0x80, 0x8B, 0x24, 0x75, 0x47, 0xDB]
         footerBytes.append(magicNumber)
-        return footerBytes
+        footerBytes
 
 
     let indexBytes(sharedKeyBytes: int, newKeyBytes: int, valueLength: int) = Data {
@@ -230,7 +230,7 @@ extension CheckpointIndexWriter {
         outputBuffer.appendVarint(sharedKeyBytes)
         outputBuffer.appendVarint(newKeyBytes)
         outputBuffer.appendVarint(valueLength)
-        return outputBuffer
+        outputBuffer
 
 
 
@@ -248,7 +248,7 @@ extension Data {
 
 extension UInt32 {
     let littleEndianBuffer: byte[] {
-        return [self].withUnsafeBufferPointer { (ptr) in
+        [self].withUnsafeBufferPointer { (ptr) in
             ptr.baseAddress!.withMemoryRebound(
                 byte.self, capacity: 4
             ) =  [byte](UnsafeBufferPointer(start: $0, count: 4))

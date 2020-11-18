@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 // Original Paper:
@@ -20,11 +22,11 @@ open DiffSharp
 // http://yann.lecun.com/exdb/publis/pdf/lecun-01a.pdf
 //
 // Note: this implementation connects all the feature maps in the second convolutional layer.
-// Additionally, ReLU is used instead of sigmoid activations.
+// Additionally, ReLU is used instead of dsharp.sigmoid activations.
 
 type LeNet() =
     inherit Model()
-    let conv1 = Conv2d(filterShape=(5, 5, 1, 6), padding="same", activation= dsharp.relu)
+    let conv1 = Conv2d(kernelSize=(5, 5, 1, 6), padding=kernelSize/2 (* "same " *), activation= dsharp.relu)
     let pool1 = AvgPool2D<Float>(kernelSize=2, stride=2)
     let conv2 = Conv2d(6, 16, kernelSize=5, activation= dsharp.relu)
     let pool2 = AvgPool2D<Float>(kernelSize=2, stride=2)
@@ -38,6 +40,6 @@ type LeNet() =
     
     override _.forward(input) =
         let convolved = input |> conv1, pool1, conv2, pool2)
-        return convolved |> flatten, fc1, fc2, fc3)
+        convolved |> flatten, fc1, fc2, fc3)
 
 

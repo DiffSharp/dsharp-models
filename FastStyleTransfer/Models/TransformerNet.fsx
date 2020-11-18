@@ -15,16 +15,16 @@ type ResidualBlock(channels: int) =
     inherit Model()
     /// Convolution & instance normalization layers.
     let conv1 = ConvLayer(inChannels=channels, outChannels: channels, kernelSize: 3, stride=1)
-    let in1 = InstanceNorm2D(featureCount=channels)
+    let in1 = InstanceNorm2d(numFeatures=channels)
     let conv2 = ConvLayer(inChannels=channels, outChannels: channels, kernelSize: 3, stride=1)
-    let in2 = InstanceNorm2D(featureCount=channels)
+    let in2 = InstanceNorm2d(numFeatures=channels)
 
     /// Returns the output obtained from applying the layer to the given input.
     ///
     /// - Parameter input: The input to the layer.
     /// - Returns: The output.
     override _.forward(input) =
-        return input + input |> conv1, in1, relu, conv2, in2)
+        input + input |> conv1, in1, relu, conv2, in2)
 
 
 
@@ -48,7 +48,7 @@ type UpsampleConvLayer(inChannels: int, outChannels: int, kernelSize: int, strid
     /// Padding layer.
     let reflectionPad = ReflectionPad2D<Float>(padding: int(kernelSize / 2))
     /// Convolution layer.
-    let conv2d = Conv2d(filterShape=(kernelSize, kernelSize, inChannels, outChannels),strides = [stride; stride])
+    let conv2d = Conv2d(kernelSize=(kernelSize, kernelSize, inChannels, outChannels),strides = [stride; stride])
 
     /// Returns the output obtained from applying the layer to the given input.
     ///
@@ -67,11 +67,11 @@ type TransformerNet() =
     inherit Model()
     // Convolution & instance normalization layers.
     let conv1 = ConvLayer(inChannels=3, outChannels: 32, kernelSize: 9, stride=1)
-    let in1 = InstanceNorm2D(featureCount=32)
-    let conv2 = ConvLayer(inChannels=32, outChannels: 64, kernelSize: 3, stride: 2)
-    let in2 = InstanceNorm2D(featureCount=64)
-    let conv3 = ConvLayer(inChannels=64, outChannels: 128, kernelSize: 3, stride: 2)
-    let in3 = InstanceNorm2D(featureCount=128)
+    let in1 = InstanceNorm2d(numFeatures=32)
+    let conv2 = ConvLayer(inChannels=32, outChannels: 64, kernelSize: 3, stride=2)
+    let in2 = InstanceNorm2d(numFeatures=64)
+    let conv3 = ConvLayer(inChannels=64, outChannels: 128, kernelSize: 3, stride=2)
+    let in3 = InstanceNorm2d(numFeatures=128)
 
     // Residual block layers.
     let res1 = ResidualBlock(channels: 128)
@@ -84,11 +84,11 @@ type TransformerNet() =
     let deconv1 = UpsampleConvLayer(
         inChannels=128, outChannels: 64,
         kernelSize: 3, stride=1, scaleFactor: 2.0)
-    let in4 = InstanceNorm2D(featureCount=64)
+    let in4 = InstanceNorm2d(numFeatures=64)
     let deconv2 = UpsampleConvLayer(
         inChannels=64, outChannels: 32,
         kernelSize: 3, stride=1, scaleFactor: 2.0)
-    let in5 = InstanceNorm2D(featureCount=32)
+    let in5 = InstanceNorm2d(numFeatures=32)
     let deconv3 = UpsampleConvLayer(
         inChannels=32, outChannels: 3,
         kernelSize: 9, stride=1)
@@ -112,7 +112,7 @@ type TransformerNet() =
         let upscaled1 = residual |> deconv1, in4, relu)
         let upscaled2 = upscaled1 |> deconv2, in5)
         let upscaled3 = deconv3(upscaled2)
-        return upscaled3
+        upscaled3
 
 /// Helper layer: convolution with padding.
 /// Creates 2D convolution with padding layer.
@@ -128,7 +128,7 @@ type ConvLayer(inChannels: int, outChannels: int, kernelSize: int, stride: int) 
     /// Padding layer.
     let reflectionPad = ReflectionPad2D<Float>(padding=int(kernelSize / 2))
     /// Convolution layer.
-    let conv2d = Conv2d(filterShape=(kernelSize, kernelSize, inChannels, outChannels), strides = [stride, stride])
+    let conv2d = Conv2d(kernelSize=(kernelSize, kernelSize, inChannels, outChannels), strides = [stride, stride])
 
     /// Returns the output obtained from applying the layer to the given input.
     ///

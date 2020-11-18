@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 // Original Paper:
@@ -30,17 +32,17 @@ type ConvBN() =
     let norm: BatchNorm<Float>
 
     public init(
-        filterShape=(Int, Int, Int, Int),
+        kernelSize=(Int, Int, Int, Int),
         strides = [Int, Int) = (1, 1),
         padding: Padding = .valid
     ) = 
-        self.conv = Conv2d(filterShape: filterShape, strides: strides, padding: padding, useBias: false)
-        self.norm = BatchNorm(featureCount=filterShape.3, momentum: 0.9, epsilon: 1e-5)
+        self.conv = Conv2d(filterShape: filterShape, strides=strides, padding: padding, useBias: false)
+        self.norm = BatchNorm2d(numFeatures=filterShape.3, momentum: 0.9, epsilon: 1e-5)
 
 
     
     override _.forward(input) =
-        return input |> conv, norm)
+        input |> conv, norm)
 
 
 
@@ -58,30 +60,30 @@ type ResidualBlock() =
         self.needsProjection = (inputFilters <> outFilters) || (strides.0 <> 1)
         // TODO: Replace the following, so as to not waste memory for non-projection cases.
         if needsProjection then
-            projection = ConvBN(filterShape=(1, 1, inputFilters, outFilters), strides: strides)
+            projection = ConvBN(kernelSize=(1, 1, inputFilters, outFilters), strides=strides)
         else
-            projection = ConvBN(filterShape=(1, 1, 1, 1))
+            projection = ConvBN(kernelSize=(1, 1, 1, 1))
 
 
         if isBasic then
             earlyConvs = [
                 (ConvBN(
-                    filterShape=(3, 3, inputFilters, filters), strides: strides, padding="same")),
+                    kernelSize=(3, 3, inputFilters, filters), strides=strides, padding=kernelSize/2 (* "same " *))),
             ]
-            lastConv = ConvBN(filterShape=(3, 3, filters, outFilters), padding="same")
+            lastConv = ConvBN(kernelSize=(3, 3, filters, outFilters), padding=kernelSize/2 (* "same " *))
         else
             if useLaterStride then
                 // Configure for ResNet V1.5 (the more common implementation).
-                earlyConvs.append(ConvBN(filterShape=(1, 1, inputFilters, filters)))
+                earlyConvs.append(ConvBN(kernelSize=(1, 1, inputFilters, filters)))
                 earlyConvs.append(
-                    ConvBN(filterShape=(3, 3, filters, filters), strides: strides, padding="same"))
+                    ConvBN(kernelSize=(3, 3, filters, filters), strides=strides, padding=kernelSize/2 (* "same " *)))
             else
                 // Configure for ResNet V1 (the paper implementation).
                 earlyConvs.append(
-                    ConvBN(filterShape=(1, 1, inputFilters, filters), strides: strides))
-                earlyConvs.append(ConvBN(filterShape=(3, 3, filters, filters), padding="same"))
+                    ConvBN(kernelSize=(1, 1, inputFilters, filters), strides=strides))
+                earlyConvs.append(ConvBN(kernelSize=(3, 3, filters, filters), padding=kernelSize/2 (* "same " *)))
 
-            lastConv = ConvBN(filterShape=(1, 1, filters, outFilters))
+            lastConv = ConvBN(kernelSize=(1, 1, filters, outFilters))
 
 
 
@@ -101,7 +103,7 @@ type ResidualBlock() =
 
         let lastConvResult = lastConv(earlyConvsReduced)
 
-        return relu(lastConvResult + residual)
+        relu(lastConvResult + residual)
 
 
 
@@ -111,7 +113,7 @@ type ResNet() =
     let initialLayer: ConvBN
     let maxPool: MaxPool2d
     let residualBlocks: ResidualBlock[] = [| |]
-    let avgPool = GlobalAvgPool2D<Float>()
+    let avgPool = GlobalAvgPool2d()
     let flatten = Flatten()
     let classifier: Dense
 
@@ -137,21 +139,21 @@ type ResNet() =
         if downsamplingInFirstStage then
             inputFilters = 64
             initialLayer = ConvBN(
-                filterShape=(7, 7, 3, inputFilters), stride=2, padding="same")
-            maxPool = MaxPool2D(poolSize: (3, 3), stride=2, padding="same")
+                kernelSize=(7, 7, 3, inputFilters), stride=2, padding=kernelSize/2 (* "same " *))
+            maxPool = MaxPool2D(poolSize: (3, 3), stride=2, padding=kernelSize/2 (* "same " *))
         else
             inputFilters = 16
-            initialLayer = ConvBN(filterShape=(3, 3, 3, inputFilters), padding="same")
+            initialLayer = ConvBN(kernelSize=(3, 3, 3, inputFilters), padding=kernelSize/2 (* "same " *))
             maxPool = MaxPool2D(poolSize: (1, 1), stride=1)  // no-op
 
 
         let lastInputFilterCount = inputFilters
         for (blockSizeIndex, blockSize) in depth.layerBlockSizes.enumerated() do
-            for blockIndex in 0..<blockSize {
+            for blockIndex in 0..blockSize-1 do
                 let strides = ((blockSizeIndex > 0) && (blockIndex = 0)) ? (2, 2) : (1, 1)
                 let filters = inputFilters * int(pow(2.0, Double(blockSizeIndex)))
                 let residualBlock = ResidualBlock(
-                    inputFilters: lastInputFilterCount, filters: filters, strides: strides,
+                    inputFilters: lastInputFilterCount, filters: filters, strides=strides,
                     useLaterStride: useLaterStride, isBasic: depth.usesBasicBlocks)
                 lastInputFilterCount = filters * (depth.usesBasicBlocks ? 1 : 4)
                 residualBlocks.append(residualBlock)
@@ -170,22 +172,22 @@ type ResNet() =
         let blocksReduced = residualBlocks.differentiableReduce(inputLayer) =  last, layer in
             layer(last)
 
-        return blocksReduced |> avgPool, flatten, classifier)
+        blocksReduced |> avgPool, flatten, classifier)
 
 
 
 extension ResNet {
     type Depth {
-        case resNet18
-        case resNet34
-        case resNet50
-        case resNet56
-        case resNet101
-        case resNet152
+        | resNet18
+        | resNet34
+        | resNet50
+        | resNet56
+        | resNet101
+        | resNet152
 
         let usesBasicBlocks: bool {
             match self with
-            case .resNet18, .resNet34, .resNet56 -> true
+            | .resNet18, .resNet34, .resNet56 -> true
             | _ -> return false
 
 

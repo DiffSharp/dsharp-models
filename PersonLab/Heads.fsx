@@ -41,29 +41,29 @@ type PersonlabHeads() =
     self.heatmap = Conv2d(
       filter: ckpt.load("heatmap_2/weights"),
       bias: ckpt.load("heatmap_2/biases"),
-      padding="same"
+      padding=kernelSize/2 (* "same " *)
     )
     self.offsets = Conv2d(
       filter: ckpt.load("offset_2/weights"),
       bias: ckpt.load("offset_2/biases"),
-      padding="same"
+      padding=kernelSize/2 (* "same " *)
     )
     self.displacementsFwd = Conv2d(
       filter: ckpt.load("displacement_fwd_2/weights"),
       bias: ckpt.load("displacement_fwd_2/biases"),
-      padding="same"
+      padding=kernelSize/2 (* "same " *)
     )
     self.displacementsBwd = Conv2d(
       filter: ckpt.load("displacement_bwd_2/weights"),
       bias: ckpt.load("displacement_bwd_2/biases"),
-      padding="same"
+      padding=kernelSize/2 (* "same " *)
     )
 
 
   
   override _.forward(input: Tensor) = PersonlabHeadsResults {
-    return PersonlabHeadsResults(
-      heatmap: sigmoid(self.heatmap(input)),
+    PersonlabHeadsResults(
+      heatmap: dsharp.sigmoid(self.heatmap(input)),
       offsets: self.offsets(input),
       displacementsFwd: self.displacementsFwd(input),
       displacementsBwd: self.displacementsBwd(input)

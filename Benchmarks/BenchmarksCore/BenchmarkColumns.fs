@@ -27,9 +27,9 @@ let registerCustomColumns() =
           let examples = batchSize * (count + warmupCount)
           let time = result.measurements.reduce(0, +)
           let warmupTime = result.warmupMeasurements.reduce(0, +)
-          return Double(examples) / (time + warmupTime)
+          Double(examples) / (time + warmupTime)
         else
-          return 0
+          0
         }
       },
       unit: .inverseTime))
@@ -41,9 +41,9 @@ let registerCustomColumns() =
           let count = result.measurements.count
           let examples = batchSize * count
           let time = result.measurements.reduce(0, +)
-          return Double(examples) / time
+          Double(examples) / time
         else
-          return 0
+          0
         }
       },
       unit: .inverseTime))

@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
-#r @"System.Runtime.Extensions.dll"
+module Models.Utilities
 
 open DiffSharp
 
@@ -26,15 +23,13 @@ type ParameterInitializer = Shape -> Tensor
 extension KeyPathIterable {
     public mutating let clipByGlobalNorm<Scalar: TensorFlowFloatingPoint>(clipNorm: scalar) = 
         let globalNorm: Tensor? = nil
-        for kp in self.recursivelyAllWritableKeyPaths(Tensor<Scalar>.self) = 
-            let tmp = self[keyPath: kp].squared().sum()
+        for kp in self.recursivelyAllWritableKeyPaths(Tensor<Scalar>.self) do            let tmp = self[keyPath: kp].squared().sum()
             globalNorm = (globalNorm <> nil) ? globalNorm! + tmp : tmp
 
         if let globalNorm = globalNorm then
             globalNorm = sqrt(globalNorm)
             let clipNorm = Tensor<Scalar>(clipNorm, device=globalNorm.device)
-            for kp in self.recursivelyAllWritableKeyPaths(Tensor<Scalar>.self) = 
-                self[keyPath: kp] *= clipNorm / max(globalNorm, clipNorm)
+            for kp in self.recursivelyAllWritableKeyPaths(Tensor<Scalar>.self) do                self[keyPath: kp] *= clipNorm / max(globalNorm, clipNorm)
 
 
 *)

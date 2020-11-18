@@ -46,7 +46,7 @@ type ConvBN() =
     let norm: BatchNorm<Float>
 
     init(
-        filterShape=(Int, Int, Int, Int),
+        kernelSize=(Int, Int, Int, Int),
         strides = [Int, Int) = (1, 1),
         padding: Padding,
         bias: bool = true,
@@ -54,13 +54,13 @@ type ConvBN() =
     ) = 
         // TODO(jekbradbury): thread through bias and affine boolean arguments
         // (behavior is correct for inference but this should be changed for training)
-        self.conv = Conv2d(filterShape: filterShape, strides: strides, padding: padding)
-        self.norm = BatchNorm(featureCount=filterShape.3, momentum: 0.95, epsilon: 1e-5)
+        self.conv = Conv2d(filterShape: filterShape, strides=strides, padding: padding)
+        self.norm = BatchNorm2d(numFeatures=filterShape.3, momentum: 0.95, epsilon: 1e-5)
 
 
     
     override _.forward(input) =
-        return norm(conv(input))
+        norm(conv(input))
 
 
 
@@ -78,13 +78,13 @@ type ResidualIdentityBlock() =
 
     public init(featureCounts: (int * int), kernelSize: int = 3) = 
         self.layer1 = ConvBN(
-            filterShape=(kernelSize, kernelSize, featureCounts.0, featureCounts.1),
-            padding="same",
+            kernelSize=(kernelSize, kernelSize, featureCounts.0, featureCounts.1),
+            padding=kernelSize/2 (* "same " *),
             bias: false)
 
         self.layer2 = ConvBN(
-            filterShape=(kernelSize, kernelSize, featureCounts.1, featureCounts.1),
-            padding="same",
+            kernelSize=(kernelSize, kernelSize, featureCounts.1, featureCounts.1),
+            padding=kernelSize/2 (* "same " *),
             bias: false)
 
 
@@ -92,7 +92,7 @@ type ResidualIdentityBlock() =
     override _.forward(input) =
         let tmp = relu(layer1(input))
         tmp = layer2(tmp)
-        return relu(tmp + input)
+        relu(tmp + input)
 
 
 
@@ -125,15 +125,15 @@ type GoModel() =
         self.configuration = configuration
         
         initialConv = ConvBN(
-            filterShape=(3, 3, 17, configuration.convWidth),
-            padding="same",
+            kernelSize=(3, 3, 17, configuration.convWidth),
+            padding=kernelSize/2 (* "same " *),
             bias: false)
         residualBlocks = (1..configuration.boardSize).map { _ in
             ResidualIdentityBlock(featureCounts: (configuration.convWidth, configuration.convWidth))
 
         policyConv = ConvBN(
-            filterShape=(1, 1, configuration.convWidth, configuration.policyConvWidth),
-            padding="same",
+            kernelSize=(1, 1, configuration.convWidth, configuration.policyConvWidth),
+            padding=kernelSize/2 (* "same " *),
             bias: false,
             affine: false)
         policyDense = Linear(
@@ -142,8 +142,8 @@ type GoModel() =
             outputSize=configuration.boardSize * configuration.boardSize + 1,
             activation= {$0)
         valueConv = ConvBN(
-            filterShape=(1, 1, configuration.convWidth, configuration.valueConvWidth),
-            padding="same",
+            kernelSize=(1, 1, configuration.convWidth, configuration.valueConvWidth),
+            padding=kernelSize/2 (* "same " *),
             bias: false,
             affine: false)
         valueDense1 = Linear(
@@ -162,7 +162,7 @@ type GoModel() =
         let batchSize = input.shape.[0]
         let output = relu(initialConv(input))
 
-        for i in 0..<configuration.boardSize {
+        for i in 0..<configuration.boardSize do
             output = residualBlocks[i](output)
 
 
@@ -178,7 +178,7 @@ type GoModel() =
              configuration.valueConvWidth * configuration.boardSize * configuration.boardSize]))
         let valueOutput = valueDense2(valueHidden).view([batchSize])
 
-        return GoModelOutput(policy: policyOutput, value: valueOutput, logits=logits)
+        GoModelOutput(policy: policyOutput, value: valueOutput, logits=logits)
 
 
     @usableFromInline
@@ -188,7 +188,7 @@ type GoModel() =
         -> (GoModel.TangentVector, Tensor<Float>)) = 
         // TODO(jekbradbury): add a real VJP
         // (we're only interested in inference for now and have control flow in our `call(_:)` method)
-        return (self(input), {
+        (self(input), {
             seed in (GoModel.TangentVector.zero, Tensor<Float>(0))
 )
 
@@ -196,14 +196,14 @@ type GoModel() =
 
 extension GoModel: InferenceModel {
     let prediction(for input: Tensor) = GoModelOutput {
-        return self(input)
+        self(input)
 
 
 
 extension GoModel: LoadableFromPythonCheckpoint {
     public mutating let load(from reader: MiniGoCheckpointReader) = 
         initialConv.load(reader)
-        for i in 0..<configuration.boardSize {
+        for i in 0..<configuration.boardSize do
             residualBlocks[i].load(reader)
 
 

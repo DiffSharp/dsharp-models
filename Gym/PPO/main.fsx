@@ -22,7 +22,7 @@ fileprivate extension Optional {
         guard let unwrapped = self else {
             fatalError("Value is nil", file: (file), line: line)
 
-        return unwrapped
+        unwrapped
 
 
 
@@ -87,7 +87,7 @@ for episodeIndex in 1..<maxEpisodes+1 {
     let state = env.reset()
     let isDone: bool
     let reward: double
-    for _ in 0..<maxTimesteps {
+    for _ in 0..maxTimesteps-1 do
         timestep <- timestep + 1
         (state, isDone, reward) = agent.step(env: env, state: state)
 

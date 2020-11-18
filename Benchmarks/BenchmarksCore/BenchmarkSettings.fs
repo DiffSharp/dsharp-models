@@ -44,8 +44,8 @@ type Backend: BenchmarkSetting {
     self.value = value
   }
   type Value {
-    case x10
-    case eager
+    | x10
+    | Eager
   }
 }
 
@@ -55,10 +55,10 @@ type Platform: BenchmarkSetting {
     self.value = value
   }
   type Value {
-    case `default`
-    case cpu
-    case gpu
-    case tpu
+    | `default`
+    | cpu
+    | gpu
+    | tpu
   }
 }
 
@@ -71,16 +71,16 @@ type DatasetFilePath: BenchmarkSetting {
 
 extension BenchmarkSettings {
   let batchSize: int? {
-    return self[BatchSize.self]?.value
+    self[BatchSize.self]?.value
   }
 
   let length: int? {
-    return self[Length.self]?.value
+    self[Length.self]?.value
   }
 
   let synthetic: bool {
     if let value = self[Synthetic.self]?.value {
-      return value
+      value
     else
       fatalError("Synthetic setting must have a default.")
     }
@@ -88,7 +88,7 @@ extension BenchmarkSettings {
 
   let backend: Backend.Value {
     if let value = self[Backend.self]?.value {
-      return value
+      value
     else
       fatalError("Backend setting must have a default.")
     }
@@ -96,7 +96,7 @@ extension BenchmarkSettings {
 
   let platform: Platform.Value {
     if let value = self[Platform.self]?.value {
-      return value
+      value
     else
       fatalError("Platform setting must have a default.")
     }
@@ -109,7 +109,7 @@ extension BenchmarkSettings {
     let _ = _ExecutionContext.global
 
     match backend with
-    | .eager ->
+    | Eager ->
       match platform with
       | .default -> return Device.defaultTFEager
       | .cpu -> return Device(kind: .CPU, ordinal: 0, backend: .TF_EAGER)
@@ -127,7 +127,7 @@ extension BenchmarkSettings {
   }
 
   let datasetFilePath: string? {
-    return self[DatasetFilePath.self]?.value
+    self[DatasetFilePath.self]?.value
   }
 }
 

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 // Original Paper:
@@ -23,7 +25,7 @@ open DiffSharp
 
 type ConvBlock() =
     inherit Model()
-    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d<Float>(padding: ((0, 1), (0, 1)))
     let conv: Conv2D<Float>
     let batchNorm: BatchNorm<Float>
 
@@ -33,16 +35,16 @@ type ConvBlock() =
         let scaledFilterCount: int = int(double(filterCount) * widthMultiplier)
 
         conv = Conv2d(
-            filterShape=(3, 3, 3, scaledFilterCount),
-            strides: strides,
+            kernelSize=(3, 3, 3, scaledFilterCount),
+            strides=strides,
             padding="valid")
-        batchNorm = BatchNorm(featureCount=scaledFilterCount)
+        batchNorm = BatchNorm2d(numFeatures=scaledFilterCount)
 
 
     
     override _.forward(input) =
         let convolved = input |> zeroPad, conv, batchNorm)
-        return relu6(convolved)
+        relu6(convolved)
 
 
 
@@ -52,8 +54,8 @@ type DepthwiseConvBlock() =
     let strides = [Int, Int)
 
     @noDerivative
-    let zeroPad = ZeroPadding2D<Float>(padding: ((0, 1), (0, 1)))
-    let dConv: DepthwiseConv2D<Float>
+    let zeroPad = ZeroPadding2d<Float>(padding: ((0, 1), (0, 1)))
+    let dConv: DepthwiseConv2d<Float>
     let batchNorm1: BatchNorm<Float>
     let conv: Conv2D<Float>
     let batchNorm2: BatchNorm<Float>
@@ -70,33 +72,33 @@ type DepthwiseConvBlock() =
         let scaledFilterCount = int(double(filterCount) * widthMultiplier)
         let scaledPointwiseFilterCount = int(double(pointwiseFilterCount) * widthMultiplier)
 
-        dConv = DepthwiseConv2D<Float>(
-            filterShape=(3, 3, scaledFilterCount, depthMultiplier),
-            strides: strides,
+        dConv = DepthwiseConv2d(
+            kernelSize=(3, 3, scaledFilterCount, depthMultiplier),
+            strides=strides,
             padding: strides = (1, 1) ? .same : .valid)
-        batchNorm1 = BatchNorm(
+        batchNorm1 = BatchNorm2d((
             featureCount: scaledFilterCount * depthMultiplier)
         conv = Conv2d(
-            filterShape=(
+            kernelSize=(
                 1, 1, scaledFilterCount * depthMultiplier,
                 scaledPointwiseFilterCount
             ),
             stride=1,
-            padding="same")
-        batchNorm2 = BatchNorm(featureCount=scaledPointwiseFilterCount)
+            padding=kernelSize/2 (* "same " *))
+        batchNorm2 = BatchNorm2d(numFeatures=scaledPointwiseFilterCount)
 
 
     
     override _.forward(input) =
         let convolved1: Tensor
-        if self.strides = (1, 1) = 
+        if self.strides = (1, 1) then
             convolved1 = input |> dConv, batchNorm1)
         else
             convolved1 = input |> zeroPad, dConv, batchNorm1)
 
         let convolved2 = relu6(convolved1)
         let convolved3 = relu6(convolved2 |> conv, batchNorm2))
-        return convolved3
+        convolved3
 
 
 
@@ -119,7 +121,7 @@ type MobileNetV1() =
     let dConvBlock11: DepthwiseConvBlock
     let dConvBlock12: DepthwiseConvBlock
     let dConvBlock13: DepthwiseConvBlock
-    let avgPool = GlobalAvgPool2D<Float>()
+    let avgPool = GlobalAvgPool2d()
     let dropoutLayer: Dropout<Float>
     let convLast: Conv2D<Float>
 
@@ -212,9 +214,9 @@ type MobileNetV1() =
 
         dropoutLayer = Dropout(probability: dropout)
         convLast = Conv2d(
-            filterShape=(1, 1, scaledFilterShape, classCount),
+            kernelSize=(1, 1, scaledFilterShape, classCount),
             stride=1,
-            padding="same")
+            padding=kernelSize/2 (* "same " *))
 
 
     
@@ -231,6 +233,6 @@ type MobileNetV1() =
             ])
         let convolved4 = convolved3 |> dropoutLayer, convLast)
         let output = convolved4.view([input.shape.[0], classCount])
-        return output
+        output
 
 

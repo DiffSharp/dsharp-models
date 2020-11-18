@@ -146,7 +146,7 @@ let scoreAndGradient(model: SNLM, sentence: CharacterSequence, device: Device) =
     let score = lattice[sentence.count].semiringScore
     let expectedLength = exp(score.logr - score.logp)
     let loss = -1 * score.logp + lambd * expectedLength
-    return dsharp.tensor(loss, on: device)
+    dsharp.tensor(loss, on: device)
   }
 }
 

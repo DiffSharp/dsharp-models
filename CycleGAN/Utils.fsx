@@ -22,10 +22,10 @@ open DiffSharp.Model
 
 //extension BatchNorm: FeatureChannelInitializable {
 //    public init(featureCount: int) = 
-//        self.init(featureCount=featureCount, axis = -1, momentum: 0.99, epsilon: 0.001)
+//        self.init(numFeatures=featureCount, axis = -1, momentum: 0.99, epsilon: 0.001)
 
-//extension InstanceNorm2D: FeatureChannelInitializable {
+//extension InstanceNorm2d: FeatureChannelInitializable {
 //    public init(featureCount: int) = 
-//        self.init(featureCount=featureCount, epsilon: dsharp.tensor(1e-5))
+//        self.init(numFeatures=featureCount, epsilon: dsharp.tensor(1e-5))
 
 

@@ -14,42 +14,42 @@ open TurboJPEG
 #endif
 
 public enum pixelFormat: int {
-    case RGB888 = 0 // TJPF_RGB
-    case BGR888 = 1 // TJPF_BGR
-    case RGBA8888 = 2 // TJPF_RGBA
-    case BGRA8888 = 3 // TJPF_BGRA
-    case ARGB8888 = 4 // TJPF_ARGB
-    case ABGR8888 = 5 // TJPF_ABGR
-    case RGBA8880 = 6 // TJPF_RGBX
-    case BGRA8880 = 7 // TJPF_BGRX
-    case ARGB0888 = 8 // TJPF_XRGB
-    case ABGR0888 = 9 // TJPF_XBGR
-    case YUV400 = 10 // TJPF_GREY
+    | RGB888 = 0 // TJPF_RGB
+    | BGR888 = 1 // TJPF_BGR
+    | RGBA8888 = 2 // TJPF_RGBA
+    | BGRA8888 = 3 // TJPF_BGRA
+    | ARGB8888 = 4 // TJPF_ARGB
+    | ABGR8888 = 5 // TJPF_ABGR
+    | RGBA8880 = 6 // TJPF_RGBX
+    | BGRA8880 = 7 // TJPF_BGRX
+    | ARGB0888 = 8 // TJPF_XRGB
+    | ABGR0888 = 9 // TJPF_XBGR
+    | YUV400 = 10 // TJPF_GREY
 
     let channelCount: int {
         match self with
         | .RGB888 ->
-            return 3
+            3
         | .BGR888 ->
-            return 3
+            3
         | .RGBA8888 ->
-            return 4
+            4
         | .BGRA8888 ->
-            return 4
+            4
         | .ARGB8888 ->
-            return 4
+            4
         | .ABGR8888 ->
-            return 4
+            4
         | .RGBA8880 ->
-            return 3
+            3
         | .BGRA8880 ->
-            return 3
+            3
         | .ARGB0888 ->
-            return 3
+            3
         | .ABGR0888 ->
-            return 3
+            3
         | .YUV400 ->
-            return 1
+            1
         }
     }
 }
@@ -83,7 +83,7 @@ let loadJPEG(atPath path: string, imageFormat: pixelFormat) -> ImageData {
     let data: Data = FileManager.default.contents(atPath: path)!
     let jpegSize: UInt = UInt(data.count)
 
-    return data.withUnsafeBytes {
+    data.withUnsafeBytes {
         let finPointer: UnsafeMutablePointer<byte> = UnsafeMutablePointer<byte>(mutating: $0.baseAddress!.assumingMemoryBound(to: byte.self))
 
         let decompressor = tjInitDecompress()
@@ -106,7 +106,7 @@ let loadJPEG(atPath path: string, imageFormat: pixelFormat) -> ImageData {
          */
         tjDecompress2(decompressor, finPointer, UInt(jpegSize), imageData.buffer, imageData.width, 0, imageData.height, int32(imageFormat.rawValue), 0)
 
-        return imageData
+        imageData
     }
 }
 

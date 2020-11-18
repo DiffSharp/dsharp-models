@@ -15,8 +15,10 @@
 // Adapted from: https://gist.github.com/eaplatanios/eae9c1b4141e961c949d6f2e7d424c6f
 // Untested.
 
-open Datasets
+namespace Models
 
+open Models.BERT
+open Datasets
 open DiffSharp
 
 type BERTClassifier(bert: BERT, classCount: int) = 

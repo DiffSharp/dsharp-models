@@ -177,7 +177,7 @@ type BytePairEncoder(vocabulary: Vocabulary, mergePairs: Map<(string * string), 
             |> Array.tail
 
         let pairs =
-            [| for (index, line) in Seq.indexed lines  do
+            [| for (index, line) in Seq.indexed lines do
                 let tokens = line.Split(" ")
                 if tokens.Length <= 2 then 
                     ((tokens.[0], tokens.[1]), index) |]

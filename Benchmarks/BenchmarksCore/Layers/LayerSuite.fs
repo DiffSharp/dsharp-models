@@ -118,7 +118,7 @@ where
         try state.measure {
           let result = dsharp.grad(layer) =  layer -> Tensor<Float> in
             let predicted = layer(input)
-            return meanAbsoluteError(predicted=predicted, expected=output)
+            meanAbsoluteError(predicted=predicted, expected=output)
           }
           // Force materialization of the lazy results.
           sink <- sink + result

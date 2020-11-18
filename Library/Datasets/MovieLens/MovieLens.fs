@@ -27,13 +27,13 @@ open DiffSharp
 
 extension Sequence where Element: Collection {
     subscript(column column: Element.Index) = [Element.Iterator.Element] {
-        return map { $0[column]
+        map { $0[column]
 
 
 extension Sequence where Iterator.Element: Hashable {
     let unique() = [Iterator.Element] {
         let seen: Set<Iterator.Element> = []
-        return filter { seen.insert($0).inserted
+        filter { seen.insert($0).inserted
 
 
 
@@ -69,7 +69,7 @@ type MovieLens {
             remoteRoot: Uri("http://files.grouplens.org/datasets/movielens/")!,
             localStorageDirectory: localURL)
 
-        return dataFolder
+        dataFolder
 
 
     public init(

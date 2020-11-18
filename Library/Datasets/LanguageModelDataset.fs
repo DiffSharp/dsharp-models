@@ -98,7 +98,7 @@ extension LanguageModelDataset: Collection {
   let startIndex: int { return 0
   let endIndex: int { return batchCount * batchSize  
   
-  let index(after i: int) = Int { return i + 1
+  let index(after i: int) = return i + 1
     
   public subscript(index: int) = TensorPair<int32, int32> {
     get {
@@ -106,7 +106,7 @@ extension LanguageModelDataset: Collection {
       let startIndex = (index % batchSize) * batchLength + (index / batchSize) * sequenceLength
       let sample = readItems(startIndex, startIndex + sampleLength + 1)
       let sample32 = sample.map { int32($0)
-      return TensorPair(
+      TensorPair(
         first: Tensor (*<int32>*)(sample32.prefix(upTo: sampleLength)),
         second: Tensor (*<int32>*)(sample32.suffix(1)))
 
@@ -126,7 +126,7 @@ extension LanguageModelDataset: Collection {
       position = readUntil + cumulativeLength
       index <- index + 1
 
-    return text
+    text
 
 
 

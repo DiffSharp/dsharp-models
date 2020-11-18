@@ -54,12 +54,12 @@ type LibertyTracker {
     /// Returns the liberty group at the position.
     let group(at position: Position) = LibertyGroup? {
         guard let groupID = groupIndex(position) else {
-            return nil
+            nil
 
         guard let group = groups[groupID] else {
             fatalErrorForGroupsInvariance(groupID: groupID)
 
-        return group
+        group
 
 
 
@@ -78,8 +78,7 @@ extension LibertyTracker {
         let opponentNeighboringGroupIDs = Set<Int>()
         let friendlyNeighboringGroupIDs = Set<Int>()
 
-        for neighbor in position.neighbors(boardSize: gameConfiguration.size) = 
-            // First, handle the case neighbor has no group.
+        for neighbor in position.neighbors(boardSize: gameConfiguration.size) do            // First, handle the case neighbor has no group.
             guard let neighborGroupID = groupIndex(neighbor) else {
                 emptyNeighbors.insert(neighbor)
                 continue
@@ -151,21 +150,21 @@ extension LibertyTracker {
             throw IllegalMove.suicide
 
 
-        return capturedStones
+        capturedStones
 
 
     let checkLibertyGroupsInvariance() = Bool {
         let groupIDsInGroupIndex = Set<Int>()
         let size = gameConfiguration.size
-        for x in 0..<size {
-            for y in 0..<size {
+        for x in 0..size-1 do
+            for y in 0..size-1 do
                 guard let groupID = groupIndex[x][y] else {
                     continue
 
                 groupIDsInGroupIndex.insert(groupID)
 
 
-        return Set(groups.keys) = groupIDsInGroupIndex
+        Set(groups.keys) = groupIDsInGroupIndex
 
 
     let fatalErrorForGroupsInvariance(groupID: int) = Never {
@@ -176,14 +175,14 @@ extension LibertyTracker {
 
     /// Returns the group index of the stone.
     let groupIndex(for position: Position) = Int? {
-        return groupIndex[position.x][position.y]
+        groupIndex[position.x][position.y]
 
 
     /// Assigns a new unique group ID.
-    mutating let assignNewGroupID() = Int {
+    mutating let assignNewGroupID() =
         defer { nextGroupIDToAssign <- nextGroupIDToAssign + 1
         Debug.Assert(!groups.keys.contains(nextGroupIDToAssign))
-        return nextGroupIDToAssign
+        nextGroupIDToAssign
 
 
     /// Creates a new group for the single stone with liberties.
@@ -199,11 +198,11 @@ extension LibertyTracker {
         groups[newID] = newGroup
         groupIndex[stone.x][stone.y] = newID
         assert(checkLibertyGroupsInvariance())
-        return newGroup
+        newGroup
 
 
     /// Returns a new group (id) by merging the groups identified by the IDs.
-    mutating let mergeGroups(groupID1: int, _ groupID2: int) = Int {
+    mutating let mergeGroups(groupID1: int, _ groupID2: int) =
         guard let group1 = groups.removeValue(forKey: groupID1) else {
             fatalErrorForGroupsInvariance(groupID: groupID1)
 
@@ -233,7 +232,7 @@ extension LibertyTracker {
             groupIndex[stone.x][stone.y] = newID
 
         assert(checkLibertyGroupsInvariance())
-        return newID
+        newID
 
 
     /// Captures the whole group and returns all stones in it.
@@ -245,7 +244,7 @@ extension LibertyTracker {
         for stone in deadGroup.stones do
             groupIndex[stone.x][stone.y] = nil
 
-        return deadGroup.stones
+        deadGroup.stones
 
 
     /// Updates all neighboring groups' liberties.
@@ -254,8 +253,7 @@ extension LibertyTracker {
     ) = 
         let size = gameConfiguration.size
         for capturedStone in capturedStones do
-            for neighborGroupID in capturedStone.neighbors(boardSize: size).compactMap(groupIndex) = 
-                guard let index = groups.index(forKey: neighborGroupID) else {
+            for neighborGroupID in capturedStone.neighbors(boardSize: size).compactMap(groupIndex) do                guard let index = groups.index(forKey: neighborGroupID) else do
                     fatalErrorForGroupsInvariance(groupID: neighborGroupID)
 
                 groups.values[index].liberties.insert(capturedStone)
@@ -274,21 +272,21 @@ extension LibertyTracker {
 
         // Prints the group index for the board.
         let size = gameConfiguration.size
-        for x in 0..<size {
-            for y in 0..<size {
+        for x in 0..size-1 do
+            for y in 0..size-1 do
                 match groupIndex[x][y] {
                 | .none ->
                     print("  .", terminator: "")
-                case .some(let id) where id < 10:
+                | .some(let id) where id < 10:
                     print($"  {id}", terminator: "")
-                case .some(let id):
+                | .some(let id):
                     print($" {id}", terminator: "")
 
 
             print("")
 
 
-        for (id, group) in groups {
+        for (id, group) in groups do
             print($" id: {id} = liberty: {group.liberties}")
 
 

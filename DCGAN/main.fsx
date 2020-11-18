@@ -98,7 +98,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
             let fakeImages = generator(noiseG)
             let fakeLabels = discriminator(fakeImages)
             let loss = generatorLoss(fakeLabels: fakeLabels)
-            return loss
+            loss
 
         optG.update(&generator, along=δgenerator)
 
@@ -110,7 +110,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
             let realLabels = discriminator(realImages)
             let fakeLabels = discriminator(fakeImages)
             let loss = discriminatorLoss(realLabels: realLabels, fakeLabels: fakeLabels)
-            return loss
+            loss
 
         optD.update(&discriminator, along=δdiscriminator)
 

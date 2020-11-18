@@ -117,7 +117,7 @@ type BenchmarkArguments: ParsableArguments {
       settings.append(DatasetFilePath(value))
     }
 
-    return settings
+    settings
   }
 }
 *)

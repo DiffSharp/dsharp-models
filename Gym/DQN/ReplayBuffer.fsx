@@ -100,6 +100,6 @@ type ReplayBuffer {
     let nextStateBatch = dsharp.tensor(stacking: nextStates).gathering(atIndices: indices, alongAxis: 0)
     let isDoneBatch = dsharp.tensor(stacking: isDones).gathering(atIndices: indices, alongAxis: 0)
 
-    return (stateBatch, actionBatch, rewardBatch, nextStateBatch, isDoneBatch)
+    (stateBatch, actionBatch, rewardBatch, nextStateBatch, isDoneBatch)
 
 

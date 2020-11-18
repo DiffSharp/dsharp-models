@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 /// MLP is a multi-layer perceptron and is used as a component of the DLRM model
@@ -26,9 +28,8 @@ type MLP() =
     /// - Parameter sigmoidLastLayer: if `true`, use a `sigmoid` activation function for the last layer,
     ///   `relu` otherwise.
     init(dims: int[], sigmoidLastLayer: bool = false) = 
-        for i in 0..<(dims.count-1) = 
-            if sigmoidLastLayer && i = dims.count - 2 then
-                blocks.append(Linear(inFeatures=dims[i], outFeatures=dims[i+1], activation= sigmoid))
+        for i in 0..<(dims.count-1) do            if sigmoidLastLayer && i = dims.count - 2 then
+                blocks.append(Linear(inFeatures=dims[i], outFeatures=dims[i+1], activation= dsharp.sigmoid))
             else
                 blocks.append(Linear(inFeatures=dims[i], outFeatures=dims[i+1], activation= dsharp.relu))
 
@@ -40,7 +41,7 @@ type MLP() =
         let blocksReduced = blocks.differentiableReduce(input) =  last, layer in
             layer(last)
 
-        return blocksReduced
+        blocksReduced
 
 
 

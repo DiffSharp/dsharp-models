@@ -14,6 +14,8 @@
 
 open PythonKit
 open DiffSharp
+open DiffSharp.Model
+open DiffSharp.Optim
 
 /// Agent that uses the Proximal Policy Optimization (PPO).
 ///
@@ -21,27 +23,7 @@ open DiffSharp
 /// function) using a clipped objective function. The clipped objective function simplifies the
 /// update equation from its predecessor Trust Region Policy Optimization (TRPO). For more
 /// information, check Proximal Policy Optimization Algorithms (Schulman et al., 2017).
-type PPOAgent {
-    // Cache for trajectory segments for minibatch updates.
-    let memory: PPOMemory
-    /// The learning rate for both the actor and the critic.
-    let learningRate: double
-    /// The discount factor that measures how much to weight to give to future
-    /// rewards when calculating the action value.
-    let discount: double
-    /// Number of epochs to run minibatch updates once enough trajectory segments are collected.
-    let epochs: int
-    /// Parameter to clip the probability ratio.
-    let clipEpsilon: double
-    /// Coefficient for the entropy bonus added to the objective.
-    let entropyCoefficient: double
-
-    let actorCritic: ActorCritic
-    let oldActorCritic: ActorCritic
-    let actorOptimizer: Adam<ActorNetwork>
-    let criticOptimizer: Adam<CriticNetwork>
-
-    init(
+type PPOAgent(
         observationSize: int,
         hiddenSize: int,
         actionCount: int,
@@ -50,26 +32,31 @@ type PPOAgent {
         epochs: int,
         clipEpsilon: double,
         entropyCoefficient: double
-    ) = 
-        self.learningRate = learningRate
-        self.discount = discount
-        self.epochs = epochs
-        self.clipEpsilon = clipEpsilon
-        self.entropyCoefficient = entropyCoefficient
+    ) =
+    /// The learning rate for both the actor and the critic.
+    let learningRate = learningRate
+    /// The discount factor that measures how much to weight to give to future
+    /// rewards when calculating the action value.
+    let discount = discount
+    /// Number of epochs to run minibatch updates once enough trajectory segments are collected.
+    let epochs = epochs
+    /// Parameter to clip the probability ratio.
+    let clipEpsilon = clipEpsilon
+    /// Coefficient for the entropy bonus added to the objective.
+    let entropyCoefficient = entropyCoefficient
 
-        self.memory = PPOMemory()
+    // Cache for trajectory segments for minibatch updates.
+    let memory = PPOMemory()
 
-        self.actorCritic = ActorCritic(
-            observationSize: observationSize,
-            hiddenSize: hiddenSize,
-            actionCount: actionCount
+    let actorCritic = ActorCritic(
+            observationSize=observationSize,
+            hiddenSiz=hiddenSize,
+            actionCount=actionCount
         )
-        self.oldActorCritic = self.actorCritic
-        self.actorOptimizer = Adam(actorCritic.actorNetwork, learningRate: learningRate)
-        self.criticOptimizer = Adam(actorCritic.criticNetwork, learningRate: learningRate)
-
-
-    let step(env: PythonObject, state: PythonObject) = (PythonObject, Bool, Float) = 
+    let mutable oldActorCritic = actorCritic
+    let actorOptimizer = Adam(actorCritic.actorNetwork, learningRate: learningRate)
+    let criticOptimizer = Adam(actorCritic.criticNetwork, learningRate: learningRate)
+    let step(env: PythonObject, state: PythonObject) : (PythonObject * Bool * Float) =
         let tfState: Tensor = Tensor<Float>(numpy: np.array([state], dtype: np.float32))!
         let dist: Categorical<int32> = oldActorCritic(tfState)
         let action: int32 = dist.sample().toScalar()
@@ -83,15 +70,14 @@ type PPOAgent {
             isDone: bool(isDone)!
         )
 
-        return (newState, Bool(isDone)!, double(reward)!)
+        (newState, Bool(isDone)!, double(reward)!)
 
 
     let update() = 
         // Discount rewards for advantage estimation
         let rewards: double[] = [| |]
         let discountedReward: double = 0
-        for i in (0..<memory.rewards.count).reversed() = 
-            if memory.isDones[i] then
+        for i in (0..<memory.rewards.count).reversed() do            if memory.isDones[i] then
                 discountedReward = 0
 
             discountedReward = memory.rewards[i] + (discount * discountedReward)
@@ -108,7 +94,7 @@ type PPOAgent {
         // Optimize actor and critic
         let actorLosses: double[] = [| |]
         let criticLosses: double[] = [| |]
-        for _ in 0..<epochs {
+        for _ in 0..epochs-1 do
             // Optimize policy network (actor)
             let (actorLoss, actorGradients) = valueWithGradient(at: self.actorCritic.actorNetwork) =  actorNetwork -> Tensor<Float> in
                 let npIndices = np.stack([np.arange(oldActions.shape.[0], dtype: np.int32), oldActions.makeNumpyArray()], axis: 1)
@@ -127,7 +113,7 @@ type PPOAgent {
                 let entropyBonus: Tensor = Tensor<Float>(self.entropyCoefficient * dist.entropy())
                 let loss: Tensor = -1 * (surrogateObjective + entropyBonus)
 
-                return loss.mean()
+                loss.mean()
 
             self.actorOptimizer.update(&self.actorCritic.actorNetwork, along=actorGradients)
             actorLosses.append(actorLoss.toScalar())
@@ -137,7 +123,7 @@ type PPOAgent {
                 let stateValues = criticNetwork(oldStates).flattened()
                 let loss: Tensor = 0.5 * pow(stateValues - tfRewards, 2)
 
-                return loss.mean()
+                loss.mean()
 
             self.criticOptimizer.update(&self.actorCritic.criticNetwork, along=criticGradients)
             criticLosses.append(criticLoss.toScalar())

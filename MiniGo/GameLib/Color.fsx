@@ -14,8 +14,8 @@
 
 /// The color of a player or a stone.
 type Color: int {
-    case black = 1
-    case white = -1
+    | black = 1
+    | white = -1
 
 
 extension Color: CaseIterable {

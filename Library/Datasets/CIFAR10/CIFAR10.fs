@@ -86,7 +86,7 @@ type CIFAR10 {
     let trainingSamples = loadCIFARTrainingFiles(in: localStorageDirectory)
     training = TrainingEpochs(samples: trainingSamples, batchSize= batchSize, entropy: entropy)
        |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
-        return batches |> Seq.map{
+        batches |> Seq.map{
           makeBatch(samples: $0, mean: mean, standardDeviation=standardDeviation, device=device)
 
 
@@ -138,7 +138,7 @@ let loadCIFARFile(named name: string, in directory: Uri) = [(data: byte[], label
   let labeledImages: [(data: byte[], label: int32)] = []
 
   let imageByteSize = 3073
-  for imageIndex in 0..<imageCount {
+  for imageIndex in 0..imageCount-1 do
     let baseAddress = imageIndex * imageByteSize
     let label = int32(fileContents[baseAddress])
     let data = [byte](fileContents[(baseAddress + 1)..<(baseAddress + 3073)])

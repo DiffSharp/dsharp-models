@@ -23,7 +23,7 @@ type Identity() =
     override _.forward(input) =
         input
 
-type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
+type InstanceNorm2d(featureCount: int, ?epsilon: Tensor) =
     inherit Model()
 
     /// Small value added in denominator for numerical stability.
@@ -47,7 +47,7 @@ type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
         let res = norm * scale.value.view([featureCount;1;1]) + offset.value.view([featureCount;1;1])
         res
 
-    override _.ToString() = sprintf "InstanceNorm2D(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon
+    override _.ToString() = sprintf "InstanceNorm2d(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon
 
 
 /// Creates 2D convolution with padding layer.
@@ -62,7 +62,7 @@ type ConvLayer(inChannels: int, outChannels: int, kernelSize: int, stride: int, 
 
     let _padding = defaultArg padding (kernelSize / 2)
     /// Padding layer.
-    let pad = ZeroPadding2D(padding=((_padding, _padding), (_padding, _padding)))
+    let pad = ZeroPadding2d(padding=((_padding, _padding), (_padding, _padding)))
     /// Convolution layer.
     let conv2d = Conv2d(inChannels, outChannels, kernelSize,strides = [stride; stride])
 
@@ -83,16 +83,16 @@ type UNetSkipConnectionInnermost() =
     public init(inChannels: int,
                 innerChannels: int,
                 outChannels: int) = 
-        self.downConv = Conv2d(filterShape=(4, 4, inChannels, innerChannels),
+        self.downConv = Conv2d(kernelSize=(4, 4, inChannels, innerChannels),
                                stride=2,
-                               padding="same",
+                               padding=kernelSize/2 (* "same " *),
                                filterInitializer: { dsharp.randn($0,
                                                             standardDeviation=dsharp.scalar(0.02)))
-        self.upNorm = BatchNorm(featureCount=outChannels)
+        self.upNorm = BatchNorm2d(numFeatures=outChannels)
         
-        self.upConv = ConvTranspose2d(filterShape=(4, 4, innerChannels, outChannels),
+        self.upConv = ConvTranspose2d(kernelSize=(4, 4, innerChannels, outChannels),
                                        stride=2,
-                                       padding="same",
+                                       padding=kernelSize/2 (* "same " *),
                                        filterInitializer: { dsharp.randn($0,
                                                                     standardDeviation=dsharp.scalar(0.02)))
 
@@ -104,7 +104,7 @@ type UNetSkipConnectionInnermost() =
         x = relu(x)
         x = x |> self.upConv, self.upNorm)
 
-        return input.cat(x, alongAxis: 3)
+        input.cat(x, alongAxis: 3)
 
 
 
@@ -124,16 +124,16 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
                 outChannels: int,
                 submodule: Sublayer,
                 useDropOut: bool = false) = 
-        self.downConv = Conv2d(filterShape=(4, 4, inChannels, innerChannels),
+        self.downConv = Conv2d(kernelSize=(4, 4, inChannels, innerChannels),
                                stride=2,
-                               padding="same",
+                               padding=kernelSize/2 (* "same " *),
                                filterInitializer: { dsharp.randn($0, standardDeviation=dsharp.scalar(0.02)))
-        self.downNorm = BatchNorm(featureCount=innerChannels)
-        self.upNorm = BatchNorm(featureCount=outChannels)
+        self.downNorm = BatchNorm2d(numFeatures=innerChannels)
+        self.upNorm = BatchNorm2d(numFeatures=outChannels)
         
-        self.upConv = ConvTranspose2d(filterShape=(4, 4, outChannels, innerChannels * 2),
+        self.upConv = ConvTranspose2d(kernelSize=(4, 4, outChannels, innerChannels * 2),
                                        stride=2,
-                                       padding="same",
+                                       padding=kernelSize/2 (* "same " *),
                                        filterInitializer: { dsharp.randn($0,
                                                                     standardDeviation=dsharp.scalar(0.02)))
     
@@ -153,7 +153,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
             x = self.dropOut(x)
 
         
-        return input.cat(x, alongAxis: 3)
+        input.cat(x, alongAxis: 3)
 
 
 
@@ -167,14 +167,14 @@ type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentV
                 innerChannels: int,
                 outChannels: int,
                 submodule: Sublayer) = 
-        self.downConv = Conv2d(filterShape=(4, 4, inChannels, innerChannels),
+        self.downConv = Conv2d(kernelSize=(4, 4, inChannels, innerChannels),
                                stride=2,
-                               padding="same",
+                               padding=kernelSize/2 (* "same " *),
                                filterInitializer: { dsharp.randn($0,
                                                             standardDeviation=dsharp.scalar(0.02)))
-        self.upConv = ConvTranspose2d(filterShape=(4, 4, outChannels, innerChannels * 2),
+        self.upConv = ConvTranspose2d(kernelSize=(4, 4, outChannels, innerChannels * 2),
                                        stride=2,
-                                       padding="same",
+                                       padding=kernelSize/2 (* "same " *),
                                        activation= tanh,
                                        filterInitializer: { dsharp.randn($0,
                                                                     standardDeviation=dsharp.scalar(0.02)))
@@ -188,6 +188,6 @@ type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentV
         x = relu(x)
         x = self.upConv(x)
 
-        return x
+        x
 
 

@@ -85,9 +85,7 @@ type TensorLoopSolution: ShallowWaterEquationSolution {
   let evolved() = TensorLoopSolution {
     let u2 = u1
 
-    for x in withoutDerivative(at: 1..<resolution - 1) = 
-      for y in withoutDerivative(at: 1..<resolution - 1) = 
-        let Δu0 = Δ(u0, x, y)
+    for x in withoutDerivative(at: 1..<resolution - 1) do      for y in withoutDerivative(at: 1..<resolution - 1) do        let Δu0 = Δ(u0, x, y)
         let Δu1 = Δ(u1, x, y)
 
         let Δu0Coefficient = c * α * Δt
@@ -106,7 +104,7 @@ type TensorLoopSolution: ShallowWaterEquationSolution {
 
 
     LazyTensorBarrier(wait: true)
-    return TensorLoopSolution(u0: u1, u1: u2, t: t + Δt)
+    TensorLoopSolution(u0: u1, u1: u2, t: t + Δt)
 
 
   /// Constructs intermediate solution with previous water level `u0`, current water level `u1` and time `t`.
@@ -134,7 +132,7 @@ type TensorLoopSolution: ShallowWaterEquationSolution {
     let center4 = center * 4.0
     let finiteDifference = left + right + up + down - center4
     let Δu = finiteDifference / Δx / Δx
-    return Δu
+    Δu
 
 
 
@@ -149,7 +147,7 @@ extension TensorLoopSolution {
     assert(target.shape.[0] = resolution && target.shape.[1] = resolution)
 
     let error = u1 - target
-    return error.squared().mean().toScalar()
+    error.squared().mean().toScalar()
 
 
 
@@ -174,8 +172,8 @@ extension Tensor where Scalar: TensorFlowFloatingPoint {
     let pullback(`self`: inout Self) = Self {
       let `value` = `self`[x, y]
       `self`[x, y] = dsharp.tensor(0)
-      return `value`
+      `value`
 
-    return ((), pullback)
+    ((), pullback)
 
 

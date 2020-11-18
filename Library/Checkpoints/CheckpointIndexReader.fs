@@ -76,7 +76,7 @@ extension CheckpointIndexReader {
         let value = binaryData.readDataBlock(at: &index, size: valueLength)
 
         let tempHeader = try Tensorflow_BundleHeaderProto( value)
-        return tempHeader
+        tempHeader
 
 
     let readAllKeysAndValues() -> [String: Tensorflow_BundleEntryProto] {
@@ -85,7 +85,7 @@ extension CheckpointIndexReader {
             lookupTable[key] = value
 
 
-        return lookupTable
+        lookupTable
 
 
 
@@ -100,7 +100,7 @@ extension CheckpointIndexReader {
 
         let keyData = currentPrefix[0..<sharedBytes] + newBytes
         currentPrefix = keyData
-        return String(bytes: keyData)!
+        String(bytes: keyData)!
 
 
     let readKeyAndValue() -> (String, Tensorflow_BundleEntryProto)? {
@@ -119,7 +119,7 @@ extension CheckpointIndexReader {
 
         let bundleEntry = try Tensorflow_BundleEntryProto( value)
 
-        return (key, bundleEntry)
+        (key, bundleEntry)
 
 
 *)

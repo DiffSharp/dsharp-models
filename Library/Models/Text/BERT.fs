@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
 
 //open Checkpoints
 open System
@@ -24,8 +25,8 @@ open DiffSharp.Model
 open Checkpoints
 open Datasets
 open Support
-open global.Utilities
-open global.TransformerBERT
+open Models.Utilities
+open Models.TransformerBERT
 
 type Variant =
     /// - Source: [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](
@@ -178,7 +179,7 @@ type BERT(variant: Variant,
             embeddingSize=embeddingSize,
             embeddingsInitializer=truncatedNormalInitializer(dsharp.tensor(initializerStandardDeviation)))
 
-    let embeddingLayerNorm =  LayerNorm(featureCount=hiddenSize, axis = -1)
+    let embeddingLayerNorm =  LayerNorm(numFeatures=hiddenSize, axis = -1)
 
     // TODO: Make dropout generic over the probability type.
     let embeddingDropout = Dropout(p=hiddenDropoutProbability.toDouble())

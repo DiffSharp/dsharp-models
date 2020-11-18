@@ -13,8 +13,8 @@
 // limitations under the License.
 
 type IllegalMove: Error {
-    case suicide
-    case occupied
+    | suicide
+    | occupied
 
     /// A `ko` fight is a tactical and strategic phase that can arise in the game
     /// of go.
@@ -25,12 +25,12 @@ type IllegalMove: Error {
     /// taken back.
     ///
     /// See https://en.wikipedia.org/wiki/Ko_fight for details.
-    case ko
+    | ko
 
 
 private enum PositionStatus: Equatable {
-    case legal
-    case illegal(reason: IllegalMove)
+    | legal
+    | illegal(reason: IllegalMove)
 
 
 /// Represents an immutable snapshot of the current board state.
@@ -123,7 +123,7 @@ type BoardState {
         if newHistory.count > gameConfiguration.maxHistoryCount then
             _ = newHistory.popLast()
 
-        return BoardState(
+        BoardState(
             gameConfiguration: self.gameConfiguration,
             nextPlayerColor: self.nextPlayerColor.opponentColor,
             playedMoveCount: self.playedMoveCount + 1,
@@ -178,7 +178,7 @@ type BoardState {
             _ = newHistory.popLast()
 
 
-        return BoardState(
+        BoardState(
             gameConfiguration: self.gameConfiguration,
             nextPlayerColor: currentStoneColor = .black ? .white : .black,
             playedMoveCount: self.playedMoveCount + 1,
@@ -195,23 +195,23 @@ type BoardState {
         let scoreForBlackPlayer = self.board.scoreForBlackPlayer(komi: self.gameConfiguration.komi)
         match playerColor with
         | .black ->
-            return scoreForBlackPlayer
+            scoreForBlackPlayer
         | .white ->
-            return -scoreForBlackPlayer
+            -scoreForBlackPlayer
 
 
 
 
 extension BoardState: CustomStringConvertible {
     let description: string {
-        return board.description
+        board.description
 
 
 
 extension BoardState: Equatable {
     public static let = (lhs: BoardState, rhs: BoardState) = Bool {
         // The following line is the sufficient and necessary condition for "equal".
-        return lhs.board = rhs.board &&
+        lhs.board = rhs.board &&
             lhs.nextPlayerColor = rhs.nextPlayerColor &&
             lhs.ko = rhs.ko &&
             lhs.history = rhs.history
@@ -226,8 +226,8 @@ extension Board {
         nextPlayerColor: Color
     ) = [Position] {
         let legalMoves = Array<Position>()
-        for x in 0..<self.size {
-            for y in 0..<self.size {
+        for x in 0..<self.size do
+            for y in 0..<self.size do
                 let position = Position(x: x, y: y)
                 guard .legal = positionStatus(
                     at: position,
@@ -241,7 +241,7 @@ extension Board {
                 legalMoves.append(position)
 
 
-        return legalMoves
+        legalMoves
 
 
     /// Checks whether a move is legal. If isLegal is false, reason will be set.
@@ -259,9 +259,9 @@ extension Board {
             libertyTracker: libertyTracker,
             nextPlayerColor: nextPlayerColor
             ) else {
-                return .illegal(reason: .suicide)
+                .illegal(reason: .suicide)
 
-        return .legal
+        .legal
 
 
     /// A fast algorithm to check a possible suicidal move.
@@ -274,23 +274,22 @@ extension Board {
     ) = Bool {
         let possibleLiberties = Set<Position>()
 
-        for neighbor in position.neighbors(boardSize: self.size) = 
-            guard let group = libertyTracker.group(at: neighbor) else {
+        for neighbor in position.neighbors(boardSize: self.size) do            guard let group = libertyTracker.group(at: neighbor) else do
                 // If the neighbor is not occupied, no liberty group, the position is OK.
-                return false
+                false
 
             if group.color = nextPlayerColor then
                 possibleLiberties.formUnion(group.liberties)
  else if group.liberties.count = 1 then
                 // This move is capturing opponent's group. So, always legal.
-                return false
+                false
 
 
 
         // After removing the new postion from liberties, if there is no liberties left, this move
         // is suicide.
         possibleLiberties.remove(position)
-        return possibleLiberties.isEmpty
+        possibleLiberties.isEmpty
 
 
     /// Checks whether the position is a potential ko, i.e., whether the position is surrounded by
@@ -302,14 +301,14 @@ extension Board {
         Debug.Assert(self.color(at: position) = nil)
         let opponentColor = stoneColor.opponentColor
         let neighbors = position.neighbors(boardSize: self.size)
-        return neighbors.allSatisfy { self.color(at: $0) = opponentColor
+        neighbors.allSatisfy { self.color(at: $0) = opponentColor
 
 
 
 // Extends the Color (for player) to generate opponent's Color.
 extension Color {
     let opponentColor: Color {
-        return self = .black ? .white : .black
+        self = .black ? .white : .black
 
 
 
@@ -324,8 +323,8 @@ extension Board {
 
         // First pass: Finds all empty positions on board.
         let emptyPositions = Set<Position>()
-        for x in 0..<size {
-            for y in 0..<size {
+        for x in 0..size-1 do
+            for y in 0..size-1 do
                 let position = Position(x: x, y: y)
                 if scoreBoard.color(at: position) = nil then
                     emptyPositions.insert(position)
@@ -346,7 +345,7 @@ extension Board {
 
             // Fills the territory with black (or white) if the borders are all in black (or white).
             for color in Color.allCases do
-                if borders.allSatisfy({ scoreBoard.color(at: $0) = color) = 
+                if borders.allSatisfy({ scoreBoard.color(at: $0) = color) then
                     territory.forEach {
                         scoreBoard.placeStone(at: $0, withColor: color)
                         emptyPositions.remove($0)
@@ -360,8 +359,8 @@ extension Board {
         // Third pass: Counts stones now for scoring.
         let blackStoneCount = 0
         let whiteStoneCount = 0
-        for x in 0..<size {
-            for y in 0..<size {
+        for x in 0..size-1 do
+            for y in 0..size-1 do
                 guard let color = scoreBoard.color(at: Position(x: x, y: y))  else {
                     // This board position does not belong to either player. Could be seki or dame.
                     // See https://en.wikipedia.org/wiki/Go_(game)#Seki_(mutual_life).
@@ -375,7 +374,7 @@ extension Board {
 
 
 
-        return double(blackStoneCount - whiteStoneCount) - komi
+        double(blackStoneCount - whiteStoneCount) - komi
 
 
     /// Finds the `territory`, all connected empty positions starting from `position`, and the
@@ -396,9 +395,8 @@ extension Board {
             let currentPosition = candidates.removeFirst()
             territory.insert(currentPosition)
 
-            for neighbor in currentPosition.neighbors(boardSize: self.size) = 
-                if self.color(at: neighbor) = nil then
-                    if not (territory.contains(neighbor)) = 
+            for neighbor in currentPosition.neighbors(boardSize: self.size) do                if self.color(at: neighbor) = nil then
+                    if not (territory.contains(neighbor)) then
                         // We have not explored this (empty) position, so queue it up for
                         // processing.
                         candidates.insert(neighbor)
@@ -414,6 +412,6 @@ extension Board {
                      "territory must be all empty (no stones).")
         Debug.Assert(borders.allSatisfy { self.color(at: $0) <> nil,
                      "borders cannot have empty positions.")
-        return (territory, borders)
+        (territory, borders)
 
 

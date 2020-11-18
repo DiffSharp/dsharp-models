@@ -21,7 +21,7 @@ open DiffSharp
 
 type DepthwiseSeparableConvBlock() =
   inherit Model()
-  let dConv: DepthwiseConv2D<Float>
+  let dConv: DepthwiseConv2d<Float>
   let conv: Conv2D<Float>
 
   public init(
@@ -32,25 +32,25 @@ type DepthwiseSeparableConvBlock() =
     strides = [Int, Int)
   ) = 
 
-    dConv = DepthwiseConv2D<Float>(
+    dConv = DepthwiseConv2d(
       filter: depthWiseFilter,
       bias: depthWiseBias,
       activation= dsharp.relu6,
-      strides: strides,
-      padding="same"
+      strides=strides,
+      padding=kernelSize/2 (* "same " *)
     )
 
     conv = Conv2d(
       filter: pointWiseFilter,
       bias: pointWiseBias,
       activation= dsharp.relu6,
-      padding="same"
+      padding=kernelSize/2 (* "same " *)
     )
 
 
   
   override _.forward(input) =
-    return input |> dConv, conv)
+    input |> dConv, conv)
 
 
 
@@ -81,7 +81,7 @@ type MobileNetLikeBackbone() =
       bias: ckpt.load("Conv2d_0/biases"),
       activation= dsharp.relu6,
       stride=2,
-      padding="same"
+      padding=kernelSize/2 (* "same " *)
     )
     self.dConvBlock1 = DepthwiseSeparableConvBlock(
       depthWiseFilter: ckpt.load("Conv2d_1_depthwise/depthwise_weights"),
@@ -192,7 +192,7 @@ type MobileNetLikeBackbone() =
     x = dConvBlock11(x)
     x = dConvBlock12(x)
     x = dConvBlock13(x)
-    return x
+    x
 
 
 

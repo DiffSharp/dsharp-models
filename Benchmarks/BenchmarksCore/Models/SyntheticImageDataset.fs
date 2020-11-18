@@ -56,7 +56,7 @@ public class SyntheticImageDataset {
     // Training data
     training = TrainingEpochs(samples: (0..batchSize-1), batchSize= batchSize, entropy: entropy)
        |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
-        return batches |> Seq.map {
+        batches |> Seq.map {
           makeSyntheticBatch(samples: $0, dimensions: dimensions, labels=labels, device=device)
         }
       }

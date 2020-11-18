@@ -40,9 +40,9 @@ type Generator() =
 
     let dense4 = Linear(inFeatures= latentSize * 8, outFeatures=imageSize, activation= dsharp.tanh)
 
-    let batchnorm1 = BatchNorm(featureCount=latentSize * 2)
-    let batchnorm2 = BatchNorm(featureCount=latentSize * 4)
-    let batchnorm3 = BatchNorm(featureCount=latentSize * 8)
+    let batchnorm1 = BatchNorm2d(numFeatures=latentSize * 2)
+    let batchnorm2 = BatchNorm2d(numFeatures=latentSize * 4)
+    let batchnorm3 = BatchNorm2d(numFeatures=latentSize * 8)
 
     
     override _.forward(input) =
@@ -84,7 +84,7 @@ let discriminatorLoss(realLogits: Tensor, fakeLogits: Tensor) : Tensor =
     let fakeLoss = dsharp.sigmoidCrossEntropy(
         logits=fakeLogits,
         labels=dsharp.zeros(fakeLogits.shape))
-    return realLoss + fakeLoss
+    realLoss + fakeLoss
 
 
 /// Returns `size` samples of noise vector.
@@ -143,7 +143,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
             let fakeImages = generator(vec1)
             let fakeLogits = discriminator(fakeImages)
             let loss = generatorLoss(fakeLogits: fakeLogits)
-            return loss
+            loss
 
         optG.update(&generator, along=δgenerator)
 
@@ -156,7 +156,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
             let realLogits = discriminator(realImages)
             let fakeLogits = discriminator(fakeImages)
             let loss = discriminatorLoss(realLogits: realLogits, fakeLogits: fakeLogits)
-            return loss
+            loss
 
         optD.update(&discriminator, along=δdiscriminator)
 

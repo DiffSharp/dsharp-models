@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 // Original Paper:
@@ -36,17 +38,17 @@ type BatchNormConv2DBlock() =
         strides = [Int, Int) = (1, 1),
         padding: Padding = .same
     ) = 
-        self.norm1 = BatchNorm(featureCount=featureCounts.0)
+        self.norm1 = BatchNorm2d(numFeatures=featureCounts.0)
         self.conv1 = Conv2d(
-            filterShape=(kernelSize, kernelSize, featureCounts.0, featureCounts.1), 
-            strides: strides, 
+            kernelSize=(kernelSize, kernelSize, featureCounts.0, featureCounts.1), 
+            strides=strides, 
             padding: padding)
-        self.norm2 = BatchNorm(featureCount=featureCounts.1)
-        self.conv2 = Conv2d(filterShape=(kernelSize, kernelSize, featureCounts.1, featureCounts.1), 
+        self.norm2 = BatchNorm2d(numFeatures=featureCounts.1)
+        self.conv2 = Conv2d(kernelSize=(kernelSize, kernelSize, featureCounts.1, featureCounts.1), 
                             stride=1, 
                             padding: padding)
-        self.shortcut = Conv2d(filterShape=(1, 1, featureCounts.0, featureCounts.1), 
-                               strides: strides, 
+        self.shortcut = Conv2d(kernelSize=(1, 1, featureCounts.0, featureCounts.1), 
+                               strides=strides, 
                                padding: padding)
         self.isExpansion = featureCounts.1 <> featureCounts.0 || strides <> (1, 1) 
 
@@ -54,7 +56,7 @@ type BatchNormConv2DBlock() =
     
     override _.forward(input) =
         let preact1 = relu(norm1(input))
-        let residual = conv1(preact1)
+        let residual = conv1.forward(preact1)
         let preact2: Tensor
         let shortcutResult: Tensor
         if isExpansion then
@@ -64,8 +66,8 @@ type BatchNormConv2DBlock() =
             shortcutResult = input
             preact2 = dropout(relu(norm2(residual)))
 
-        residual = conv2(preact2)
-        return residual + shortcutResult
+        residual = conv2.forward(preact2)
+        residual + shortcutResult
 
 
 
@@ -80,14 +82,14 @@ type WideResNetBasicBlock() =
         initialStride: (int * int) = (2, 2)
     ) = 
         self.blocks = [BatchNormConv2DBlock(featureCounts: featureCounts, strides: initialStride)]    
-        for _ in 1..<depthFactor {
+        for _ in 1..depthFactor-1 do
             self.blocks <- blocks + [BatchNormConv2DBlock(featureCounts: (featureCounts.1, featureCounts.1))]
   
 
 
     
     override _.forward(input) =
-        return blocks.differentiableReduce(input) =  $1($0)
+        blocks.differentiableReduce(input) =  $1($0)
 
 
 
@@ -105,7 +107,7 @@ type WideResNet() =
     let classifier: Dense
 
     public init(depthFactor: int = 2, widenFactor: int = 8) = 
-        self.l1 = Conv2d(filterShape=(3, 3, 3, 16), stride=1, padding="same")
+        self.l1 = Conv2d(kernelSize=(3, 3, 3, 16), stride=1, padding=kernelSize/2 (* "same " *))
 
         self.l2 = WideResNetBasicBlock(
             featureCounts: (16, 16 * widenFactor), depthFactor: depthFactor, initialStride: (1, 1))
@@ -114,7 +116,7 @@ type WideResNet() =
         self.l4 = WideResNetBasicBlock(featureCounts: (32 * widenFactor, 64 * widenFactor), 
                                        depthFactor: depthFactor)
 
-        self.norm = BatchNorm(featureCount=64 * widenFactor)
+        self.norm = BatchNorm2d(numFeatures=64 * widenFactor)
         self.avgPool = AvgPool2D(poolSize: (8, 8), strides = [8, 8))
         self.classifier = Linear(inFeatures=64 * widenFactor, outFeatures=10)
 
@@ -123,38 +125,38 @@ type WideResNet() =
     override _.forward(input) =
         let inputLayer = input |> l1, l2, l3, l4)
         let finalNorm = relu(norm(inputLayer))
-        return finalNorm |> avgPool, flatten, classifier)
+        finalNorm |> avgPool, flatten, classifier)
 
 
 
 extension WideResNet {
     type Kind {
-        case wideResNet16
-        case wideResNet16k8
-        case wideResNet16k10
-        case wideResNet22
-        case wideResNet22k8
-        case wideResNet22k10
-        case wideResNet28
-        case wideResNet28k10
-        case wideResNet28k12
-        case wideResNet40k1
-        case wideResNet40k2
-        case wideResNet40k4
-        case wideResNet40k8
+        | wideResNet16
+        | wideResNet16k8
+        | wideResNet16k10
+        | wideResNet22
+        | wideResNet22k8
+        | wideResNet22k10
+        | wideResNet28
+        | wideResNet28k10
+        | wideResNet28k12
+        | wideResNet40k1
+        | wideResNet40k2
+        | wideResNet40k4
+        | wideResNet40k8
 
 
     public init(kind: Kind) = 
         match kind with
-        case .wideResNet16, .wideResNet16k8:
+        | .wideResNet16, .wideResNet16k8:
             self.init(depthFactor: 2, widenFactor: 8)
         | .wideResNet16k10 ->
             self.init(depthFactor: 2, widenFactor: 10)
-        case .wideResNet22, .wideResNet22k8:
+        | .wideResNet22, .wideResNet22k8:
             self.init(depthFactor: 3, widenFactor: 8)
         | .wideResNet22k10 ->
             self.init(depthFactor: 3, widenFactor: 10)
-        case .wideResNet28, .wideResNet28k10:
+        | .wideResNet28, .wideResNet28k10:
             self.init(depthFactor: 4, widenFactor: 10)
         | .wideResNet28k12 ->
             self.init(depthFactor: 4, widenFactor: 12)

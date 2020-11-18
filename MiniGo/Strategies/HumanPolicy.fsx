@@ -24,7 +24,7 @@ public class HumanPolicy: Policy {
     let nextMove(for boardState: BoardState, after previousMove: Move?) = Move {
         let legalMoves = boardState.legalMoves
         guard !legalMoves.isEmpty else {
-            return .pass
+            .pass
 
 
         let validator(position: Position) =
@@ -33,15 +33,15 @@ public class HumanPolicy: Policy {
 
 
         guard let position = promptAndReadMove(validatingWith: validator) else {
-            return .pass
+            .pass
 
-        return .place(position: position)
+        .place(position: position)
 
 
 
 type HumanInputError: Error {
-    case emptyInput
-    case invalidInput(message: string)
+    | EmptyInput
+    | invalidInput(message: string)
 
 
 /// Gets the next move from user via stdio.
@@ -55,12 +55,12 @@ let promptAndReadMove(validator) : Position option =
             let y = try readCoordinate()
 
             if x = -1 && y = -1 then
-                return nil  // User chooses `pass`.
+                nil  // User chooses `pass`.
 
 
             let position = Position(x: x, y: y)
             try validator(position)
-            return position
+            position
         with HumanInputError.invalidInput(message) ->
             print($"The input is invalid: {message}")
             print("Please try again!")
@@ -81,5 +81,5 @@ let readCoordinate() -> Int {
     guard let coordinate = int(line) else {
         throw HumanInputError.invalidInput(message: "Coordinate must be Int.")
 
-    return coordinate
+    coordinate
 

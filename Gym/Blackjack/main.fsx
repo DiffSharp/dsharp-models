@@ -38,7 +38,7 @@ type BlackjackState {
 
 
 type SolverType: CaseIterable {
-    case random, markov, qlearning, normal
+    | random, markov, qlearning, normal
 
 
 type Solver {
@@ -78,22 +78,22 @@ type Solver {
         let stayReward = qLookup[0]
         let hitReward = qLookup[1]
 
-        if iteration < Int.random(in: 1..learningPhase) = 
-            return randomStrategy()
+        if iteration < Int.random(in: 1..learningPhase) then
+            randomStrategy()
         else
             // quit learning after initial phase
             if iteration > learningPhase then alpha = 0.0
 
 
         if hitReward = stayReward then
-            return randomStrategy()
+            randomStrategy()
         else
-            return hitReward > stayReward
+            hitReward > stayReward
 
 
 
     let randomStrategy() = Strategy {
-        return Strategy.random()
+        Strategy.random()
 
 
     let markovStrategy(observation: BlackjackState) = Strategy {
@@ -102,9 +102,9 @@ type Solver {
         let threshHold: double = 0.8
 
         if observation.playerSum < 18 then
-            return flip < threshHold
+            flip < threshHold
         else
-            return flip > threshHold
+            flip > threshHold
 
 
 
@@ -129,22 +129,22 @@ type Solver {
 
     let normalStrategy(observation: BlackjackState) = Strategy {
         if observation.playerSum = 0 then
-            return true
+            true
 
         let lookupString = normalStrategyLookup(playerSum: observation.playerSum)
-        return Array(lookupString)[observation.dealerCard - 1] = "H"
+        Array(lookupString)[observation.dealerCard - 1] = "H"
 
 
     let strategy(observation: BlackjackState, solver: SolverType, iteration: int) = Strategy {
         match solver with
         | .random ->
-            return randomStrategy()
+            randomStrategy()
         | .markov ->
-            return markovStrategy(observation=observation)
+            markovStrategy(observation=observation)
         | .qlearning ->
-            return qLearningStrategy(observation=observation, iteration: iteration)
+            qLearningStrategy(observation=observation, iteration: iteration)
         | .normal ->
-            return normalStrategy(observation=observation)
+            normalStrategy(observation=observation)
 
 
 

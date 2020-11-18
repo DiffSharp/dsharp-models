@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 // Original Paper:
@@ -27,20 +29,20 @@ type Fire() =
     let expand3: Conv2D<Float>
 
     public init(
-        inputFilterCount: int,
+        inChannels=int,
         squeezeFilterCount: int,
         expand1FilterCount: int,
         expand3FilterCount: int
     ) = 
         squeeze = Conv2d(
-            filterShape=(1, 1, inputFilterCount, squeezeFilterCount),
+            kernelSize=(1, 1, inputFilterCount, squeezeFilterCount),
             activation= dsharp.relu)
         expand1 = Conv2d(
-            filterShape=(1, 1, squeezeFilterCount, expand1FilterCount),
+            kernelSize=(1, 1, squeezeFilterCount, expand1FilterCount),
             activation= dsharp.relu)
         expand3 = Conv2d(
-            filterShape=(3, 3, squeezeFilterCount, expand3FilterCount),
-            padding="same",
+            kernelSize=(3, 3, squeezeFilterCount, expand3FilterCount),
+            padding=kernelSize/2 (* "same " *),
             activation= dsharp.relu)
 
 
@@ -49,57 +51,57 @@ type Fire() =
         let squeezed = squeeze(input)
         let expanded1 = expand1(squeezed)
         let expanded3 = expand3(squeezed)
-        return expanded1.cat(expanded3, alongAxis: -1)
+        expanded1.cat(expanded3, alongAxis: -1)
 
 
 
 type SqueezeNetV1_0() =
     inherit Model()
     let conv1 = Conv2d(
-        filterShape=(7, 7, 3, 96),
+        kernelSize=(7, 7, 3, 96),
         stride=2,
-        padding="same",
+        padding=kernelSize/2 (* "same " *),
         activation= dsharp.relu)
     let maxPool1 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire2 = Fire(
-        inputFilterCount: 96,
+        inChannels=96,
         squeezeFilterCount: 16,
         expand1FilterCount: 64,
         expand3FilterCount: 64)
     let fire3 = Fire(
-        inputFilterCount: 128,
+        inChannels=128,
         squeezeFilterCount: 16,
         expand1FilterCount: 64,
         expand3FilterCount: 64)
     let fire4 = Fire(
-        inputFilterCount: 128,
+        inChannels=128,
         squeezeFilterCount: 32,
         expand1FilterCount: 128,
         expand3FilterCount: 128)
     let maxPool4 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire5 = Fire(
-        inputFilterCount: 256,
+        inChannels=256,
         squeezeFilterCount: 32,
         expand1FilterCount: 128,
         expand3FilterCount: 128)
     let fire6 = Fire(
-        inputFilterCount: 256,
+        inChannels=256,
         squeezeFilterCount: 48,
         expand1FilterCount: 192,
         expand3FilterCount: 192)
     let fire7 = Fire(
-        inputFilterCount: 384,
+        inChannels=384,
         squeezeFilterCount: 48,
         expand1FilterCount: 192,
         expand3FilterCount: 192)
     let fire8 = Fire(
-        inputFilterCount: 384,
+        inChannels=384,
         squeezeFilterCount: 64,
         expand1FilterCount: 256,
         expand3FilterCount: 256)
     let maxPool8 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire9 = Fire(
-        inputFilterCount: 512,
+        inChannels=512,
         squeezeFilterCount: 64,
         expand1FilterCount: 256,
         expand3FilterCount: 256)
@@ -108,7 +110,7 @@ type SqueezeNetV1_0() =
     let dropout = Dropout2d(p=0.5)
 
     public init(classCount: int) = 
-        conv10 = Conv2d(filterShape=(1, 1, 512, classCount), stride=1, activation= dsharp.relu)
+        conv10 = Conv2d(kernelSize=(1, 1, 512, classCount), stride=1, activation= dsharp.relu)
 
 
     
@@ -118,57 +120,57 @@ type SqueezeNetV1_0() =
         let fired2 = fired1 |> fire7, fire8, maxPool8, fire9)
         let convolved2 = fired2 |> dropout, conv10, avgPool10)
             .view([input.shape.[0], conv10.filter.shape.[3]])
-        return convolved2
+        convolved2
 
 
 
 type SqueezeNetV1_1() =
     inherit Model()
     let conv1 = Conv2d(
-        filterShape=(3, 3, 3, 64),
+        kernelSize=(3, 3, 3, 64),
         stride=2,
-        padding="same",
+        padding=kernelSize/2 (* "same " *),
         activation= dsharp.relu)
     let maxPool1 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire2 = Fire(
-        inputFilterCount: 64,
+        inChannels=64,
         squeezeFilterCount: 16,
         expand1FilterCount: 64,
         expand3FilterCount: 64)
     let fire3 = Fire(
-        inputFilterCount: 128,
+        inChannels=128,
         squeezeFilterCount: 16,
         expand1FilterCount: 64,
         expand3FilterCount: 64)
     let maxPool3 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire4 = Fire(
-        inputFilterCount: 128,
+        inChannels=128,
         squeezeFilterCount: 32,
         expand1FilterCount: 128,
         expand3FilterCount: 128)
     let fire5 = Fire(
-        inputFilterCount: 256,
+        inChannels=256,
         squeezeFilterCount: 32,
         expand1FilterCount: 128,
         expand3FilterCount: 128)
     let maxPool5 = MaxPool2d(poolSize: (3, 3), stride=2)
     let fire6 = Fire(
-        inputFilterCount: 256,
+        inChannels=256,
         squeezeFilterCount: 48,
         expand1FilterCount: 192,
         expand3FilterCount: 192)
     let fire7 = Fire(
-        inputFilterCount: 384,
+        inChannels=384,
         squeezeFilterCount: 48,
         expand1FilterCount: 192,
         expand3FilterCount: 192)
     let fire8 = Fire(
-        inputFilterCount: 384,
+        inChannels=384,
         squeezeFilterCount: 64,
         expand1FilterCount: 256,
         expand3FilterCount: 256)
     let fire9 = Fire(
-        inputFilterCount: 512,
+        inChannels=512,
         squeezeFilterCount: 64,
         expand1FilterCount: 256,
         expand3FilterCount: 256)
@@ -177,7 +179,7 @@ type SqueezeNetV1_1() =
     let dropout = Dropout2d(p=0.5)
 
     public init(classCount: int) = 
-        conv10 = Conv2d(filterShape=(1, 1, 512, classCount), stride=1, activation= dsharp.relu)
+        conv10 = Conv2d(kernelSize=(1, 1, 512, classCount), stride=1, activation= dsharp.relu)
 
 
     
@@ -187,6 +189,6 @@ type SqueezeNetV1_1() =
         let fired2 = fired1 |> maxPool5, fire6, fire7, fire8, fire9)
         let convolved2 = fired2 |> dropout, conv10, avgPool10)
             .view([input.shape.[0], conv10.filter.shape.[3]])
-        return convolved2
+        convolved2
 
 

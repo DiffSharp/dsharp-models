@@ -26,24 +26,24 @@ type NetD() =
         let kw = 4
 
         let module = Sequential {
-            Conv2d(filterShape=(kw, kw, inChannels, lastConvFilters),
+            Conv2d(kernelSize=(kw, kw, inChannels, lastConvFilters),
                           stride=2,
-                          padding="same",
+                          padding=kernelSize/2 (* "same " *),
                           filterInitializer: { dsharp.randn($0, standardDeviation=dsharp.scalar(0.02)))
             Function<Tensor<Float>, Tensor<Float>>dsharp.leakyRelu
 
-            Conv2d(filterShape=(kw, kw, lastConvFilters, 2 * lastConvFilters),
+            Conv2d(kernelSize=(kw, kw, lastConvFilters, 2 * lastConvFilters),
                           stride=2,
-                          padding="same",
+                          padding=kernelSize/2 (* "same " *),
                           filterInitializer: { dsharp.randn($0, standardDeviation=dsharp.scalar(0.02)))
-            BatchNorm(featureCount=2 * lastConvFilters)
+            BatchNorm2d(numFeatures=2 * lastConvFilters)
             Function<Tensor<Float>, Tensor<Float>>dsharp.leakyRelu
 
-            Conv2d(filterShape=(kw, kw, 2 * lastConvFilters, 4 * lastConvFilters),
+            Conv2d(kernelSize=(kw, kw, 2 * lastConvFilters, 4 * lastConvFilters),
                           stride=2,
-                          padding="same",
+                          padding=kernelSize/2 (* "same " *),
                           filterInitializer: { dsharp.randn($0, standardDeviation=dsharp.scalar(0.02)))
-            BatchNorm(featureCount=4 * lastConvFilters)
+            BatchNorm2d(numFeatures=4 * lastConvFilters)
             Function<Tensor<Float>, Tensor<Float>>dsharp.leakyRelu
 
 
@@ -52,7 +52,7 @@ type NetD() =
             ConvLayer(inChannels=4 * lastConvFilters, outChannels=8 * lastConvFilters,
                       kernelSize=4, stride=1, padding=1)
 
-            BatchNorm(featureCount=8 * lastConvFilters)
+            BatchNorm2d(numFeatures=8 * lastConvFilters)
             Function<Tensor<Float>, Tensor<Float>>dsharp.leakyRelu
 
             ConvLayer(inChannels=8 * lastConvFilters, outChannels=1,
@@ -64,6 +64,6 @@ type NetD() =
 
     
     override _.forward(input) =
-        return module(input)
+        module(input)
 
 

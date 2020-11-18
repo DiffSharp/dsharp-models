@@ -22,7 +22,7 @@ public class MiniGoCheckpointReader: CheckpointReader {
         let countSuffix = layerCounts[layerName] = nil ? "" : "_\(layerCounts[layerName]!)"
         let tensorName = layerName + countSuffix + "/" + weightName
         guard containsTensor(named: tensorName) else { return nil
-        return Tensor<Float>(loadTensor(named: tensorName))
+        Tensor<Float>(loadTensor(named: tensorName))
 
 
     /// Increments a per-layer counter for variable names in the checkpoint file.
@@ -50,7 +50,7 @@ extension Dense: LoadableFromPythonCheckpoint where Scalar = Float {
         checkShapes(weight, newWeight)
         weight = newWeight
 
-        if let newBias = reader.readTensor(layerName: "dense", weightName: "bias") = 
+        if let newBias = reader.readTensor(layerName: "dense", weightName: "bias") then
             checkShapes(bias, newBias)
             bias = newBias
 
@@ -67,7 +67,7 @@ extension Conv2D: LoadableFromPythonCheckpoint where Scalar = Float {
         // TODO(jekbradbury): handle layers with optional weights
         // It would be helpful to have an op to see if a checkpoint contains a particular variable
         // (see b/124126672)
-        // if let newBias = loader.readTensor(layerName: "conv2d", weightName: "bias") = 
+        // if let newBias = loader.readTensor(layerName: "conv2d", weightName: "bias") then
         //   checkShapes(bias, newBias)
         //   bias = newBias
         //
@@ -78,12 +78,12 @@ extension Conv2D: LoadableFromPythonCheckpoint where Scalar = Float {
 
 extension BatchNorm: LoadableFromPythonCheckpoint where Scalar = Float {
     mutating let load(from reader: MiniGoCheckpointReader) = 
-        if let newOffset = reader.readTensor(layerName: "batch_normalization", weightName: "beta") = 
+        if let newOffset = reader.readTensor(layerName: "batch_normalization", weightName: "beta") then
             checkShapes(offset, newOffset)
             offset = newOffset
 
 
-        if let newScale = reader.readTensor(layerName: "batch_normalization", weightName: "gamma") = 
+        if let newScale = reader.readTensor(layerName: "batch_normalization", weightName: "gamma") then
             checkShapes(scale, newScale)
             scale = newScale
 

@@ -44,12 +44,12 @@ type Keypoint {
 
 
   let isWithinRadiusOfCorrespondingKeypoints(in poses: Pose[], radius: double) = Bool {
-    return poses.contains { pose in
+    poses.contains { pose in
       let correspondingKeypoint = pose.getKeypoint(self.index)!
       let dy = correspondingKeypoint.y - self.y
       let dx = correspondingKeypoint.x - self.x
       let squaredDistance = dy * dy + dx * dx
-      return squaredDistance <= radius * radius
+      squaredDistance <= radius * radius
 
 
 
@@ -79,7 +79,7 @@ type Direction { case fwd, bwd
 let getNextKeypointIndexAndDirection(keypointId: KeypointIndex) = [(KeypointIndex, Direction)] {
   match keypointId with
   | .nose ->
-    return [(.leftEye, .fwd), (.rightEye, .fwd), (.leftShoulder, .fwd), (.rightShoulder, .fwd)]
+    [(.leftEye, .fwd), (.rightEye, .fwd), (.leftShoulder, .fwd), (.rightShoulder, .fwd)]
   | .leftEye -> return [(.nose, .bwd), (.leftEar, .fwd)]
   | .rightEye -> return [(.nose, .bwd), (.rightEar, .fwd)]
   | .leftEar -> return [(.leftEye, .bwd)]
@@ -129,11 +129,11 @@ type Pose {
 
 
   let getKeypoint(index: KeypointIndex) = Keypoint? {
-    return keypoints[index.rawValue]
+    keypoints[index.rawValue]
 
 
   mutating let rescale(to newResolution: (height: int, width: int)) = 
-    for i in 0..<keypoints.count {
+    for i in 0..<keypoints.count do
       if let k = keypoints[i] then
         k.y *= double(newResolution.height) / double(resolution.height)
         k.x *= double(newResolution.width) / double(resolution.width)
@@ -151,6 +151,6 @@ extension Pose: CustomStringConvertible {
       description.append(
         $"\(keypoint!.index) - \(keypoint!.score) | \(keypoint!.y) - \(keypoint!.x)\n")
 
-    return description
+    description
 
 

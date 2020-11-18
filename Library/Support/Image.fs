@@ -23,26 +23,26 @@ open DiffSharp
 
 type Image {
     public enum ByteOrdering {
-        case bgr
-        case rgb
+        | bgr
+        | rgb
 
 
     public enum Colorspace {
-        case rgb
-        case grayscale
+        | rgb
+        | grayscale
 
 
     enum ImageTensor {
-        case float(data: Tensor)
-        case uint8(data: Tensor<byte>)
+        | float(data: Tensor)
+        | uint8(data: Tensor<byte>)
 
 
     let imageData: ImageTensor
 
     let tensor: Tensor {
         match self.imageData {
-        case let .float(data) -> data
-        case let .uint8(data) -> Tensor<Float>(data)
+        | let .float(data) -> data
+        | let .uint8(data) -> Tensor<Float>(data)
 
 
 
@@ -91,8 +91,8 @@ type Image {
         | .grayscale ->
             bpp = 1
             match self.imageData {
-            case let .uint8(data): outputImageData = data
-            case let .float(data):
+            | let .uint8(data): outputImageData = data
+            | let .float(data):
                 let lowerBound = data.min(dim=[0, 1])
                 let upperBound = data.max(dim=[0, 1])
                 let adjustedData = (data - lowerBound) * (255.0 / (upperBound - lowerBound))
@@ -101,8 +101,8 @@ type Image {
         | .rgb ->
             bpp = 3
             match self.imageData {
-            case let .uint8(data): outputImageData = data
-            case let .float(data):
+            | let .uint8(data): outputImageData = data
+            | let .float(data):
                 outputImageData = Tensor<byte>(data.clipped(min: 0, max: 255))
 
 
@@ -121,10 +121,10 @@ type Image {
 
     let resized(to size: (int * int)) = Image {
         match self.imageData {
-        case let .uint8(data):
+        | let .uint8(data):
             let resizedImage = resize(images: dsharp.tensor(data), size: size, method: .bilinear)
             resizedImage
-        case let .float(data):
+        | let .float(data):
             let resizedImage = resize(images: data, size: size, method: .bilinear)
             resizedImage
 

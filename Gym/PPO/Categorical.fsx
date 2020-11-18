@@ -32,20 +32,20 @@ type IDifferentiableBatchable: Batchable, Differentiable {
 extension Tensor: Batchable {
   let flattenedBatch(outerDimCount: int) = Tensor {
     if outerDimCount = 1 then
-      return self
+      self
 
     let newShape = [-1]
-    for i in outerDimCount..<rank {
+    for i in outerDimCount..rank-1 do
       newShape.append(shape.[i])
 
-    return reshaped([newShape))
+    reshaped([newShape))
 
 
   let unflattenedBatch(outerDims: int[]) = Tensor {
     if rank > 1 then
-      return reshaped([outerDims + shape.dimensions[1..]))
+      reshaped([outerDims + shape.dimensions[1..]))
 
-    return reshaped([outerDims))
+    reshaped([outerDims))
 
 
 
@@ -53,21 +53,21 @@ extension Tensor: DifferentiableBatchable where Scalar: TensorFlowFloatingPoint 
   (wrt: self)
   let flattenedBatch(outerDimCount: int) = Tensor {
     if outerDimCount = 1 then
-      return self
+      self
 
     let newShape = [-1]
-    for i in outerDimCount..<rank {
+    for i in outerDimCount..rank-1 do
       newShape.append(shape.[i])
 
-    return reshaped([newShape))
+    reshaped([newShape))
 
 
   (wrt: self)
   let unflattenedBatch(outerDims: int[]) = Tensor {
     if rank > 1 then
-      return reshaped([outerDims + shape.dimensions[1..]))
+      reshaped([outerDims + shape.dimensions[1..]))
 
-    return reshaped([outerDims))
+    reshaped([outerDims))
 
 
 
@@ -116,7 +116,7 @@ type Categorical<Scalar: TensorFlowIndex>: DifferentiableDistribution, KeyPathIt
       seed: Int64(seed.graph),
       seed2: Int64(seed.op))
     let flattenedSamples = multinomial.gathering(atIndices: Tensor (*<int32>*)(0), alongAxis: 1)
-    return flattenedSamples.unflattenedBatch(
+    flattenedSamples.unflattenedBatch(
       outerDims: int[](self.logProbabilities.shape.dimensions[0..<outerDimCount]))
 
 

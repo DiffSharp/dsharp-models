@@ -44,7 +44,7 @@ type WordSegCommand: ParsableCommand {
   let hiddenSize: int = 512
 
   @Option(help: "Dropout rate.")
-  let dropoutProbability: Double = 0.5
+  let dropoutProbability: double = 0.5
 
   @Option(help: "Power of the length penalty.")
   let order: int = 5

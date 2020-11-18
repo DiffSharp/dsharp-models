@@ -49,7 +49,7 @@ where
 
       let δmodel = model.gradv(x) 
         let logits = model(images)
-        return softmaxCrossEntropy(logits=logits, labels=labels)
+        softmaxCrossEntropy(logits=logits, labels=labels)
       }
       optimizer.update(&model, along=δmodel)
       LazyTensorBarrier()

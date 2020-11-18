@@ -126,7 +126,7 @@ for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated()
         gradients.clipByGlobalNorm(clipNorm: 1)
 
         let step = optimizer.step + 1 // for scheduled rates and bias correction, steps start at 1
-        optimizer.learningRate = scheduledLearningRate(forStep: UInt64(step))
+        optimizer.learningRate = scheduledLearningRate(forStep: uint64(step))
         if useBiasCorrection then
           let step = double(step)
           optimizer.learningRate *= sqrtf(1 - powf(beta2, step)) / (1 - powf(beta1, step))
@@ -150,7 +150,7 @@ for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated()
         devLossSum <- devLossSum + loss.toScalar()
         devBatchCount <- devBatchCount + 1
 
-        let predictedLabels = sigmoid(logits.squeeze(-1)) .>= 0.5
+        let predictedLabels = dsharp.sigmoid(logits.squeeze(-1)) .>= 0.5
         devPredictedLabels.append(predictedLabels.scalars)
         devGroundTruth.append(labels.scalars.map (fun _ -> 1))
 

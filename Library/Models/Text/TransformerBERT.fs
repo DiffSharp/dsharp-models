@@ -12,19 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
-#r @"System.Runtime.Extensions.dll"
-#load "Utilities.fsx"
-#load "Attention.fsx"
+module Models.TransformerBERT
 
 open System.Diagnostics
 open DiffSharp
 open DiffSharp.Model
 open DiffSharp.ShapeChecking
-open global.Utilities
-open global.Attention
+open Models.Utilities
+open Models.Attention
 
 type Linear with 
     member m.regularizationValue = 
@@ -147,7 +142,7 @@ type TransformerEncoderLayer(hiddenSize: int,
     let p_intermediateBias = intermediateBiasInitializer(Shape [intermediateSize]) |> Parameter
     let p_outputWeight = intermediateWeightInitializer(Shape [intermediateSize; hiddenSize]) |> Parameter
     let p_outputBias = intermediateBiasInitializer(Shape [hiddenSize]) |> Parameter
-    let m_outputLayerNorm = LayerNorm(featureCount=hiddenSize, axis = -1)
+    let m_outputLayerNorm = LayerNorm(numFeatures=hiddenSize, axis = -1)
 
     member _.multiHeadAttention = _multiHeadAttention
     member _.attentionWeight = p_attentionWeight

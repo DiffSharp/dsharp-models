@@ -54,7 +54,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         let rating = batch.second
         let (loss, grad) = valueWithGradient<| fun model -> 
             let logits = model(userId)
-            return dsharp.sigmoidCrossEntropy(logits=logits, labels=rating)
+            dsharp.sigmoidCrossEntropy(logits=logits, labels=rating)
 
 
         optimizer.update(&model, along=grad)
@@ -81,8 +81,8 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         let sortedItemScore = itemScore.sorted (fun x -> x.1 > $1.1
         let topK = sortedItemScore.prefix(min(10, int(itemCount.[user]!)))
 
-        for (key, _) in topK {
-            if testNegSampling.[userIndex][dataset.item2id.[key]!] = dsharp.tensor(1.0) = 
+        for (key, _) in topK do
+            if testNegSampling.[userIndex][dataset.item2id.[key]!] = dsharp.tensor(1.0) then
                 correct = correct + 1.0
 
             count = count + 1
@@ -118,9 +118,9 @@ for user in dataset.testUsers do
     print("User:", user, terminator: "\t")
     print("Top K Recommended Items:", terminator: "\t")
 
-    for (key, _) in topK {
+    for (key, _) in topK do
         print(key, terminator: "\t")
-        if testNegSampling.[userIndex][dataset.item2id.[key]!] = dsharp.tensor(1.0) = 
+        if testNegSampling.[userIndex][dataset.item2id.[key]!] = dsharp.tensor(1.0) then
             correct = correct + 1.0
 
         count = count + 1

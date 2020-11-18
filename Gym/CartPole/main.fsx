@@ -28,7 +28,7 @@ fileprivate extension Optional {
         guard let unwrapped = self else {
             fatalError("Value is nil", file: (file), line: line)
 
-        return unwrapped
+        unwrapped
 
 
 
@@ -58,7 +58,7 @@ type Net() =
 
     
     override _.forward(input: Tensor) =
-        return input |> l1, l2)
+        input |> l1, l2)
 
 
 
@@ -116,7 +116,7 @@ let filteringBatch(
         retainedEpisodeCount <- retainedEpisodeCount + 1
 
 
-    return (input, target, retainedEpisodeCount, totalReward / double(retainedEpisodeCount))
+    (input, target, retainedEpisodeCount, totalReward / double(retainedEpisodeCount))
 
 
 let nextBatch(
@@ -130,7 +130,7 @@ let nextBatch(
     let episodes: Episode[] = [| |]
 
     // We build up a batch of observations and actions.
-    for _ in 0..<batchSize {
+    for _ in 0..batchSize-1 do
         let steps: [Episode.Step] = []
         let episodeReward: double = 0.0
 
@@ -164,7 +164,7 @@ let nextBatch(
 
 
 
-    return episodes
+    episodes
 
 
 let env = gym.make("CartPole-v0")
@@ -192,7 +192,7 @@ while true do
             let logits = net(input)
             let loss = softmaxCrossEntropy(logits=logits, probabilities: target)
             print($"loss is {loss}")
-            return loss
+            loss
 
 
     optimizer.update(&net, along=gradients)

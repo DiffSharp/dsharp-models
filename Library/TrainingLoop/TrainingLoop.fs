@@ -312,7 +312,7 @@ extension TrainingLoop {
       (model: Model) = Tensor<Float> in
       let predictions = model(data)
       lastStepOutput = predictions
-      return lossFunction.f(predictions, target)
+      lossFunction.f(predictions, target)
     }
   }
 

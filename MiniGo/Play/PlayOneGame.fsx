@@ -62,7 +62,7 @@ let playOneGame(gameConfiguration: GameConfiguration, participants: Policy[]) =
             consecutivePassCount <- consecutivePassCount + 1
             print("- Pass")
             boardState = boardState.passing()
-        case .place(let position):
+        | .place(let position):
             consecutivePassCount = 0
             print($"- Placing stone at: {position}")
             boardState = try boardState.placingNewStone(at: position)

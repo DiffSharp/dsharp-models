@@ -31,7 +31,7 @@ type TensorFlowEnvironmentWrapper {
 
   let reset() : Tensor =
     let state = self.originalEnv.reset()
-    return Tensor<Float>(numpy: np.array(state, dtype: np.float32))!
+    Tensor<Float>(numpy: np.array(state, dtype: np.float32))!
 
 
   let step(action: Tensor (*<int32>*)) = (
@@ -41,7 +41,7 @@ type TensorFlowEnvironmentWrapper {
     let tfState = Tensor<Float>(numpy: np.array(state, dtype: np.float32))!
     let tfReward = Tensor<Float>(numpy: np.array(reward, dtype: np.float32))!
     let tfIsDone = Tensor<Bool>(numpy: np.array(isDone, dtype: np.bool))!
-    return (tfState, tfReward, tfIsDone, info)
+    (tfState, tfReward, tfIsDone, info)
 
 
 

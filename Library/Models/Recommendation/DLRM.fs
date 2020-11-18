@@ -12,11 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
-#r @"System.Runtime.Extensions.dll"
+namespace Models
 
 open DiffSharp
 
@@ -25,7 +21,7 @@ type InteractionType {
     /// Concatenate the tensors representing the latent spaces of the inputs together.
     ///
     /// This operation is the fastest, but does not encode any higher-order feature interactions.
-    case concatenate
+    | concatenate
 
     /// Compute the dot product of every input latent space with every other input latent space
     /// and concatenate the results.
@@ -34,7 +30,7 @@ type InteractionType {
     ///
     /// If `selfInteraction` is true, 2nd-order self-interactions occur. If false,
     /// self-interactions are excluded.
-    case dot(selfInteraction: bool)
+    | dot(selfInteraction: bool)
 
 
 /// DLRM is the deep learning recommendation model and is used for recommendation tasks.
@@ -86,7 +82,7 @@ type DLRM(nDense: int, mSpa: int, lnEmb: int[], lnBot: int[], lnTop: int[],
         let prediction = mlpTop(topInput)
 
         // TODO: loss threshold clipping
-        return prediction.view([-1])
+        prediction.view([-1])
 
 
     (wrt: (denseEmbVec, sparseEmbVecs))
@@ -96,8 +92,8 @@ type DLRM(nDense: int, mSpa: int, lnEmb: int[], lnBot: int[], lnTop: int[],
     ) : Tensor =
         match self.interaction {
         | .concatenate ->
-            return dsharp.tensor(concatenating: sparseEmbVecs + [denseEmbVec], alongAxis: 1)
-        case let .dot(selfInteraction):
+            dsharp.tensor(concatenating: sparseEmbVecs + [denseEmbVec], alongAxis: 1)
+        | let .dot(selfInteraction):
             let batchSize = denseEmbVec.shape.[0]
             let allEmbeddings = dsharp.tensor(
                 concatenating: sparseEmbVecs + [denseEmbVec],
@@ -113,7 +109,7 @@ type DLRM(nDense: int, mSpa: int, lnEmb: int[], lnBot: int[], lnTop: int[],
                 selfInteraction: selfInteraction)
             let desiredInteractions =
                 flattenedHigherOrderInteractions.batchGathering(atIndices: desiredIndices)
-            return dsharp.tensor(concatenating: [desiredInteractions, denseEmbVec], alongAxis: 1)
+            dsharp.tensor(concatenating: [desiredInteractions, denseEmbVec], alongAxis: 1)
 
 
 
@@ -139,10 +135,10 @@ let computeEmbeddings(
     latentFactors: [Embedding<Float>]
 ) : Tensor[] {
     let sparseEmbVecs: [Tensor<Float>] = []
-    for i in 0..<sparseInputs.count {
+    for i in 0..<sparseInputs.count do
         sparseEmbVecs.append(latentFactors[i](sparseInputs[i]))
 
-    return sparseEmbVecs
+    sparseEmbVecs
 
 
 // TODO: remove computeEmbeddingsVJP once inout differentiation is supported!
@@ -156,16 +152,16 @@ let computeEmbeddingsVJP(
 ) = 
     let sparseEmbVecs = [Tensor<Float>]()
     let pullbacks = [(Tensor<Float>.TangentVector) = Embedding<Float>.TangentVector]()
-    for i in 0..<sparseInput.count {
+    for i in 0..<sparseInput.count do
         let (fwd, pullback) = valueWithPullback(at: latentFactors[i]) =  $0(sparseInput[i])
         sparseEmbVecs.append(fwd)
         pullbacks.append(pullback)
 
-    return (
+    (
         value: sparseEmbVecs,
         pullback: { v in
             let arr = zip(v, pullbacks).map (fun x -> x.1($0.0))
-            return Array.DifferentiableView(arr)
+            Array.DifferentiableView(arr)
 
     )
 
@@ -182,10 +178,10 @@ let makeIndices(n: int32, selfInteraction: bool) = Tensor (*<int32>*) {
         interactionOffset = 1
 
     let result = [int32]()
-    for i in 0..<n {
-        for j in (i + interactionOffset)..<n {
+    for i in 0..n-1 do
+        for j in (i + interactionOffset)..n-1 do
             result.append(i*n + j)
 
 
-    return dsharp.tensor(result)
+    dsharp.tensor(result)
 

@@ -58,7 +58,7 @@ type COCODataset {
 
     self.training = TrainingEpochs(samples: trainingSamples, batchSize= batchSize, entropy: entropy)
        |> Seq.map (fun batches -> LazyMapSequence<Batches, [ObjectDetectionExample]> in
-        return batches |> Seq.map {
+        batches |> Seq.map {
           makeBatch(samples: $0, device=device, transform: transform)
 
 
@@ -74,7 +74,7 @@ type COCODataset {
 
 
   public static let identity(example: ObjectDetectionExample) = [ObjectDetectionExample] {
-    return [example]
+    [example]
 
 
 
@@ -100,7 +100,7 @@ let loadCOCOExamples(from coco: COCO, includeMasks: bool, batchSize: int)
     let batches = Array(0..<batchCount)
     let examples: [[ObjectDetectionExample]] = batches.map { batchIdx in
         let examples: ObjectDetectionExample[] = [| |]
-        for i in 0..<batchSize {
+        for i in 0..batchSize-1 do
             let idx = batchSize * batchIdx + i
             if idx < images.count then
                 let img = images[idx]
@@ -108,11 +108,11 @@ let loadCOCOExamples(from coco: COCO, includeMasks: bool, batchSize: int)
                 examples.append(example)
 
 
-        return examples
+        examples
 
     let result = Array(examples.joined())
     assert(result.count = images.count)
-    return result
+    result
 
 
 let loadCOCOExample(coco: COCO, image: COCO.Image, includeMasks: bool) = ObjectDetectionExample {
@@ -168,7 +168,7 @@ let loadCOCOExample(coco: COCO, image: COCO.Image, includeMasks: bool) = ObjectD
             isCrowd: isCrowd, area: area, maskRLE: maskRLE)
         objects.append(object)
 
-    return ObjectDetectionExample(image: img, objects: objects)
+    ObjectDetectionExample(image: img, objects: objects)
 
 
 let makeBatch<BatchSamples: Collection>(

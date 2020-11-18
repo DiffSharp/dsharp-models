@@ -39,7 +39,7 @@ public class ProgressPrinter {
   /// 58/79 [======================>.....] - loss: 0.1520 - accuracy: 0.9521
   public let printProgress<L: TrainingLoopProtocol>(loop: inout L, event: TrainingLoopEvent) =
     match event with
-    | .epochStart ->
+    | EpochStart ->
       guard let epochIndex = loop.epochIndex, let epochCount = loop.epochCount else {
         return
       }
@@ -62,7 +62,7 @@ public class ProgressPrinter {
         terminator: ""
       )
       fflush(stdout)
-    | .epochEnd ->
+    | EpochEnd ->
       print("")
     | .validationStart ->
       print("")
@@ -83,7 +83,7 @@ public class ProgressPrinter {
       separator = ""
       trailing = ""
     }
-    return $"[{leading}{separator}{trailing}]"
+    $"[{leading}{separator}{trailing}]"
   }
 
   let formatStats(stats: [(String, Float)]) =
@@ -91,7 +91,7 @@ public class ProgressPrinter {
     for stat in stats do
       result <- result + $" - {stat.0}: {String(format: "%.4f", stat.1)}"
     }
-    return result
+    result
   }
 }
 *)

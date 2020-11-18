@@ -71,11 +71,11 @@ type COCOVariant {
             imagesDirectory = directory </> (images!)
 
         let coco = try! COCO(fromFile: jsonURL, imagesDirectory: imagesDirectory)
-        return coco
+        coco
 
 
     public static let defaultDirectory() = URL {
-        return DatasetUtilities.defaultDirectory
+        DatasetUtilities.defaultDirectory
              </> ("COCO")
 
 
@@ -91,7 +91,7 @@ type COCOVariant {
                 from: trainImagesURL, directory,
                 filename: "train2017")
 
-        return loadJSON(
+        loadJSON(
             directory,
             annotations: "annotations-train2017/instances_train2017.json",
             images: downloadImages ? "train2017" : nil)
@@ -109,7 +109,7 @@ type COCOVariant {
                 from: valImagesURL, directory,
                 filename: "val2017")
 
-        return loadJSON(
+        loadJSON(
             directory,
             annotations: "annotations-val2017/instances_val2017.json",
             images: downloadImages ? "val2017" : nil)
@@ -127,7 +127,7 @@ type COCOVariant {
                 from: testImagesURL, directory,
                 filename: "test2017")
 
-        return loadJSON(
+        loadJSON(
             directory,
             annotations: "annotations-test2017/image_info_test2017.json",
             images: downloadImages ? "test2017" : nil)
@@ -145,7 +145,7 @@ type COCOVariant {
                 from: testImagesURL, directory,
                 filename: "test2017")
 
-        return loadJSON(
+        loadJSON(
             directory,
             annotations: "annotations-test-dev2017/image_info_test-dev2017.json",
             images: downloadImages ? "test2017" : nil)

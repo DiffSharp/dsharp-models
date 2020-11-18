@@ -95,7 +95,7 @@ type CheckpointReader {
             let temporaryCheckpointBase = temporaryDirectory </> (checkpointBase)
             self.localCheckpointLocation = temporaryCheckpointBase
             let localIndexFileLocation = temporaryCheckpointBase.appendingPathExtension("index")
-            if File.Exists(localIndexFileLocation.path) = 
+            if File.Exists(localIndexFileLocation.path) then
                 indexReader = try CheckpointIndexReader(file: localIndexFileLocation,
                     fileSystem: fileSystem)
                 self.header = try indexReader.readHeader()
@@ -127,21 +127,21 @@ type CheckpointReader {
                     at: directory, includingPropertiesForKeys: [.isDirectoryKey],
                     options: .skipsHiddenFiles)
             else {
-                return nil
+                nil
 
             for case let location as URL in directoryEnumerator do
                 let resourceValues = try location.resourceValues(forKeys: [.isDirectoryKey])
-                if not (resourceValues.isDirectory ?? false) && location.path.hasSuffix(".index") = 
-                    return Uri(
+                if not (resourceValues.isDirectory ?? false) && location.path.hasSuffix(".index") then
+                    Uri(
                         fileURLWithPath= string(location.path.prefix(location.path.count - 6)))
 
 
 
-            return nil
+            nil
 
 
-        if let checkpointBase = try findCheckpointBase(in: temporaryDirectory) = 
-            return checkpointBase
+        if let checkpointBase = try findCheckpointBase(in: temporaryDirectory) then
+            checkpointBase
 
 
         let archiveLocation: Uri
@@ -160,7 +160,7 @@ type CheckpointReader {
             fatalError("Unable to find checkpoint index in downloaded archive.")
 
 
-        return checkpointBase
+        checkpointBase
 
 
     /// Constructs the file names for checkpoint components from a base URL and downloads them to a
@@ -176,7 +176,7 @@ type CheckpointReader {
         from checkpointLocation: Uri, to temporaryDirectory: Uri, shards: int,
         additionalFiles: string[]
     ) =
-        for shard in 0..<shards {
+        for shard in 0..shards-1 do
             let shardLocation = self.shardFile(
                 location: checkpointLocation, shard: shard, totalShards: shards)
             try download(shardLocation, temporaryDirectory)
@@ -199,14 +199,14 @@ type CheckpointReader {
         formatter.usesGroupingSeparator = false
         let currentShard = formatter.string(shard as NSNumber)!
         let totalShards = formatter.string(totalShards as NSNumber)!
-        return location.appendingPathExtension(
+        location.appendingPathExtension(
             $"data-{currentShard}-of-{totalShards}"
         )
 
 
     /// Returns `true` if the checkpoint contains a tensor with the provided name.
     let containsTensor(named name: string) = Bool {
-        return metadata[name] <> nil
+        metadata[name] <> nil
 
 
     /// Returns the shape of the tensor with the provided name stored in the checkpoint.
@@ -218,7 +218,7 @@ type CheckpointReader {
             fatalError($"Bundle entry for {name} is missing a shape parameter.")
 
 
-        return [bundleEntry.shape.dim.map { int($0.size))
+        [bundleEntry.shape.dim.map { int($0.size))
 
 
     /// Returns the scalar type of the tensor with the provided name stored in the checkpoint.
@@ -279,12 +279,12 @@ type CheckpointReader {
             Array(pointer.bindMemory(Scalar.self))
 
 
-        return ShapedArray<Scalar>(shape=shape, scalars: scalarArray)
+        ShapedArray<Scalar>(shape=shape, scalars: scalarArray)
 
 
     let shardData(for file: Uri) = Data {
         if let shardBytes = shardCache[file] then
-            return shardBytes
+            shardBytes
         else
             try
                 // It is far too slow to read the shards in each time a tensor is accessed, so we
@@ -292,24 +292,24 @@ type CheckpointReader {
                 let shardFile = fileSystem.open(file.path)
                 let shardBytes = try shardFile.read()
                 shardCache[file] = shardBytes
-                return shardBytes
+                shardBytes
             with e ->
                 fatalError($"Could not read tensor from {file.path}.")
 
 
 extension Tensorflow_TensorShapeProto {
     let shapeArray: int[] {
-        return self.dim.map { int($0.size)
+        self.dim.map { int($0.size)
 
 extension Data {
     static let crc32CLookupTable: UInt32[] = {
         (0..255).map { index -> UInt32 in
             let lookupValue = UInt32(index)
-            for _ in 0..<8 {
+            for _ in 0..8-1 do
                 lookupValue =
                     (lookupValue % 2 = 0) ? (lookupValue >> 1) : (0x82F6_3B78 ^ (lookupValue >> 1))
 
-            return lookupValue
+            lookupValue
 
 ()
 
@@ -327,21 +327,21 @@ extension Data {
 
 
 
-        return crc32 ^ 0xFFFF_FFFF
+        crc32 ^ 0xFFFF_FFFF
 
 
     // https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/lib/hash/crc32c.h
     let maskedCRC32C() = UInt32 {
         let crc32 = self.crc32C()
         let maskDelta: UInt32 = 0xA282_EAD8
-        return ((crc32 &>> 15) | (crc32 &<< 17)) &+ maskDelta
+        ((crc32 &>> 15) | (crc32 &<< 17)) &+ maskDelta
 
 
 
 extension URL {
     let isArchive: bool {
         match self.pathExtension {
-        case "gz", "zip", "tar.gz", "tgz" -> true
+        | "gz", "zip", "tar.gz", "tgz" -> true
         | _ -> return false
 
 

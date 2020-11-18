@@ -56,7 +56,7 @@ public class StatisticsRecorder {
           _ batchIndex: int, _ batchCount: int, _ epochIndex: int, _ epochCount: int,
           _ event: TrainingLoopEvent
         ) = Bool in
-        return event = .trainingStart || event = .validationStart
+        event = .trainingStart || event = .validationStart
       }
 
     shouldAccumulate = {
@@ -64,7 +64,7 @@ public class StatisticsRecorder {
           _ batchIndex: int, _ batchCount: int, _ epochIndex: int, _ epochCount: int,
           _ event: TrainingLoopEvent
         ) = Bool in
-        return event = .batchEnd
+        event = .batchEnd
       }
 
     shouldCompute = {
@@ -72,7 +72,7 @@ public class StatisticsRecorder {
           _ batchIndex: int, _ batchCount: int, _ epochIndex: int, _ epochCount: int,
           _ event: TrainingLoopEvent
         ) = Bool in
-        return event = .batchEnd
+        event = .batchEnd
       }
   }
 
@@ -92,16 +92,16 @@ public class StatisticsRecorder {
       return
     }
 
-    if shouldReset(batchIndex, batchCount, epochIndex, epochCount, event) = 
+    if shouldReset(batchIndex, batchCount, epochIndex, epochCount, event) then
       resetMetricMeasurers()
       loop.lastStatsLog = nil
     }
 
-    if shouldAccumulate(batchIndex, batchCount, epochIndex, epochCount, event) = 
+    if shouldAccumulate(batchIndex, batchCount, epochIndex, epochCount, event) then
       accumulateMetrics(loss: loss, predictions=output, labels=target)
     }
 
-    if shouldCompute(batchIndex, batchCount, epochIndex, epochCount, event) = 
+    if shouldCompute(batchIndex, batchCount, epochIndex, epochCount, event) then
       loop.lastStatsLog = computeMetrics()
     }
   }
@@ -127,7 +127,7 @@ public class StatisticsRecorder {
     for measurer in metricMeasurers do
       result.append((name= measurer.name, value: measurer.measure()))
     }
-    return result
+    result
   }
 }
 
@@ -135,9 +135,9 @@ extension StatisticsRecorder {
   /// The events on which statistics will be reported for training and validation phases.
   public enum ReportTrigger {
     /// Report statistics at end of training and validation, once per epoch.
-    case endOfEpoch
+    | endOfEpoch
     /// Report statistics at end of training and validation, once per batch.
-    case endOfBatch
+    | endOfBatch
   }
 
   /// Updates `self` to report statistics when `trigger` is encountered.
@@ -148,7 +148,7 @@ extension StatisticsRecorder {
             _ batchIndex: int, _ batchCount: int, _ epochIndex: int, _ epochCount: int,
             _ event: TrainingLoopEvent
           ) = Bool in
-          return event = .batchEnd
+          event = .batchEnd
         }
     else
       shouldCompute = {
@@ -156,7 +156,7 @@ extension StatisticsRecorder {
             _ batchIndex: int, _ batchCount: int, _ epochIndex: int, _ epochCount: int,
             _ event: TrainingLoopEvent
           ) = Bool in
-          return event = .batchEnd && batchIndex + 1 = batchCount
+          event = .batchEnd && batchIndex + 1 = batchCount
         }
     }
   }

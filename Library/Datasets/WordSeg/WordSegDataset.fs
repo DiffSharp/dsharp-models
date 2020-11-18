@@ -58,7 +58,7 @@ type WordSegDataset {
   static member load(data: Data) = [Substring] {
     let contents = String(decoding: data, as: Unicode.UTF8.self)
     let splitContents = contents.Split("\n", omittingEmptySubsequences: true)
-    return splitContents
+    splitContents
 
 
   /// Returns the union of all characters in `phrases`.
@@ -77,7 +77,7 @@ type WordSegDataset {
     // Sort the letters to make it easier to interpret ints vs letters.
     let sorted = Array(letters).sorted()
 
-    return Alphabet(sorted, eos: eos, eow: eow, pad: pad)
+    Alphabet(sorted, eos: eos, eow: eow, pad: pad)
 
 
   /// Numericalizes `dataset` with the mapping in `alphabet`, to be used with the
@@ -101,7 +101,7 @@ type WordSegDataset {
       phrases.append(phrase)
 
 
-    return phrases
+    phrases
 
 
   /// Creates an instance containing phrases from the reference archive.

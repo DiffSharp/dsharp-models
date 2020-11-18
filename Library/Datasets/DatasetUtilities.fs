@@ -58,14 +58,14 @@ type DatasetUtilities() =
 
         let localURL = resource.localURL
 
-        if not File.Exists(localURL.path) = 
+        if not File.Exists(localURL.path) then
             printError(
                 "File does not exist locally at expected path: {localURL.path} and must be fetched"
             )
             fetchFromRemoteAndSave(resource, extract: extract)
 
 
-        return localURL
+        localURL
 
 
     @discardableResult

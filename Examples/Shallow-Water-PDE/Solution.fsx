@@ -35,11 +35,10 @@ extension Array where Array.Element: ShallowWaterEquationSolution {
 
   /// Creates an array of shallow water equation solutions by evolving the `initialSolution` forward `numSteps`-times.
   
-  init(evolve initialSolution: Array.Element, for numSteps: int) = 
-    self.init()
+  init(evolve initialSolution: Array.Element, for numSteps: int) do    self.init()
 
     let currentSolution = initialSolution
-    for _ in 0..<numSteps {
+    for _ in 0..numSteps-1 do
       self.append(currentSolution)
       currentSolution = currentSolution.evolved()
 

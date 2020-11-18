@@ -35,7 +35,7 @@ type Config {
 
 extension CheckpointReader {
   let load(from name: string) : Tensor =
-    return dsharp.tensor(self.loadTensor(named: "MobilenetV1/{name}"))
+    dsharp.tensor(self.loadTensor(named: "MobilenetV1/{name}"))
 
 
 
@@ -46,9 +46,8 @@ let draw(pose: Pose, on imageTensor: inout Tensor<Float>) =
   let recursivellyDrawNextKeypoint(
     after previousKeypoint: Keypoint, into imageTensor: inout Tensor<Float>
   ) = 
-    for (nextKeypointIndex, direction) in getNextKeypointIndexAndDirection(previousKeypoint.index) = 
-      if direction = .fwd then
-        if let nextKeypoint = pose.getKeypoint(nextKeypointIndex) = 
+    for (nextKeypointIndex, direction) in getNextKeypointIndexAndDirection(previousKeypoint.index) do      if direction = .fwd then
+        if let nextKeypoint = pose.getKeypoint(nextKeypointIndex) then
           drawLine(
             on: &imageTensor,
             from: (int(previousKeypoint.x), int(previousKeypoint.y)),
@@ -84,11 +83,11 @@ type CPUTensor<T: TensorFlowScalar> {
 
   subscript(indexes: int..) = T {
     let oneDimensionalIndex = 0
-    for i in 1..<ndims {
+    for i in 1..ndims-1 do
       oneDimensionalIndex <- oneDimensionalIndex + indexes[i - 1] * shape.[i..].reduce(1, *)
 
     // Last dimension doesn't have multipliers.
     oneDimensionalIndex <- oneDimensionalIndex + indexes |> Array.last
-    return flattenedTensor[oneDimensionalIndex]
+    flattenedTensor[oneDimensionalIndex]
 
 

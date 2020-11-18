@@ -14,6 +14,8 @@
 //
 // Adapted from: https://github.com/eaplatanios/nca/blob/master/Sources/NCA/Evaluation.swift
 
+module Models.Evaluation
+
 /// Computes the Matthews correlation coefficient.
 ///
 /// The Matthews correlation coefficient is more informative than other confusion matrix measures
@@ -23,20 +25,19 @@
 ///
 /// - Source: [https://en.wikipedia.org/wiki/Matthews_correlation_coefficient](
 ///             https://en.wikipedia.org/wiki/Matthews_correlation_coefficient).
-let matthewsCorrelationCoefficient(predictions=[Bool], groundTruth=[Bool]) =
-  let tp = 0 // True positives.
-  let tn = 0 // True negatives.
-  let fp = 0 // False positives.
-  let fn = 0 // False negatives.
-  for (prediction, truth) in zip(predictions, groundTruth) = 
-    match (prediction, truth) = 
-    case (false, false): tn <- tn + 1
-    case (false, true): fn <- fn + 1
-    case (true, false): fp <- fp + 1
-    case (true, true): tp <- tp + 1
+let matthewsCorrelationCoefficient(predictions: bool[], groundTruth: bool[]) =
+    let mutable tp = 0 // True positives.
+    let mutable tn = 0 // True negatives.
+    let mutable fp = 0 // False positives.
+    let mutable fn = 0 // False negatives.
+    for (prediction, truth) in Array.zip predictions groundTruth do
+        match (prediction, truth) with
+        | (false, false) -> tn <- tn + 1
+        | (false, true) -> fn <- fn + 1
+        | (true, false) -> fp <- fp + 1
+        | (true, true) -> tp <- tp + 1
 
-
-  let nominator = double(tp * tn - fp * fn)
-  let denominator = double((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)).squareRoot()
-  return denominator <> 0 ? nominator / denominator : 0
+    let nominator = double(tp * tn - fp * fn)
+    let denominator = double((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn)) |> sqrt
+    if denominator <> 0.0 then nominator / denominator else 0.0
 

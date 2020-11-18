@@ -33,17 +33,17 @@ type ResNetGenerator(inputChannels:int,
     let useBias = true
 
     let conv1 = Conv2d(inputChannels, ngf, kernelSize=7, stride=1, bias=useBias)
-    let norm1 = InstanceNorm2D(featureCount=ngf)
+    let norm1 = InstanceNorm2d(numFeatures=ngf)
 
     let mult = 1
 
     let conv2 = Conv2d(ngf * mult, ngf * mult * 2, kernelSize=3, stride=2, padding = 1, bias=useBias)
-    let norm2 = InstanceNorm2D(featureCount=ngf * mult * 2)
+    let norm2 = InstanceNorm2d(numFeatures=ngf * mult * 2)
 
     let mult = 2
 
     let conv3 = Conv2d(ngf * mult, ngf * mult * 2, kernelSize=3, stride=2, padding = 1, bias=useBias)
-    let norm3 = InstanceNorm2D(featureCount=ngf * mult * 2)
+    let norm3 = InstanceNorm2d(numFeatures=ngf * mult * 2)
 
     let mult = 4
 
@@ -52,12 +52,12 @@ type ResNetGenerator(inputChannels:int,
     let mult = 4
 
     let upConv1 = ConvTranspose2d(ngf * mult, ngf * mult / 2, kernelSize=3, stride=2, padding=1, outputPadding=1, bias=useBias)
-    let upNorm1 = InstanceNorm2D(featureCount=ngf * mult / 2)
+    let upNorm1 = InstanceNorm2d(numFeatures=ngf * mult / 2)
     
     let mult = 2
 
     let upConv2 = ConvTranspose2d(ngf * mult, ngf * mult / 2, kernelSize=3, stride=2, padding=1, outputPadding=1, bias=useBias)
-    let upNorm2 = InstanceNorm2D(featureCount=ngf * mult / 2)
+    let upNorm2 = InstanceNorm2d(numFeatures=ngf * mult / 2)
 
     let lastConv = Conv2d(ngf, outputChannels, kernelSize = 7, bias=useBias, padding=3)
 

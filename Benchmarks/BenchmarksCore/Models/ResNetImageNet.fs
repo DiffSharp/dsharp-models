@@ -58,7 +58,7 @@ type ResNet50() =
 
   
   let callAsFunction(input: Tensor<Float>) = Tensor<Float> {
-    return model(input)
+    model(input)
   }
 }
 

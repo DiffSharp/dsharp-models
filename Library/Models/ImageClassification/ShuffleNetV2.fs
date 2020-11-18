@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 // Original V2 paper
@@ -36,20 +38,20 @@ type ChannelShuffle: ParameterlessLayer {
         let output = input.view([batchSize, height, width, groups, channelsPerGroup])
         output = output.permute([0, 1, 2, 4, 3])
         output = output.view([batchSize, height, width, channels])
-        return output
+        output
 
 
 
 type InvertedResidual() =
     inherit Model()
     let includeBranch: bool = true
-    let zeropad: ZeroPadding2D = ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
+    let zeropad: ZeroPadding2d = ZeroPadding2d<Float>(padding: ((1, 1), (1, 1)))
     
-    let branch: Sequential<ZeroPadding2D<Float>, Sequential<DepthwiseConv2D<Float>,
+    let branch: Sequential<ZeroPadding2d<Float>, Sequential<DepthwiseConv2d<Float>,
     Sequential<BatchNorm<Float>, Sequential<Conv2D<Float>, BatchNorm<Float>>>>>
     let conv1: Conv2D<Float>
     let batchNorm1: BatchNorm<Float>
-    let depthwiseConv: DepthwiseConv2D<Float>
+    let depthwiseConv: DepthwiseConv2d<Float>
     let batchNorm2: BatchNorm<Float>
     let conv2: Conv2D<Float>
     let batchNorm3: BatchNorm<Float>
@@ -61,33 +63,33 @@ type InvertedResidual() =
         
         let branchChannels = filters.1 / 2
         branch = Sequential {
-            ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
-            DepthwiseConv2D<Float>(
-                filterShape=(3, 3, filters.0, 1), strides = [stride, stride),
+            ZeroPadding2d<Float>(padding: ((1, 1), (1, 1)))
+            DepthwiseConv2d(
+                kernelSize=(3, 3, filters.0, 1), strides = [stride, stride),
                 padding="valid"
             )
-            BatchNorm(featureCount=filters.0)
+            BatchNorm2d(numFeatures=filters.0)
             Conv2d(
-                filterShape=(1, 1, filters.0, branchChannels), stride=1 (* , padding="valid" *),
+                kernelSize=(1, 1, filters.0, branchChannels), stride=1 (* , padding="valid" *),
                 useBias: false
             )
-            BatchNorm(featureCount=branchChannels)
+            BatchNorm2d(numFeatures=branchChannels)
 
         let inputChannels = includeBranch ? filters.0: branchChannels
         conv1 = Conv2d(
-            filterShape=(1, 1, inputChannels, branchChannels), stride=1 (* , padding="valid" *),
+            kernelSize=(1, 1, inputChannels, branchChannels), stride=1 (* , padding="valid" *),
             useBias: false
         )
         conv2 = Conv2d(
-            filterShape=(1, 1, branchChannels, branchChannels), stride=1 (* , padding="valid" *),
+            kernelSize=(1, 1, branchChannels, branchChannels), stride=1 (* , padding="valid" *),
             useBias: false
         )
-        depthwiseConv = DepthwiseConv2D<Float>(
-            filterShape=(3, 3, branchChannels, 1), strides = [stride, stride) (* , padding="valid" *)
+        depthwiseConv = DepthwiseConv2d(
+            kernelSize=(3, 3, branchChannels, 1), strides = [stride, stride) (* , padding="valid" *)
         )
-        batchNorm1 = BatchNorm(featureCount=branchChannels)
-        batchNorm2 = BatchNorm(featureCount=branchChannels)
-        batchNorm3 = BatchNorm(featureCount=branchChannels)
+        batchNorm1 = BatchNorm2d(numFeatures=branchChannels)
+        batchNorm2 = BatchNorm2d(numFeatures=branchChannels)
+        batchNorm3 = BatchNorm2d(numFeatures=branchChannels)
 
     
     
@@ -99,13 +101,13 @@ type InvertedResidual() =
             let output2 = relu(input2 |> conv1, batchNorm1))
             output2 = relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
                                              batchNorm3))
-            return ChannelShuffle()(input1.cat(output2, alongAxis: 3))
+            ChannelShuffle()(input1.cat(output2, alongAxis: 3))
         else
             let output1 = branch(input)
             let output2 = relu(input |> conv1, batchNorm1))
             output2 = relu(output2 |> zeropad, depthwiseConv, batchNorm2, conv2,
                                              batchNorm3))
-            return ChannelShuffle()(output1.cat(output2, alongAxis: 3))
+            ChannelShuffle()(output1.cat(output2, alongAxis: 3))
 
 
 
@@ -114,7 +116,7 @@ type InvertedResidual() =
 
 type ShuffleNetV2() =
     inherit Model()
-    let zeroPad: ZeroPadding2D<Float> = ZeroPadding2D<Float>(padding: ((1, 1), (1, 1)))
+    let zeroPad: ZeroPadding2d<Float> = ZeroPadding2d<Float>(padding: ((1, 1), (1, 1)))
     
     let conv1: Conv2D<Float>
     let batchNorm1: BatchNorm<Float>
@@ -123,7 +125,7 @@ type ShuffleNetV2() =
     let invertedResidualBlocksStage2: InvertedResidual[]
     let invertedResidualBlocksStage3: InvertedResidual[]
     let conv2: Conv2D<Float>
-    let globalPool: GlobalAvgPool2D<Float> = GlobalAvgPool2D()
+    let globalPool: GlobalAvgPool2d<Float> = GlobalAvgPool2d()
     let dense: Dense
     
     public init(stagesRepeat: (Int, Int, Int), stagesOutputChannels: (Int, Int, Int, Int, Int),
@@ -131,19 +133,19 @@ type ShuffleNetV2() =
         let inputChannels = 3
         let outputChannels = stagesOutputChannels.0
         conv1 = Conv2d(
-            filterShape=(3, 3, inputChannels, outputChannels), stride=1
+            kernelSize=(3, 3, inputChannels, outputChannels), stride=1
         )
         maxPool = MaxPool2D(poolSize: (3, 3), stride=2)
         conv2 = Conv2d(
-            filterShape=(1, 1, stagesOutputChannels.3, stagesOutputChannels.4), stride=1,
+            kernelSize=(1, 1, stagesOutputChannels.3, stagesOutputChannels.4), stride=1,
             useBias: false
         )
         dense = Linear(inFeatures=stagesOutputChannels.4, outFeatures=classCount)
-        batchNorm1 = BatchNorm(featureCount=outputChannels)
+        batchNorm1 = BatchNorm2d(numFeatures=outputChannels)
         inputChannels = outputChannels
         outputChannels = stagesOutputChannels.1
         invertedResidualBlocksStage1 = [InvertedResidual(filters: (inputChannels, outputChannels),
-                                                         stride: 2)]
+                                                         stride=2)]
         for _ in 1..stagesRepeat.0 do
             invertedResidualBlocksStage1.append(InvertedResidual(
                 filters: (outputChannels, outputChannels), stride=1)
@@ -152,7 +154,7 @@ type ShuffleNetV2() =
         inputChannels = outputChannels
         outputChannels = stagesOutputChannels.2
         invertedResidualBlocksStage2 = [InvertedResidual(filters: (inputChannels, outputChannels),
-                                                         stride: 2)]
+                                                         stride=2)]
         for _ in 1..stagesRepeat.1 do
             invertedResidualBlocksStage2.append(InvertedResidual(
                 filters: (outputChannels, outputChannels), stride=1)
@@ -162,7 +164,7 @@ type ShuffleNetV2() =
         inputChannels = outputChannels
         outputChannels = stagesOutputChannels.3
         invertedResidualBlocksStage3 = [InvertedResidual(filters: (inputChannels, outputChannels),
-                                                         stride: 2)]
+                                                         stride=2)]
         for _ in 1..stagesRepeat.2 do
             invertedResidualBlocksStage3.append(InvertedResidual(
                 filters: (outputChannels, outputChannels), stride=1)
@@ -176,17 +178,17 @@ type ShuffleNetV2() =
         output = invertedResidualBlocksStage1.differentiableReduce(output) = $1($0)
         output = invertedResidualBlocksStage2.differentiableReduce(output) = $1($0)
         output = invertedResidualBlocksStage3.differentiableReduce(output) = $1($0)
-        output = relu(conv2(output))
-        return output |> globalPool, dense)
+        output = relu(conv2.forward(output))
+        output |> globalPool, dense)
 
 
 
 extension ShuffleNetV2 {
     type Kind {
-        case shuffleNetV2x05
-        case shuffleNetV2x10
-        case shuffleNetV2x15
-        case shuffleNetV2x20
+        | shuffleNetV2x05
+        | shuffleNetV2x10
+        | shuffleNetV2x15
+        | shuffleNetV2x20
 
 
     public init(kind: Kind) = 

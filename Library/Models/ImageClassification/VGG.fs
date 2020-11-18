@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
 
 // Original Paper:
@@ -25,19 +27,19 @@ type VGGBlock() =
     let maxpool = MaxPool2d(kernelSize=2, stride=2)
 
     public init(featureCounts: (Int, Int, Int, Int), blockCount: int) = 
-        self.blocks = [Conv2d(filterShape=(3, 3, featureCounts.0, featureCounts.1),
-            padding="same",
+        self.blocks = [Conv2d(kernelSize=(3, 3, featureCounts.0, featureCounts.1),
+            padding=kernelSize/2 (* "same " *),
             activation= dsharp.relu)]
-        for _ in 1..<blockCount {
-            self.blocks <- blocks + [Conv2d(filterShape=(3, 3, featureCounts.2, featureCounts.3),
-                padding="same",
+        for _ in 1..blockCount-1 do
+            self.blocks <- blocks + [Conv2d(kernelSize=(3, 3, featureCounts.2, featureCounts.3),
+                padding=kernelSize/2 (* "same " *),
                 activation= dsharp.relu)]
 
 
 
     
     override _.forward(input) =
-        return maxpool(blocks.differentiableReduce(input) =  $1($0))
+        maxpool(blocks.differentiableReduce(input) =  $1($0))
 
 
 
@@ -55,18 +57,18 @@ type VGG16() =
     let output: Dense
 
     public init(classCount: int = 1000) = 
-        layer1 = VGGBlock(featureCounts: (3, 64, 64, 64), blockCount: 2)
-        layer2 = VGGBlock(featureCounts: (64, 128, 128, 128), blockCount: 2)
-        layer3 = VGGBlock(featureCounts: (128, 256, 256, 256), blockCount: 3)
-        layer4 = VGGBlock(featureCounts: (256, 512, 512, 512), blockCount: 3)
-        layer5 = VGGBlock(featureCounts: (512, 512, 512, 512), blockCount: 3)
+        layer1 = VGGBlock(featureCounts: (3, 64, 64, 64), blockCount=2)
+        layer2 = VGGBlock(featureCounts: (64, 128, 128, 128), blockCount=2)
+        layer3 = VGGBlock(featureCounts: (128, 256, 256, 256), blockCount=3)
+        layer4 = VGGBlock(featureCounts: (256, 512, 512, 512), blockCount=3)
+        layer5 = VGGBlock(featureCounts: (512, 512, 512, 512), blockCount=3)
         output = Linear(inFeatures=4096, outFeatures=classCount)
 
 
     
     override _.forward(input) =
         let backbone = input |> layer1, layer2, layer3, layer4, layer5)
-        return backbone |> flatten, dense1, dense2, output)
+        backbone |> flatten, dense1, dense2, output)
 
 
 
@@ -84,17 +86,17 @@ type VGG19() =
     let output: Dense
 
     public init(classCount: int = 1000) = 
-        layer1 = VGGBlock(featureCounts: (3, 64, 64, 64), blockCount: 2)
-        layer2 = VGGBlock(featureCounts: (64, 128, 128, 128), blockCount: 2)
-        layer3 = VGGBlock(featureCounts: (128, 256, 256, 256), blockCount: 4)
-        layer4 = VGGBlock(featureCounts: (256, 512, 512, 512), blockCount: 4)
-        layer5 = VGGBlock(featureCounts: (512, 512, 512, 512), blockCount: 4)
+        layer1 = VGGBlock(featureCounts: (3, 64, 64, 64), blockCount=2)
+        layer2 = VGGBlock(featureCounts: (64, 128, 128, 128), blockCount=2)
+        layer3 = VGGBlock(featureCounts: (128, 256, 256, 256), blockCount=4)
+        layer4 = VGGBlock(featureCounts: (256, 512, 512, 512), blockCount=4)
+        layer5 = VGGBlock(featureCounts: (512, 512, 512, 512), blockCount=4)
         output = Linear(inFeatures=4096, outFeatures=classCount)
 
 
     
     override _.forward(input) =
         let backbone = input |> layer1, layer2, layer3, layer4, layer5)
-        return backbone |> flatten, dense1, dense2, output)
+        backbone |> flatten, dense1, dense2, output)
 
 

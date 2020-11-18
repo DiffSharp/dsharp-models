@@ -12,41 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
-open x10_optimizers_optimizer
+open DiffSharp.Optim
 
 /// Adam optimizer with weight decay.
 ///
 /// Reference: ["Adam - A Method for Stochastic Optimization"](
 /// https://arxiv.org/abs/1412.6980v8)
-type WeightDecayedAdam(learningRate: double, beta1: double, beta2: double, weightDecayRate: double, epsilon: double) = 
+type WeightDecayedAdam(?learningRate: double, ?beta1: double, ?beta2: double, ?weightDecayRate: double, ?epsilon: double) = 
   inherit ParameterGroupOptimizer()
   let learningRate = defaultArg learningRate 0.01
   let beta1 = defaultArg beta1 0.9
   let beta2 = defaultArg beta2 0.999
   let weightDecayRate = defaultArg weightDecayRate 0.01
-  let epsilon = defaultArg 1e-6 epsilon
+  let epsilon = defaultArg epsilon 1e-6
   let b = ParameterGroupOptimizerBuilder()
-  let learningRate = b.makeParameter("learningRate", learningRate)
-  let beta1 = b.makeParameter("beta1", beta1)
-  let beta2 = b.makeParameter("beta2", beta2)
-  let wd = b.makeParameter("weightDecay", weightDecayRate)
+  let learningRate = b.makeParameter("learningRate", dsharp.scalar learningRate)
+  let beta1 = b.makeParameter("beta1", dsharp.scalar beta1)
+  let beta2 = b.makeParameter("beta2", dsharp.scalar beta2)
+  let wd = b.makeParameter("weightDecay", dsharp.scalar weightDecayRate)
 
-  let firstMoment = b.[state: "firstMoment"]
-  let secondMoment = b.[state: "secondMoment"]
+  let firstMoment = b.makeStateParameter "firstMoment"
+  let secondMoment = b.makeStateParameter "secondMoment"
 
   do 
-      b.appendCallback (fun (state: inout OptimizerWeightStepState, optState: inout OptimizerState) ->
+      b.appendCallback (fun (state: OptimizerWeightStepState, optState: OptimizerState) ->
         optState.[state, firstMoment] <-
-          state.[beta1] * optState.[state, firstMoment] + state.grad * (1 - state.[beta1]))
+          state.[beta1] * optState.[state, firstMoment] + state.grad * (1.0 - state.[beta1]))
 
-      b.appendCallback (fun (state: inout OptimizerWeightStepState, optState: inout OptimizerState) ->
+      b.appendCallback (fun (state: OptimizerWeightStepState, optState: OptimizerState) ->
         optState.[state, secondMoment] <-
-          state.[beta2] * optState.[state, secondMoment] + state.grad .* state.grad * (1 - state.[beta2]))
+          state.[beta2] * optState.[state, secondMoment] + state.grad * state.grad * (1.0 - state.[beta2]))
 
-      b.appendCallback (fun (state: inout OptimizerWeightStepState, optState: inout OptimizerState) ->
-        let denominator = sqrt(optState.[state, secondMoment]).adding(epsilon)
-        let update = optState.[state, firstMoment] ./ denominator + state.weight * state.[wd]
+      b.appendCallback (fun (state: OptimizerWeightStepState, optState: OptimizerState) ->
+        let denominator = sqrt(optState.[state, secondMoment]) + epsilon
+        let update = optState.[state, firstMoment] / denominator + state.weight * state.[wd]
         state.step <- -state.[learningRate] * update)
 
       b.makeOptimizer()

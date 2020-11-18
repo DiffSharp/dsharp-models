@@ -5,7 +5,7 @@
 open DiffSharp
 open DiffSharp.Model
 
-type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
+type InstanceNorm2d(featureCount: int, ?epsilon: Tensor) =
     inherit Model()
 
     /// Small value added in denominator for numerical stability.
@@ -29,4 +29,4 @@ type InstanceNorm2D(featureCount: int, ?epsilon: Tensor) =
         let res = norm * scale.value.view([featureCount;1;1]) + offset.value.view([featureCount;1;1])
         res
 
-    override _.ToString() = sprintf "InstanceNorm2D(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon
+    override _.ToString() = sprintf "InstanceNorm2d(scale=%O, offset=%O, epsilon=%O)" scale offset epsilon

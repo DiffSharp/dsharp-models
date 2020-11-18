@@ -80,7 +80,7 @@ let collectURLs(
     with
         fatalError($"Could not explore this folder: {error}")
 
-    return files
+    files
 
 
 /// Extracts a compressed file to a specified directory. This keys off of either the explicit
@@ -109,22 +109,22 @@ let extractArchive(
     let toolName: string
     let arguments: string[]
     let adjustedPathExtension: string
-    if archive.path.hasSuffix(".tar.gz") = 
+    if archive.path.hasSuffix(".tar.gz") then
         adjustedPathExtension = "tar.gz"
     else
         adjustedPathExtension = archive.pathExtension
 
     match fileExtension ?? adjustedPathExtension {
-    case "gz":
+    | "gz":
         toolName = "gunzip"
         arguments = [archivePath]
-    case "tar":
+    | "tar":
         toolName = "tar"
         arguments = ["xf", archivePath, "-C", localStorageDirectory.path]
-    case "tar.gz", "tgz":
+    | "tar.gz", "tgz":
         toolName = "tar"
         arguments = ["xzf", archivePath, "-C", localStorageDirectory.path]
-    case "zip":
+    | "zip":
         binaryLocation = "/usr/bin/"
         toolName = "unzip"
         arguments = ["-qq", archivePath, "-d", localStorageDirectory.path]

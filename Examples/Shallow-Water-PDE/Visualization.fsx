@@ -41,6 +41,6 @@ extension Tensor where Scalar = Float {
 
     let clipped = self.clipped(min: min, max: max)
     let normalized = (clipped - min) / (max - min) * double(byte.max)
-    return Tensor<byte>(normalized)
+    Tensor<byte>(normalized)
 
 

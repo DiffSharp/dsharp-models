@@ -42,11 +42,11 @@ type Autoencoder2D() =
     let encoder6 = Function (fun t -> t.maxpool2d(kernelSize=2, stride=2, padding=1))
 
     let decoder1 = Conv2d(8, 8, kernelSize=3, padding=3/2 (* "same" *) )
-    let decoder2 = UpSampling2D(size=2)
+    let decoder2 = UpSampling2d(size=2)
     let decoder3 = Conv2d(8, 8, kernelSize=3, padding=3/2 (* "same" *) )
-    let decoder4 = UpSampling2D(size=2)
+    let decoder4 = UpSampling2d(size=2)
     let decoder5 = Conv2d(8, 16, kernelSize=3)
-    let decoder6 = UpSampling2D(size=2)
+    let decoder6 = UpSampling2d(size=2)
 
     let output = Conv2d(16, 1, kernelSize=3, padding=3/2, activation= dsharp.sigmoid)
      

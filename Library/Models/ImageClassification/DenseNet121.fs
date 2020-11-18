@@ -12,140 +12,76 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+namespace Models
+
 open DiffSharp
+open DiffSharp.Model
+
+type Conv(inChannels: int, outChannels: int, kernelSize: int, ?stride: int) =
+    inherit Model()
+    let stride = defaultArg stride 1
+
+    let batchNorm = BatchNorm2d(numFeatures=inChannels)
+    let conv = Conv2d(inChannels, outChannels, kernelSize, strides = [stride; stride], padding= kernelSize/2 (* "same"  *))
+
+    override _.forward(input) =
+        conv.forward(dsharp.relu(batchNorm.forward(input)))
+
+/// A pair of a 1x1 `Conv` layer and a 3x3 `Conv` layer.
+type ConvPair(inChannels: int, growthRate: int) =
+    inherit Model()
+    let conv1x1 = Conv(kernelSize=1, inChannels=inChannels, outChannels=inChannels * 2 )
+    let conv3x3 = Conv(kernelSize=3, inChannels=inChannels * 2, outChannels=growthRate)
+        
+    override _.forward(input) =
+        let conv1Output = conv1x1.forward(input)
+        let conv3Output = conv3x3.forward(conv1Output)
+        dsharp.cat [| conv3Output; input |]
 
 // Original Paper:
 // Densely Connected Convolutional Networks
 // Gao Huang, Zhuang Liu, Laurens van der Maaten, Kilian Q. Weinberger
 // https://arxiv.org/pdf/1608.06993.pdf
 
-type DenseNet121() =
+type DenseBlock(repetitionCount: int, inChannels:int, ?growthRate: int) =
     inherit Model()
-    let conv = Conv(
-        filterSize: 7,
-        stride: 2,
-        inputFilterCount: 3,
-        outputFilterCount: 64
-    )
-    let maxpool = MaxPool2d(
-        poolSize: (3, 3),
-        stride=2,
-        padding="same"
-    )
-    let denseBlock1 = DenseBlock(repetitionCount: 6, inputFilterCount: 64)
-    let transitionLayer1 = TransitionLayer(inputFilterCount: 256)
-    let denseBlock2 = DenseBlock(repetitionCount: 12, inputFilterCount: 128)
-    let transitionLayer2 = TransitionLayer(inputFilterCount: 512)
-    let denseBlock3 = DenseBlock(repetitionCount: 24, inputFilterCount: 256)
-    let transitionLayer3 = TransitionLayer(inputFilterCount: 1024)
-    let denseBlock4 = DenseBlock(repetitionCount: 16, inputFilterCount: 512)
-    let globalAvgPool = GlobalAvgPool2D<Float>()
-    let dense: Dense
-
-    public init(classCount: int) = 
-        dense = Linear(inFeatures=1024, outFeatures=classCount)
-
-
+    let growthRate = defaultArg growthRate 32
+    let pairs = 
+        [| for i in 0..repetitionCount-1 do
+            let filterCount = inChannels + i * growthRate
+            ConvPair(inChannels=filterCount, growthRate=growthRate) |]
     
     override _.forward(input) =
-        let inputLayer = input |> conv, maxpool)
-        let level1 = inputLayer |> denseBlock1, transitionLayer1)
-        let level2 = level1 |> denseBlock2, transitionLayer2)
-        let level3 = level2 |> denseBlock3, transitionLayer3)
-        let output = level3 |> denseBlock4, globalAvgPool, dense)
-        return output
+        failwith "tbd" 
+        //pairs.differentiableReduce(input) =  last, layer 
+        //    layer(last)
 
+type TransitionLayer(inChannels:int) = 
+    inherit Model()
+    let conv = Conv(kernelSize=1, inChannels=inChannels, outChannels=inChannels / 2)
+    let pool = AvgPool2d(kernelSize=2, stride=2, padding=1 (* "same " *))
+    
+    override _.forward(input) =
+        input |> conv.forward |> pool.forward
 
+type DenseNet121(classCount: int) = 
+    inherit Model()
+    let conv = Conv2d(kernelSize=7, stride=2, inChannels=3, outChannels=64)
+    let maxpool = MaxPool2d(kernelSize=3,stride=2,padding=3/2 (* "same " *))
+    let denseBlock1 = DenseBlock(repetitionCount=6, inChannels=64)
+    let transitionLayer1 = TransitionLayer(inChannels=256)
+    let denseBlock2 = DenseBlock(repetitionCount=12, inChannels=128)
+    let transitionLayer2 = TransitionLayer(inChannels=512)
+    let denseBlock3 = DenseBlock(repetitionCount=24, inChannels=256)
+    let transitionLayer3 = TransitionLayer(inChannels=1024)
+    let denseBlock4 = DenseBlock(repetitionCount=16, inChannels=512)
+    let globalAvgPool = GlobalAvgPool2d()
+    let dense = Linear(inFeatures=1024, outFeatures=classCount)
 
-extension DenseNet121 {
-    type Conv() =
-        inherit Model()
-        let batchNorm: BatchNorm<Float>
-        let conv: Conv2D<Float>
-
-        public init(
-            filterSize: int,
-            stride: int = 1,
-            inputFilterCount: int,
-            outputFilterCount: int
-        ) = 
-            batchNorm = BatchNorm(featureCount=inputFilterCount)
-            conv = Conv2d(
-                filterShape=(filterSize, filterSize, inputFilterCount, outputFilterCount),
-                strides = [stride, stride),
-                padding="same"
-            )
-
-
-        
-        override _.forward(input) =
-            conv(relu(batchNorm(input)))
-
-
-
-    /// A pair of a 1x1 `Conv` layer and a 3x3 `Conv` layer.
-    type ConvPair() =
-        inherit Model()
-        let conv1x1: Conv
-        let conv3x3: Conv
-
-        public init(inputFilterCount: int, growthRate: int) = 
-            conv1x1 = Conv(
-                filterSize: 1,
-                inputFilterCount: inputFilterCount,
-                outputFilterCount: inputFilterCount * 2
-            )
-            conv3x3 = Conv(
-                filterSize: 3,
-                inputFilterCount: inputFilterCount * 2,
-                outputFilterCount: growthRate
-            )
-
-
-        
-        override _.forward(input) =
-            let conv1Output = conv1x1(input)
-            let conv3Output = conv3x3(conv1Output)
-            return conv3Output.cat(input, alongAxis: -1)
-
-
-
-    type DenseBlock() =
-        inherit Model()
-        let pairs: ConvPair[] = [| |]
-
-        public init(repetitionCount: int, growthRate: int = 32, inputFilterCount: int) = 
-            for i in 0..<repetitionCount {
-                let filterCount = inputFilterCount + i * growthRate
-                pairs.append(ConvPair(inputFilterCount: filterCount, growthRate: growthRate))
-
-
-
-        
-        override _.forward(input) =
-            pairs.differentiableReduce(input) =  last, layer in
-                layer(last)
-
-
-
-
-    type TransitionLayer() =
-        inherit Model()
-        let conv: Conv
-        let pool: AvgPool2D<Float>
-
-        public init(inputFilterCount: int) = 
-            conv = Conv(
-                filterSize: 1,
-                inputFilterCount: inputFilterCount,
-                outputFilterCount: inputFilterCount / 2
-            )
-            pool = AvgPool2D(kernelSize=2, stride=2, padding="same")
-
-
-        
-        override _.forward(input) =
-            input |> conv, pool)
-
-
-
+    override _.forward(input) =
+        let inputLayer = input |> conv.forward |> maxpool.forward
+        let level1 = inputLayer |> denseBlock1.forward |> transitionLayer1.forward
+        let level2 = level1 |> denseBlock2.forward |> transitionLayer2.forward
+        let level3 = level2 |> denseBlock3.forward |> transitionLayer3.forward
+        let output = level3 |> denseBlock4.forward |> globalAvgPool.forward |> dense.forward
+        output

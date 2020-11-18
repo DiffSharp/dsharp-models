@@ -81,12 +81,12 @@ extension CoLA {
 
     if isTest then
       // The test data file has a header.
-      return lines.dropFirst()|> Seq.map (fun (i, lineParts) ->
+      lines.dropFirst()|> Seq.map (fun (i, lineParts) ->
         CoLAExample(id: lineParts.[0], sentence: lineParts.[1], isAcceptable: nil)
 
 
 
-    return lines|> Seq.map { (i, lineParts) in
+    lines|> Seq.map { (i, lineParts) in
       CoLAExample(id: lineParts.[0], sentence: lineParts.[3], isAcceptable: lineParts.[1] = "1")
 
 
@@ -123,7 +123,7 @@ extension CoLA {
 
     // Extract the data, if necessary.
     let extractedDirectoryURL = compressedDataURL.deletingPathExtension()
-    if not File.Exists(extractedDirectoryURL.path) = 
+    if not File.Exists(extractedDirectoryURL.path) then
       try extract(zipFileAt: compressedDataURL, extractedDirectoryURL)
 
 
