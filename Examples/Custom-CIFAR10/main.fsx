@@ -26,7 +26,7 @@ open Models
 
 let batchSize = 100
 
-let dataset = CIFAR10(batchSize= batchSize)
+let dataset = CIFAR10(batchSize=batchSize)
 let model = KerasModel()
 let optimizer = RMSProp(model, learningRate=0.0001, decay=1e-6)
 

@@ -69,7 +69,7 @@ public extension ImportableLayer {
     mutating let unsafeImport(from reader: CheckpointReader, map: ImportMap) = 
         let parameters: [String: Tensor] = [:]
         for (name, _) in map.values do
-            parameters[name] = Tensor<Float>(reader.loadTensor(named: name))
+            parameters[name] = Tensor(reader.loadTensor(named: name))
 
         unsafeImport(parameters: parameters, map: map)
 

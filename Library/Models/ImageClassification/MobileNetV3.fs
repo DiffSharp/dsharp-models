@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module Models.MobileNetV3
+module Models.ImageClassification.MobileNetV3
 
 open DiffSharp
 open DiffSharp.Model
@@ -29,11 +29,11 @@ let makeDivisible(filter: int, width: double) =
     let filterAdd = double(filterMult) + (divisor / 2.0)
     let div = filterAdd / divisor |> floor
     let div = div * double(divisor)
-    let mutable newFilterCount = max 1 (int div)
-    if newFilterCount < int(0.9 * double filter) then
-        newFilterCount <- newFilterCount + int(divisor)
+    let mutable newChannels = max 1 (int div)
+    if newChannels < int(0.9 * double filter) then
+        newChannels <- newChannels + int(divisor)
 
-    int newFilterCount
+    int newChannels
 
 let roundFilterPair((f1, f2), width: double) =
     makeDivisible(f1, width),makeDivisible(f2, width)
@@ -53,7 +53,7 @@ type SqueezeExcitationBlock(inputOutputSize: int, reducedSize: int) =
     
     override _.forward(input) =
         let avgPoolReshaped = averagePool.forward(input).view([ input.shape.[0]; 1; 1; inputOutputSize ])
-        input * dsharp.hardSigmoid(expandConv.forward(dsharp.relu(reduceConv.forward(avgPoolReshaped))))
+        input * dsharp.hardsigmoid(expandConv.forward(dsharp.relu(reduceConv.forward(avgPoolReshaped))))
 
 type InitialInvertedResidualBlock(filters: (int * int),
         widthMultiplier: double,
@@ -83,7 +83,7 @@ type InitialInvertedResidualBlock(filters: (int * int),
         let depthwise = batchNormDConv.forward(dConv.forward(input))
         let depthwise = 
             match activation with
-            | HardSwish -> dsharp.hardSwish(depthwise)
+            | HardSwish -> dsharp.hardswish(depthwise)
             | Relu -> dsharp.relu(depthwise)
 
         let squeezeExcite =
@@ -132,7 +132,7 @@ type InvertedResidualBlock(filters: (int * int),
         let piecewise = batchNormConv1.forward(conv1.forward(input))
         let piecewise = 
             match activation with
-            | HardSwish -> dsharp.hardSwish(piecewise)
+            | HardSwish -> dsharp.hardswish(piecewise)
             | Relu -> dsharp.relu(piecewise)
 
         let depthwise =
@@ -143,7 +143,7 @@ type InvertedResidualBlock(filters: (int * int),
 
         let depthwise =
             match activation with
-            | HardSwish -> dsharp.hardSwish(depthwise)
+            | HardSwish -> dsharp.hardswish(depthwise)
             | Relu -> dsharp.relu(depthwise)
 
         let squeezeExcite =
@@ -198,13 +198,13 @@ type MobileNetV3Large(?classCount: int, ?widthMultiplier: double, ?dropout: doub
     let classiferConv = Conv2d(lastPointChannel, classCount, kernelSize=1, stride=1, padding=0 (* "same " *))
     
     override _.forward(input) =
-        let initialConv = dsharp.hardSwish(input |> zeroPad.forward |> inputConv.forward |> inputConvBatchNorm.forward)
+        let initialConv = dsharp.hardswish(input |> zeroPad.forward |> inputConv.forward |> inputConvBatchNorm.forward)
         let backbone1 = initialConv.sequenced(invertedResidualBlock1, invertedResidualBlock2, invertedResidualBlock3, invertedResidualBlock4, invertedResidualBlock5)
         let backbone2 = backbone1.sequenced(invertedResidualBlock6, invertedResidualBlock7, invertedResidualBlock8, invertedResidualBlock9, invertedResidualBlock10)
         let backbone3 = backbone2.sequenced(invertedResidualBlock11, invertedResidualBlock12, invertedResidualBlock13, invertedResidualBlock14, invertedResidualBlock15)
-        let outputConvResult = dsharp.hardSwish(outputConvBatchNorm.forward(outputConv.forward(backbone3)))
+        let outputConvResult = dsharp.hardswish(outputConvBatchNorm.forward(outputConv.forward(backbone3)))
         let averagePool = avgPool.forward(outputConvResult).view([ input.shape.[0]; 1; 1; lastConvChannel ])
-        let finalConvResult = dropoutLayer.forward(dsharp.hardSwish(finalConv.forward(averagePool)))
+        let finalConvResult = dropoutLayer.forward(dsharp.hardswish(finalConv.forward(averagePool)))
         dsharp.flatten(classiferConv.forward(finalConvResult))
 
 type MobileNetV3Small(?classCount: int, ?widthMultiplier: double, ?dropout: double) =
@@ -243,10 +243,10 @@ type MobileNetV3Small(?classCount: int, ?widthMultiplier: double, ?dropout: doub
     let classiferConv = Conv2d(lastPointChannel, classCount, kernelSize=1, stride=1, padding=0 (* "same " *))
 
     override _.forward(input) =
-        let initialConv = dsharp.hardSwish(input |> zeroPad.forward |> inputConv.forward |> inputConvBatchNorm.forward)
+        let initialConv = dsharp.hardswish(input |> zeroPad.forward |> inputConv.forward |> inputConvBatchNorm.forward)
         let backbone1 = initialConv.sequenced(invertedResidualBlock1, invertedResidualBlock2, invertedResidualBlock3, invertedResidualBlock4, invertedResidualBlock5)
         let backbone2 = backbone1.sequenced(invertedResidualBlock6, invertedResidualBlock7, invertedResidualBlock8, invertedResidualBlock9, invertedResidualBlock10, invertedResidualBlock11)
-        let outputConvResult = dsharp.hardSwish(outputConvBatchNorm.forward(outputConv.forward(backbone2)))
+        let outputConvResult = dsharp.hardswish(outputConvBatchNorm.forward(outputConv.forward(backbone2)))
         let averagePool = avgPool.forward(outputConvResult).view([ input.shape.[0]; 1; 1; lastConvChannel ])
-        let finalConvResult = dropoutLayer.forward(dsharp.hardSwish(finalConv.forward(averagePool)))
+        let finalConvResult = dropoutLayer.forward(dsharp.hardswish(finalConv.forward(averagePool)))
         dsharp.flatten(classiferConv.forward(finalConvResult))

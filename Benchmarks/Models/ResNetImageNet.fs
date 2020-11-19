@@ -1,4 +1,4 @@
-// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
+// Copyright 2020 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,31 +16,29 @@ namespace Benchmark
 (*
 open Benchmark
 open Datasets
-open ImageClassificationModels
+open Models.ImageClassification
 open DiffSharp
 
-let LeNetMNIST = BenchmarkSuite(
-  name= "LeNetMNIST",
-  settings: BatchSize(128), WarmupIterations(2)
+let ResNetImageNet = BenchmarkSuite(
+  name="ResNetImageNet",
+  setDiffSha:pchSize(128), WarmupIterations(2), Synthetic(true)
 ) =  suite in
 
   let inference(state: inout BenchmarkState) =
     if state.settings.synthetic {
       try runImageClassificationInference(
-        model: LeNet.self, dataset: SyntheticMNIST.self, state: &state)
+        model: ResNet50.self, dataset: SyntheticImageNet.self, state: &state)
     else
-      try runImageClassificationInference(
-        model: LeNet.self, dataset: MNIST<SystemRandomNumberGenerator>.self, state: &state)
+      fatalError("Only synthetic ImageNet benchmarks are supported at the moment.")
     }
   }
 
   let training(state: inout BenchmarkState) =
     if state.settings.synthetic {
       try runImageClassificationTraining(
-        model: LeNet.self, dataset: SyntheticMNIST.self, state: &state)
+        model: ResNet50.self, dataset: SyntheticImageNet.self, state: &state)
     else
-      try runImageClassificationTraining(
-        model: LeNet.self, dataset: MNIST<SystemRandomNumberGenerator>.self, state: &state)
+      fatalError("Only synthetic ImageNet benchmarks are supported at the moment.")
     }
   }
 
@@ -50,18 +48,32 @@ let LeNetMNIST = BenchmarkSuite(
   suite.benchmark("training_x10", settings: Backend(.x10), function: training)
 }
 
-extension LeNet: ImageClassificationModel {
-  static let preferredInputDimensions: int[] { [28, 28, 1] }
-  static let outputLabels: int { 10 }
+type ResNet50() = 
+  inherit Model()
+  let model: ResNet
+
+  init() = 
+    model = ResNet(classCount=1000, depth: ResNet50, downsamplingInFirstStage: true)
+  }
+
+  
+  let callAsFunction(input: Tensor) = Tensor =
+    model(input)
+  }
 }
 
-final class SyntheticMNIST: SyntheticImageDataset<SystemRandomNumberGenerator>,
+extension ResNet50: ImageClassificationModel {
+  static let preferredInputDimensions: int[] { [224, 224, 3] }
+  static let outputLabels: int { 1000 }
+}
+
+final class SyntheticImageNet: SyntheticImageDataset<SystemRandomNumberGenerator>,
   ImageClassificationData
 {
   public init(batchSize: int, on device: Device = Device.default) = 
     super.init(
-      batchSize= batchSize, labels=LeNet.outputLabels,
-      dimensions: LeNet.preferredInputDimensions, entropy=SystemRandomNumberGenerator(),
+      batchSize=batchSize, labels=ResNet50.outputLabels,
+      dimensions: ResNet50.preferredInputDimensions, entropy=SystemRandomNumberGenerator(),
       device=device)
   }
 }

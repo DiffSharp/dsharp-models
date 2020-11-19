@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Models
+module Models.ImageClassification.SqueezeNet
 
 open DiffSharp
+open DiffSharp.Model
 
 // Original Paper:
 // SqueezeNet: AlexNet Level Accuracy with 50X Fewer Parameters
@@ -22,173 +23,139 @@ open DiffSharp
 // and Kurt Keutzer
 // https://arxiv.org/pdf/1602.07360.pdf
 
-type Fire() =
+type Fire(inputChannels:int,
+        squeezeChannels: int,
+        expand1Channels: int,
+        expand3Channels: int) =
     inherit Model()
-    let squeeze: Conv2d
-    let expand1: Conv2d
-    let expand3: Conv2d
+    let squeeze = Conv2d(inputChannels, squeezeChannels, kernelSize=1, activation=dsharp.relu)
+    let expand1 = Conv2d(squeezeChannels, expand1Channels, kernelSize=1, activation=dsharp.relu)
+    let expand3 = Conv2d(squeezeChannels, expand3Channels, kernelSize=3, padding=1 (* "same " *),activation=dsharp.relu)
 
-    public init(
-        inChannels=int,
-        squeezeFilterCount: int,
-        expand1FilterCount: int,
-        expand3FilterCount: int
-    ) = 
-        squeeze = Conv2d(
-            kernelSize=(1, 1, inputFilterCount, squeezeFilterCount),
-            activation= dsharp.relu)
-        expand1 = Conv2d(
-            kernelSize=(1, 1, squeezeFilterCount, expand1FilterCount),
-            activation= dsharp.relu)
-        expand3 = Conv2d(
-            kernelSize=(3, 3, squeezeFilterCount, expand3FilterCount),
-            padding=kernelSize/2 (* "same " *),
-            activation= dsharp.relu)
-
-
-    
     override _.forward(input) =
-        let squeezed = squeeze(input)
-        let expanded1 = expand1(squeezed)
-        let expanded3 = expand3(squeezed)
-        expanded1.cat(expanded3, alongAxis: -1)
+        let squeezed = squeeze.forward(input)
+        let expanded1 = expand1.forward(squeezed)
+        let expanded3 = expand3.forward(squeezed)
+        expanded1.cat(expanded3, dim= -1)
 
-
-
-type SqueezeNetV1_0() =
+type SqueezeNetV1_0(classCount: int) =
     inherit Model()
-    let conv1 = Conv2d(
-        kernelSize=(7, 7, 3, 96),
-        stride=2,
-        padding=kernelSize/2 (* "same " *),
-        activation= dsharp.relu)
-    let maxPool1 = MaxPool2d(poolSize: (3, 3), stride=2)
-    let fire2 = Fire(
-        inChannels=96,
-        squeezeFilterCount: 16,
-        expand1FilterCount: 64,
-        expand3FilterCount: 64)
-    let fire3 = Fire(
-        inChannels=128,
-        squeezeFilterCount: 16,
-        expand1FilterCount: 64,
-        expand3FilterCount: 64)
-    let fire4 = Fire(
-        inChannels=128,
-        squeezeFilterCount: 32,
-        expand1FilterCount: 128,
-        expand3FilterCount: 128)
-    let maxPool4 = MaxPool2d(poolSize: (3, 3), stride=2)
-    let fire5 = Fire(
-        inChannels=256,
-        squeezeFilterCount: 32,
-        expand1FilterCount: 128,
-        expand3FilterCount: 128)
-    let fire6 = Fire(
-        inChannels=256,
-        squeezeFilterCount: 48,
-        expand1FilterCount: 192,
-        expand3FilterCount: 192)
-    let fire7 = Fire(
-        inChannels=384,
-        squeezeFilterCount: 48,
-        expand1FilterCount: 192,
-        expand3FilterCount: 192)
-    let fire8 = Fire(
-        inChannels=384,
-        squeezeFilterCount: 64,
-        expand1FilterCount: 256,
-        expand3FilterCount: 256)
-    let maxPool8 = MaxPool2d(poolSize: (3, 3), stride=2)
-    let fire9 = Fire(
-        inChannels=512,
-        squeezeFilterCount: 64,
-        expand1FilterCount: 256,
-        expand3FilterCount: 256)
-    let conv10: Conv2d
-    let avgPool10 = AvgPool2d<Float>(poolSize: (13, 13), stride=1)
+    let conv1 = Conv2d(3, 96, kernelSize=7, stride=2, padding=3 (* "same " *), activation=dsharp.relu)
+    let maxPool1 = MaxPool2d(kernelSize=3, stride=2)
+    let fire2 =
+        Fire(inputChannels=96,
+            squeezeChannels=16,
+            expand1Channels=64,
+            expand3Channels=64)
+    let fire3 = 
+        Fire(inputChannels=128,
+            squeezeChannels=16,
+            expand1Channels=64,
+            expand3Channels=64)
+    let fire4 =
+        Fire(inputChannels=128,
+            squeezeChannels=32,
+            expand1Channels=128,
+            expand3Channels=128)
+    let maxPool4 = MaxPool2d(kernelSize=3, stride=2)
+    let fire5 =
+        Fire(inputChannels=256,
+            squeezeChannels=32,
+            expand1Channels=128,
+            expand3Channels=128)
+    let fire6 =
+        Fire(inputChannels=256,
+            squeezeChannels=48,
+            expand1Channels=192,
+            expand3Channels=192)
+    let fire7 =
+        Fire(inputChannels=384,
+            squeezeChannels=48,
+            expand1Channels=192,
+            expand3Channels=192)
+    let fire8 =
+        Fire(inputChannels=384,
+            squeezeChannels=64,
+            expand1Channels=256,
+            expand3Channels=256)
+    let maxPool8 = MaxPool2d(kernelSize=3, stride=2)
+    let fire9 =
+        Fire(inputChannels=512,
+            squeezeChannels=64,
+            expand1Channels=256,
+            expand3Channels=256)
+    let avgPool10 = AvgPool2d(kernelSize=13, stride=1)
     let dropout = Dropout2d(p=0.5)
 
-    public init(classCount: int) = 
-        conv10 = Conv2d(kernelSize=(1, 1, 512, classCount), stride=1, activation= dsharp.relu)
-
-
+    let conv10 = Conv2d(512, classCount, kernelSize=1, stride=1, activation=dsharp.relu)
     
     override _.forward(input) =
-        let convolved1 = input |> conv1, maxPool1)
-        let fired1 = convolved1 |> fire2, fire3, fire4, maxPool4, fire5, fire6)
-        let fired2 = fired1 |> fire7, fire8, maxPool8, fire9)
-        let convolved2 = fired2 |> dropout, conv10, avgPool10)
-            .view([input.shape.[0], conv10.filter.shape.[3]])
+        let convolved1 = input |> conv1.forward |> maxPool1.forward
+        let fired1 = convolved1 |> fire2.forward |> fire3.forward |> fire4.forward |> maxPool4.forward |> fire5.forward |> fire6.forward
+        let fired2 = fired1 |> fire7.forward |> fire8.forward |> maxPool8.forward |> fire9.forward
+        let convolved2 = fired2 |> dropout.forward |> conv10.forward |> avgPool10.forward
+        let convolved2 = convolved2.view([input.shape.[0]; failwith "tbd - check me" (* conv10.filter.shape.[3] *)])
         convolved2
 
-
-
-type SqueezeNetV1_1() =
+type SqueezeNetV1_1(classCount: int) =
     inherit Model()
-    let conv1 = Conv2d(
-        kernelSize=(3, 3, 3, 64),
-        stride=2,
-        padding=kernelSize/2 (* "same " *),
-        activation= dsharp.relu)
-    let maxPool1 = MaxPool2d(poolSize: (3, 3), stride=2)
-    let fire2 = Fire(
-        inChannels=64,
-        squeezeFilterCount: 16,
-        expand1FilterCount: 64,
-        expand3FilterCount: 64)
-    let fire3 = Fire(
-        inChannels=128,
-        squeezeFilterCount: 16,
-        expand1FilterCount: 64,
-        expand3FilterCount: 64)
-    let maxPool3 = MaxPool2d(poolSize: (3, 3), stride=2)
-    let fire4 = Fire(
-        inChannels=128,
-        squeezeFilterCount: 32,
-        expand1FilterCount: 128,
-        expand3FilterCount: 128)
-    let fire5 = Fire(
-        inChannels=256,
-        squeezeFilterCount: 32,
-        expand1FilterCount: 128,
-        expand3FilterCount: 128)
-    let maxPool5 = MaxPool2d(poolSize: (3, 3), stride=2)
-    let fire6 = Fire(
-        inChannels=256,
-        squeezeFilterCount: 48,
-        expand1FilterCount: 192,
-        expand3FilterCount: 192)
-    let fire7 = Fire(
-        inChannels=384,
-        squeezeFilterCount: 48,
-        expand1FilterCount: 192,
-        expand3FilterCount: 192)
-    let fire8 = Fire(
-        inChannels=384,
-        squeezeFilterCount: 64,
-        expand1FilterCount: 256,
-        expand3FilterCount: 256)
-    let fire9 = Fire(
-        inChannels=512,
-        squeezeFilterCount: 64,
-        expand1FilterCount: 256,
-        expand3FilterCount: 256)
-    let conv10: Conv2d
-    let avgPool10 = AvgPool2d<Float>(poolSize: (13, 13), stride=1)
+    let conv1 =
+        Conv2d(3, 64, 
+            kernelSize=3,
+            stride=2,
+            padding=1 (* "same " *),
+            activation=dsharp.relu)
+    let maxPool1 = MaxPool2d(kernelSize=3, stride=2)
+    let fire2 =
+        Fire(inputChannels=64,
+            squeezeChannels=16,
+            expand1Channels=64,
+            expand3Channels=64)
+    let fire3 = 
+        Fire(inputChannels=128,
+            squeezeChannels=16,
+            expand1Channels=64,
+            expand3Channels=64)
+    let maxPool3 = MaxPool2d(kernelSize=3, stride=2)
+    let fire4 =
+        Fire(inputChannels=128,
+            squeezeChannels=32,
+            expand1Channels=128,
+            expand3Channels=128)
+    let fire5 =
+        Fire(inputChannels=256,
+            squeezeChannels=32,
+            expand1Channels=128,
+            expand3Channels=128)
+    let maxPool5 = MaxPool2d(kernelSize=3, stride=2)
+    let fire6 =
+        Fire(inputChannels=256,
+            squeezeChannels=48,
+            expand1Channels=192,
+            expand3Channels=192)
+    let fire7 =
+        Fire(inputChannels=384,
+            squeezeChannels=48,
+            expand1Channels=192,
+            expand3Channels=192)
+    let fire8 =
+        Fire(inputChannels=384,
+            squeezeChannels=64,
+            expand1Channels=256,
+            expand3Channels=256)
+    let fire9 =
+        Fire(inputChannels=512,
+            squeezeChannels=64,
+            expand1Channels=256,
+            expand3Channels=256)
+    let conv10 = Conv2d(512, classCount, kernelSize=1, stride=1, activation=dsharp.relu)
+    let avgPool10 = AvgPool2d(kernelSize=13, stride=1)
     let dropout = Dropout2d(p=0.5)
 
-    public init(classCount: int) = 
-        conv10 = Conv2d(kernelSize=(1, 1, 512, classCount), stride=1, activation= dsharp.relu)
-
-
-    
     override _.forward(input) =
-        let convolved1 = input |> conv1, maxPool1)
-        let fired1 = convolved1 |> fire2, fire3, maxPool3, fire4, fire5)
-        let fired2 = fired1 |> maxPool5, fire6, fire7, fire8, fire9)
-        let convolved2 = fired2 |> dropout, conv10, avgPool10)
-            .view([input.shape.[0], conv10.filter.shape.[3]])
+        let convolved1 = input |> conv1.forward |> maxPool1.forward
+        let fired1 = convolved1 |> fire2.forward |> fire3.forward |> maxPool3.forward |> fire4.forward |> fire5.forward
+        let fired2 = fired1 |> maxPool5.forward |> fire6.forward |> fire7.forward |> fire8.forward |> fire9.forward
+        let convolved2 = fired2 |> dropout.forward |> conv10.forward |> avgPool10.forward
+        let convolved2 = convolved2.view([input.shape.[0]; failwith "tbd check me" (* conv10.filter.shape.[3] *) ])
         convolved2
-
-

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module Models.MobileNetV2
+module Models.ImageClassification.MobileNetV2
 
 open DiffSharp
 open DiffSharp.Model
@@ -30,11 +30,11 @@ let makeDivisible(filter: int, width: double) =
     let filterAdd = double(filterMult) + (divisor / 2.0)
     let div = filterAdd / divisor |> floor
     let div = div * double(divisor)
-    let mutable newFilterCount = max 1 (int div)
-    if newFilterCount < int(0.9 * double filter) then
-        newFilterCount <- newFilterCount + int(divisor)
+    let mutable newChannels = max 1 (int div)
+    if newChannels < int(0.9 * double filter) then
+        newChannels <- newChannels + int(divisor)
 
-    int newFilterCount
+    int newChannels
 
 let roundFilterPair((f1, f2), width: double) =
     makeDivisible(f1, width),makeDivisible(f2, width)
@@ -101,8 +101,7 @@ type InvertedBottleneckBlockStack(filters: (int * int),
         |]
     
     override _.forward(input) =
-        failwith "tbd"
-        // blocks.differentiableReduce(input) =  $1($0)
+        (input, blocks) ||> Array.fold (fun last layer -> layer.forward last) 
 
 type MobileNetV2(?classCount: int, ?widthMultiplier: double) =
     inherit Model()
@@ -123,20 +122,20 @@ type MobileNetV2(?classCount: int, ?widthMultiplier: double) =
 
     let invertedBottleneckBlock16 = InvertedBottleneckBlock(filters=(160, 320), widthMultiplier=widthMultiplier)
 
-    let lastBlockFilterCount = makeDivisible(1280, widthMultiplier)
-    let lastBlockFilterCount = 
+    let lastBlockChannels = makeDivisible(1280, widthMultiplier)
+    let lastBlockChannels = 
         if widthMultiplier < 1.0 then
             // paper: "One minor implementation difference, with [arxiv:1704.04861] is that for
             // multipliers less than one, we apply width multiplier to all layers except the very
             // last convolutional layer."
             1280
         else
-            lastBlockFilterCount
+            lastBlockChannels
 
-    let outputConv = Conv2d(makeDivisible(320, widthMultiplier), lastBlockFilterCount, kernelSize=1, stride=1, padding=0 (* "same " *))
-    let outputConvBatchNorm = BatchNorm2d(numFeatures=lastBlockFilterCount)
+    let outputConv = Conv2d(makeDivisible(320, widthMultiplier), lastBlockChannels, kernelSize=1, stride=1, padding=0 (* "same " *))
+    let outputConvBatchNorm = BatchNorm2d(numFeatures=lastBlockChannels)
 
-    let outputClassifier = Linear(lastBlockFilterCount, classCount)
+    let outputClassifier = Linear(lastBlockChannels, classCount)
 
     override _.forward(input) =
         let convolved = dsharp.relu6(input |> zeroPad.forward |> inputConv.forward |> inputConvBatchNorm.forward)

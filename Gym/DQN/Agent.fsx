@@ -32,13 +32,13 @@ extension Optional {
 /// through deep reinforcement learning (Mnih et al., 2015).
 type DeepQNetwork() =
   inherit Model()
-  type Input = Tensor<Float>
-  type Output = Tensor<Float>
+  type Input = Tensor
+  type Output = Tensor
 
   let l1, l2: Dense
 
   init(observationSize: int, hiddenSize: int, actionCount: int) = 
-    l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation= dsharp.relu)
+    l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation=dsharp.relu)
     l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount, activation= id)
 
 
@@ -106,7 +106,7 @@ type DeepQNetworkAgent {
       Tensor (*<int32>*)(numpy: np.array(np.random.randint(0, 2), dtype: np.int32))!
     else
       // Neural network input needs to be 2D
-      let tfState = Tensor<Float>(numpy: np.expand_dims(state.makeNumpyArray(), axis: 0))!
+      let tfState = Tensor(numpy: np.expand_dims(state.makeNumpyArray(), axis: 0))!
       let qValues = qNet(tfState)[0]
       Tensor (*<int32>*)(qValues[1].toScalar() > qValues[0].toScalar() ? 1 : 0, device=device)
 
@@ -116,9 +116,9 @@ type DeepQNetworkAgent {
     // Don't train if replay buffer is too small
     if replayBuffer.count >= minBufferSize then
       let (tfStateBatch, tfActionBatch, tfRewardBatch, tfNextStateBatch, tfIsDoneBatch) =
-        replayBuffer.sample(batchSize= batchSize)
+        replayBuffer.sample(batchSize=batchSize)
 
-      let (loss, gradients) = valueWithGradient(at: qNet) =  qNet -> Tensor<Float> in
+      let (loss, gradients) = valueWithGradient(at: qNet) =  qNet -> Tensor in
         // Compute prediction batch
         let npActionBatch = tfActionBatch.makeNumpyArray()
         let npFullIndices = np.stack(
@@ -143,7 +143,7 @@ type DeepQNetworkAgent {
           nextStateQValueBatch = self.targetQNet(tfNextStateBatch).max(squeezingAxes: 1)
 
         let targetBatch: Tensor =
-          tfRewardBatch + self.discount * (1 - Tensor<Float>(tfIsDoneBatch)) * nextStateQValueBatch
+          tfRewardBatch + self.discount * (1 - Tensor(tfIsDoneBatch)) * nextStateQValueBatch
 
         huberLoss(
           predicted=predictionBatch,
@@ -160,12 +160,12 @@ type DeepQNetworkAgent {
 
   let updateTargetQNet(tau: double) = 
     self.targetQNet.l1.weight =
-      tau * Tensor<Float>(self.qNet.l1.weight) + (1 - tau) * self.targetQNet.l1.weight
+      tau * Tensor(self.qNet.l1.weight) + (1 - tau) * self.targetQNet.l1.weight
     self.targetQNet.l1.bias =
-      tau * Tensor<Float>(self.qNet.l1.bias) + (1 - tau) * self.targetQNet.l1.bias
+      tau * Tensor(self.qNet.l1.bias) + (1 - tau) * self.targetQNet.l1.bias
     self.targetQNet.l2.weight =
-      tau * Tensor<Float>(self.qNet.l2.weight) + (1 - tau) * self.targetQNet.l2.weight
+      tau * Tensor(self.qNet.l2.weight) + (1 - tau) * self.targetQNet.l2.weight
     self.targetQNet.l2.bias =
-      tau * Tensor<Float>(self.qNet.l2.bias) + (1 - tau) * self.targetQNet.l2.bias
+      tau * Tensor(self.qNet.l2.bias) + (1 - tau) * self.targetQNet.l2.bias
 
 

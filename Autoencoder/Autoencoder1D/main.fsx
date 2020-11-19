@@ -29,21 +29,21 @@ let batchSize = 100
 let imageHeight = 28
 let imageWidth = 28
 
-let dataset = FashionMNIST(batchSize= batchSize, flattening=true)
+let dataset = FashionMNIST(batchSize=batchSize, flattening=true)
 
 // An autoencoder.
 let autoencoder = 
     Sequential (
           // The encoder.
-          Linear(inFeatures=imageHeight * imageWidth, outFeatures=128), Function(dsharp.relu),
-          Linear(inFeatures=128, outFeatures=64), Function(dsharp.relu),
-          Linear(inFeatures=64, outFeatures=12), Function(dsharp.relu),
-          Linear(inFeatures=12, outFeatures=3), Function(dsharp.relu),
+          Linear(inFeatures=imageHeight * imageWidth, outFeatures=128, activation=dsharp.relu),
+          Linear(inFeatures=128, outFeatures=64, activation=dsharp.relu),
+          Linear(inFeatures=64, outFeatures=12, activation=dsharp.relu),
+          Linear(inFeatures=12, outFeatures=3, activation=dsharp.relu),
           // The decoder.
-          Linear(inFeatures=3, outFeatures=12), Function(dsharp.relu),
-          Linear(inFeatures=12, outFeatures=64), Function(dsharp.relu),
-          Linear(inFeatures=64, outFeatures=128), Function(dsharp.relu),
-          Linear(inFeatures=128, outFeatures=imageHeight * imageWidth), Function(dsharp.tanh)
+          Linear(inFeatures=3, outFeatures=12, activation=dsharp.relu),
+          Linear(inFeatures=12, outFeatures=64, activation=dsharp.relu),
+          Linear(inFeatures=64, outFeatures=128, activation=dsharp.relu),
+          Linear(inFeatures=128, outFeatures=imageHeight * imageWidth, activation=dsharp.tanh)
     )
 
 let optimizer = RMSProp(autoencoder)
@@ -60,8 +60,8 @@ let saveImage(loop: TrainingLoop, event: TrainingLoopEvent) =
   let batchCount = loop.batchCount
   let epochIndex = loop.epochIndex
   let epochCount = loop.epochCount
-  let input : Tensor = loop.lastStepInput
-  let output : Tensor = loop.lastStepOutput
+  let input = loop.lastStepInput
+  let output = loop.lastStepOutput
   let imageCount = batchCount * batchSize
   let selectedImageGlobalIndex = epochIndex * (imageCount / epochCount)
   let selectedBatchIndex = selectedImageGlobalIndex / batchSize

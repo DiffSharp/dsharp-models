@@ -15,31 +15,24 @@
 // Adapted from: https://gist.github.com/eaplatanios/eae9c1b4141e961c949d6f2e7d424c6f
 // Untested.
 
-namespace Models
+module Models.Text.BERTClassifier
 
-open Models.BERT
+open Models.Text.BERT
+open Models.Text.TransformerBERT
 open Datasets
 open DiffSharp
+open DiffSharp.Model
+open Support.Text
 
 type BERTClassifier(bert: BERT, classCount: int) = 
-  inherit Model() //: Module, Regularizable {
-  let bert: BERT
-  let dense: Dense
+    inherit Model<TextBatch, Tensor>() //: Module, Regularizable {
 
-  let regularizationValue: TangentVector =
-    TangentVector(
-      bert: bert.regularizationValue,
-      dense: dense.regularizationValue)
+    let dense = Linear(inFeatures=bert.hiddenSize, outFeatures=classCount)
+    let regularizationValue: TangentVector =
+        TangentVector {| bert=bert.regularizationValue; dense=dense.regularizationValue |}
 
-
-  public init
-    self.bert = bert
-    self.dense = Linear(inFeatures=bert.hiddenSize, outFeatures=classCount)
-
-
-  /// Returns: logits with shape `[batchSize, classCount]`.
-  (wrt: self)
-  override _.forward(input: TextBatch) : Tensor =
-    dense(bert(input)[0.., 0])
+    /// Returns: logits with shape `[batchSize, classCount]`.
+    override _.forward(input: TextBatch) : Tensor =
+        dense.forward(bert.forward(input).[0.., 0])
 
 

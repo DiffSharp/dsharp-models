@@ -54,7 +54,7 @@ public class SyntheticImageDataset {
     Debug.Assert(dimensions.count = 3)
 
     // Training data
-    training = TrainingEpochs(samples: (0..batchSize-1), batchSize= batchSize, entropy: entropy)
+    training = TrainingEpochs(samples: (0..batchSize-1), batchSize=batchSize, entropy: entropy)
        |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
         batches |> Seq.map {
           makeSyntheticBatch(samples: $0, dimensions: dimensions, labels=labels, device=device)
@@ -71,13 +71,13 @@ public class SyntheticImageDataset {
 let makeSyntheticBatch<BatchSamples: Collection>(
   samples: BatchSamples, dimensions: int[], labels=int, device: Device
 ) = LabeledImage where BatchSamples.Element = Int {
-  let syntheticImageBatch = Tensor<Float>(
-    glorotUniform: [[samples.count] + dimensions], on: device)
+  let syntheticImageBatch = Tensor(
+    glorotUniform: [[samples.count] + dimensions], device=device)
 
   let syntheticLabels = Tensor<int32>(
     samples.map { _ -> int32 in
       int32.random(0..int32(labels)-1)
-    }, on: device)
+    }, device=device)
 
   return LabeledImage(data: syntheticImageBatch, label: syntheticLabels)
 }

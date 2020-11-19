@@ -18,7 +18,7 @@ open DiffSharp
 
 
 /// An image with a label.
-type LabeledImage = LabeledData<Tensor<Float>, Tensor (*<int32>*)>
+type LabeledImage = LabeledData<Tensor, Tensor (*<int32>*)>
 
 /// Types whose elements represent an image classification dataset (with both
 /// training and validation data).

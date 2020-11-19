@@ -52,7 +52,7 @@ type OxfordIIITPets {
   ///     as where the latter stages of any conversion calculations will be performed.
   public init(batchSize: int, entropy: Entropy, device: Device) = 
     self.init(
-      batchSize= batchSize, entropy: entropy, device=device, imageSize: 224)
+      batchSize=batchSize, entropy: entropy, device=device, imageSize: 224)
 
 
   /// Creates an instance with `batchSize` on `device` using `remoteBinaryArchiveLocation`.
@@ -76,7 +76,7 @@ type OxfordIIITPets {
       let trainingSamples = try loadOxfordIITPetsTraining(
         localStorageDirectory=localStorageDirectory)
 
-      training = TrainingEpochs(samples: trainingSamples, batchSize= batchSize, entropy: entropy)
+      training = TrainingEpochs(samples: trainingSamples, batchSize=batchSize, entropy: entropy)
          |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
           batches |> Seq.map {
             makeBatch(samples: $0, imageSize: imageSize, device=device)
@@ -98,14 +98,14 @@ type OxfordIIITPets {
 extension OxfordIIITPets: ImageSegmentationData where Entropy = SystemRandomNumberGenerator {
   /// Creates an instance with `batchSize`, using the SystemRandomNumberGenerator.
   public init(batchSize: int, on device: Device = Device.default) = 
-    self.init(batchSize= batchSize, device=device)
+    self.init(batchSize=batchSize, device=device)
 
 
   /// Creates an instance with `batchSize`, `inputSize`, and `outputSize`, using the
   /// SystemRandomNumberGenerator.
   public init(batchSize: int, imageSize: int, on device: Device = Device.default) = 
     self.init(
-      batchSize= batchSize, device=device,
+      batchSize=batchSize, device=device,
       imageSize: imageSize)
 
 
@@ -173,7 +173,7 @@ let loadOxfordIIITPetsValidation(localStorageDirectory: Uri) -> [(
 let makeBatch<BatchSamples: Collection>(
   samples: BatchSamples, imageSize: int, device: Device
 ) = SegmentedImage where BatchSamples.Element = (file: Uri, annotation: Uri) = 
-  let images = samples.map (fun x -> x.file).map { url -> Tensor<Float> in
+  let images = samples.map (fun x -> x.file).map { url -> Tensor in
     Image(jpeg: url).resized((imageSize, imageSize)).tensor[0.., 0.., 0..<3]
 
 

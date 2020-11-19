@@ -115,7 +115,7 @@ public class StatisticsRecorder {
 
   /// Lets each of the metricMeasurers accumulate data from
   /// `loss`, `predictions`, `labels`.
-  let accumulateMetrics<Output, Target>(loss: Tensor<Float>, predictions=Output, labels=Target) = 
+  let accumulateMetrics<Output, Target>(loss: Tensor, predictions=Output, labels=Target) = 
     for index in metricMeasurers.indices do
       metricMeasurers[index].accumulate(loss: loss, predictions=predictions, labels=labels)
     }

@@ -35,7 +35,7 @@ type DepthwiseSeparableConvBlock() =
     dConv = DepthwiseConv2d(
       filter: depthWiseFilter,
       bias: depthWiseBias,
-      activation= dsharp.relu6,
+      activation=dsharp.relu6,
       strides=strides,
       padding=kernelSize/2 (* "same " *)
     )
@@ -43,7 +43,7 @@ type DepthwiseSeparableConvBlock() =
     conv = Conv2d(
       filter: pointWiseFilter,
       bias: pointWiseBias,
-      activation= dsharp.relu6,
+      activation=dsharp.relu6,
       padding=kernelSize/2 (* "same " *)
     )
 
@@ -79,7 +79,7 @@ type MobileNetLikeBackbone() =
     self.convBlock0 = Conv2d(
       filter: ckpt.load("Conv2d_0/weights"),
       bias: ckpt.load("Conv2d_0/biases"),
-      activation= dsharp.relu6,
+      activation=dsharp.relu6,
       stride=2,
       padding=kernelSize/2 (* "same " *)
     )

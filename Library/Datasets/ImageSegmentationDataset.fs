@@ -18,7 +18,7 @@ namespace Datasets
 open DiffSharp
 
 /// An image with a label.
-type SegmentedImage = LabeledData<Tensor<Float>, Tensor (*<int32>*)>
+type SegmentedImage = LabeledData<Tensor, Tensor (*<int32>*)>
 
 /// Types whose elements represent an image segmentation dataset (with both
 /// training and validation data).

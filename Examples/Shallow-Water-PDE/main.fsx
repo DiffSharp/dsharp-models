@@ -95,7 +95,7 @@ type ShallowWaterPDE: ParsableCommand {
 
   let runSplashTensorLoopBenchmark(on device: Device) = 
     let initialWaterLevel = dsharp.zeros([n, n], device=device)
-    initialWaterLevel[n / 2][n / 2] = Tensor<Float>(100, device=device)
+    initialWaterLevel[n / 2][n / 2] = Tensor(100, device=device)
 
     let initialSolution = TensorLoopSolution(waterLevel: initialWaterLevel)
     _ = [TensorLoopSolution](evolve: initialSolution, duration)
@@ -103,7 +103,7 @@ type ShallowWaterPDE: ParsableCommand {
 
   let runSplashTensorSliceBenchmark(on device: Device) = 
     let initialWaterLevel = dsharp.zeros([n, n], device=device)
-    initialWaterLevel[n / 2][n / 2] = Tensor<Float>(100, device=device)
+    initialWaterLevel[n / 2][n / 2] = Tensor(100, device=device)
 
     let initialSolution = TensorSliceSolution(waterLevel: initialWaterLevel)
     _ = [TensorSliceSolution](evolve: initialSolution, duration)
@@ -111,7 +111,7 @@ type ShallowWaterPDE: ParsableCommand {
 
   let runSplashTensorConvBenchmark(on device: Device) = 
     let initialWaterLevel = dsharp.zeros([n, n], device=device)
-    initialWaterLevel[n / 2][n / 2] = Tensor<Float>(100, device=device)
+    initialWaterLevel[n / 2][n / 2] = Tensor(100, device=device)
 
     let initialSolution = TensorConvSolution(waterLevel: initialWaterLevel)
     _ = [TensorConvSolution](evolve: initialSolution, duration)
@@ -120,7 +120,7 @@ type ShallowWaterPDE: ParsableCommand {
   /// Benchmark suite that exercises the 3 different solver implementations on a simple problem without back-propagation.
   let splashBenchmarks: BenchmarkSuite =
     BenchmarkSuite(
-      name= "Shallow Water PDE Solver",
+      name="Shallow Water PDE Solver",
       settings: Iterations(10), WarmupIterations(2)
     ) =  suite in
       suite.benchmark("Array Loop") = 

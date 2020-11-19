@@ -54,9 +54,9 @@ type COCODataset {
     let trainingSamples = loadCOCOExamples(
       from: training,
       includeMasks: includeMasks,
-      batchSize= batchSize)
+      batchSize=batchSize)
 
-    self.training = TrainingEpochs(samples: trainingSamples, batchSize= batchSize, entropy: entropy)
+    self.training = TrainingEpochs(samples: trainingSamples, batchSize=batchSize, entropy: entropy)
        |> Seq.map (fun batches -> LazyMapSequence<Batches, [ObjectDetectionExample]> in
         batches |> Seq.map {
           makeBatch(samples: $0, device=device, transform: transform)
@@ -66,7 +66,7 @@ type COCODataset {
     let validationSamples = loadCOCOExamples(
       from: validation,
       includeMasks: includeMasks,
-      batchSize= batchSize)
+      batchSize=batchSize)
 
     self.validation = validationSamples.inBatches(of: batchSize) |> Seq.map {
       makeBatch(samples: $0, device=device, transform: transform)
@@ -86,7 +86,7 @@ extension COCODataset: ObjectDetectionData where Entropy = SystemRandomNumberGen
     transform: @escaping (ObjectDetectionExample) = [ObjectDetectionExample] = COCODataset.identity
   ) = 
     self.init(
-      training: training, validation: validation, includeMasks: includeMasks, batchSize= batchSize,
+      training: training, validation: validation, includeMasks: includeMasks, batchSize=batchSize,
       device=device, transform: transform)
 
 

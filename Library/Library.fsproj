@@ -77,8 +77,8 @@
     <Compile Include="Models\ImageClassification\SqueezeNet.fs" />
     <Compile Include="Models\ImageClassification\VGG.fs" />
     <Compile Include="Models\ImageClassification\WideResNet.fs" />
-    <Compile Include="Models\Recommendation\DLRM.fs" />
     <Compile Include="Models\Recommendation\MLP.fs" />
+    <Compile Include="Models\Recommendation\DLRM.fs" />
     <Compile Include="Models\Recommendation\NeuMF.fs" />
     <Compile Include="Models\Spatiotemporal\C3D.fs" />
     <Compile Include="Models\Text\Utilities.fs" />

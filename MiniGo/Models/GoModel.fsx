@@ -55,7 +55,7 @@ type ConvBN() =
         // TODO(jekbradbury): thread through bias and affine boolean arguments
         // (behavior is correct for inference but this should be changed for training)
         self.conv = Conv2d(filterShape: filterShape, strides=strides, padding: padding)
-        self.norm = BatchNorm2d(numFeatures=filterShape.3, momentum: 0.95, epsilon: 1e-5)
+        self.norm = BatchNorm2d(numFeatures=filterShape.3, momentum=0.95, epsilon=1e-5)
 
 
     
@@ -78,12 +78,12 @@ type ResidualIdentityBlock() =
 
     public init(featureCounts: (int * int), kernelSize: int = 3) = 
         self.layer1 = ConvBN(
-            kernelSize=(kernelSize, kernelSize, featureCounts.0, featureCounts.1),
+            kernelSize=(kernelSize, kernelSize, featureCounts0, featureCounts1),
             padding=kernelSize/2 (* "same " *),
             bias: false)
 
         self.layer2 = ConvBN(
-            kernelSize=(kernelSize, kernelSize, featureCounts.1, featureCounts.1),
+            kernelSize=(kernelSize, kernelSize, featureCounts1, featureCounts1),
             padding=kernelSize/2 (* "same " *),
             bias: false)
 
@@ -150,7 +150,7 @@ type GoModel() =
             inputSize= configuration.valueConvWidth * configuration.boardSize
                 * configuration.boardSize,
             outputSize=configuration.valueDenseWidth,
-            activation= dsharp.relu)
+            activation=dsharp.relu)
         valueDense2 = Linear(
             inputSize= configuration.valueDenseWidth,
             outputSize=1,
@@ -185,11 +185,11 @@ type GoModel() =
     @derivative(of: callAsFunction, wrt: (self, input))
     let _vjpCall(input: Tensor)
         -> (value: GoModelOutput, pullback: (GoModelOutput.TangentVector)
-        -> (GoModel.TangentVector, Tensor<Float>)) = 
+        -> (GoModel.TangentVector, Tensor)) = 
         // TODO(jekbradbury): add a real VJP
         // (we're only interested in inference for now and have control flow in our `call(_:)` method)
         (self(input), {
-            seed in (GoModel.TangentVector.zero, Tensor<Float>(0))
+            seed in (GoModel.TangentVector.zero, Tensor(0))
 )
 
 

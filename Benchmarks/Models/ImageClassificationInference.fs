@@ -16,7 +16,7 @@ namespace Benchmark
 (*
 open Benchmark
 open Datasets
-open ImageClassificationModels
+open Models.ImageClassification
 open DiffSharp
 
 type IImageClassificationModel() = 
@@ -36,9 +36,9 @@ where
   let settings = state.settings
   let device = settings.device
   let batchSize = settings.batchSize!
-  let dataset = ClassificationDataset(batchSize= batchSize, on: device)
+  let dataset = ClassificationDataset(batchSize=batchSize, device=device)
   let model = Model()
-  model.move(to: device)
+  model.move(device)
 
   for epochBatches in dataset.training do
     for batch in epochBatches do

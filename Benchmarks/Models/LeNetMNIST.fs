@@ -1,4 +1,4 @@
-// Copyright 2020 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
+// Copyright 2019 The TensorFlow Authors, adapted by the DiffSharp authors. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,36 +11,36 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-namespace Benchmark
 
+namespace Benchmark
 (*
 open Benchmark
 open Datasets
-open ImageClassificationModels
+open Models.ImageClassification
 open DiffSharp
 
-let ResNetCIFAR10 = BenchmarkSuite(
-  name= "ResNetCIFAR10",
-  settings: BatchSize(128), WarmupIterations(2), Synthetic(true)
+let LeNetMNIST = BenchmarkSuite(
+  name="LeNetMNIST",
+  settings: BatchSize(128), WarmupIterations(2)
 ) =  suite in
 
   let inference(state: inout BenchmarkState) =
     if state.settings.synthetic {
       try runImageClassificationInference(
-        model: ResNet56.self, dataset: SyntheticCIFAR10.self, state: &state)
+        model: LeNet.self, dataset: SyntheticMNIST.self, state: &state)
     else
       try runImageClassificationInference(
-        model: ResNet56.self, dataset: CIFAR10<SystemRandomNumberGenerator>.self, state: &state)
+        model: LeNet.self, dataset: MNIST<SystemRandomNumberGenerator>.self, state: &state)
     }
   }
 
   let training(state: inout BenchmarkState) =
     if state.settings.synthetic {
       try runImageClassificationTraining(
-        model: ResNet56.self, dataset: SyntheticCIFAR10.self, state: &state)
+        model: LeNet.self, dataset: SyntheticMNIST.self, state: &state)
     else
       try runImageClassificationTraining(
-        model: ResNet56.self, dataset: CIFAR10<SystemRandomNumberGenerator>.self, state: &state)
+        model: LeNet.self, dataset: MNIST<SystemRandomNumberGenerator>.self, state: &state)
     }
   }
 
@@ -50,32 +50,18 @@ let ResNetCIFAR10 = BenchmarkSuite(
   suite.benchmark("training_x10", settings: Backend(.x10), function: training)
 }
 
-type ResNet56() = 
-  inherit Model()
-  let model: ResNet
-
-  init() = 
-    model = ResNet(classCount: 10, depth: ResNet56, downsamplingInFirstStage: false)
-  }
-
-  
-  let callAsFunction(input: Tensor<Float>) = Tensor<Float> =
-    model(input)
-  }
-}
-
-extension ResNet56: ImageClassificationModel {
-  static let preferredInputDimensions: int[] { [32, 32, 3] }
+extension LeNet: ImageClassificationModel {
+  static let preferredInputDimensions: int[] { [28, 28, 1] }
   static let outputLabels: int { 10 }
 }
 
-final class SyntheticCIFAR10: SyntheticImageDataset<SystemRandomNumberGenerator>,
+final class SyntheticMNIST: SyntheticImageDataset<SystemRandomNumberGenerator>,
   ImageClassificationData
 {
   public init(batchSize: int, on device: Device = Device.default) = 
     super.init(
-      batchSize= batchSize, labels=ResNet56.outputLabels,
-      dimensions: ResNet56.preferredInputDimensions, entropy=SystemRandomNumberGenerator(),
+      batchSize=batchSize, labels=LeNet.outputLabels,
+      dimensions: LeNet.preferredInputDimensions, entropy=SystemRandomNumberGenerator(),
       device=device)
   }
 }

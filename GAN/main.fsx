@@ -32,13 +32,13 @@ let latentSize = 64
 
 type Generator() = 
     inherit Model()
-    let dense1 = Linear(inFeatures= latentSize, outFeatures=latentSize * 2, activation= dsharp.leakyRelu)
+    let dense1 = Linear(inFeatures= latentSize, outFeatures=latentSize * 2, activation=dsharp.leakyRelu)
 
-    let dense2 = Linear(inFeatures= latentSize * 2, outFeatures=latentSize * 4, activation= dsharp.leakyRelu)
+    let dense2 = Linear(inFeatures= latentSize * 2, outFeatures=latentSize * 4, activation=dsharp.leakyRelu)
 
-    let dense3 = Linear(inFeatures= latentSize * 4, outFeatures=latentSize * 8, activation= dsharp.leakyRelu)
+    let dense3 = Linear(inFeatures= latentSize * 4, outFeatures=latentSize * 8, activation=dsharp.leakyRelu)
 
-    let dense4 = Linear(inFeatures= latentSize * 8, outFeatures=imageSize, activation= dsharp.tanh)
+    let dense4 = Linear(inFeatures= latentSize * 8, outFeatures=imageSize, activation=dsharp.tanh)
 
     let batchnorm1 = BatchNorm2d(numFeatures=latentSize * 2)
     let batchnorm2 = BatchNorm2d(numFeatures=latentSize * 4)
@@ -92,7 +92,7 @@ let sampleVector(size: int) : Tensor =
     dsharp.tensor(randomNormal: [size, latentSize])
 
 
-let dataset = MNIST(batchSize= batchSize,  
+let dataset = MNIST(batchSize=batchSize,  
     flattening=true, normalizing=true)
 
 let generator = Generator()
@@ -139,7 +139,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         // Update generator.
         let vec1 = sampleVector(size: batchSize)
 
-        let δgenerator = dsharp.grad(generator) =  generator -> Tensor<Float> in
+        let δgenerator = dsharp.grad(generator) =  generator -> Tensor in
             let fakeImages = generator(vec1)
             let fakeLogits = discriminator(fakeImages)
             let loss = generatorLoss(fakeLogits: fakeLogits)
@@ -152,7 +152,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         let vec2 = sampleVector(size: batchSize)
         let fakeImages = generator(vec2)
 
-        let δdiscriminator = dsharp.grad(discriminator) =  discriminator -> Tensor<Float> in
+        let δdiscriminator = dsharp.grad(discriminator) =  discriminator -> Tensor in
             let realLogits = discriminator(realImages)
             let fakeLogits = discriminator(fakeImages)
             let loss = discriminatorLoss(realLogits: realLogits, fakeLogits: fakeLogits)

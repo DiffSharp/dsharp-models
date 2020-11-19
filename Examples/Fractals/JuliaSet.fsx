@@ -25,18 +25,18 @@ let juliaSet(
   iterations: int, constant: ComplexConstant, tolerance: double, region: ComplexRegion,
   imageSize: ImageSize, device: Device
 ) : Tensor =
-  let xs = Tensor<Float>(
+  let xs = Tensor(
     linearSpaceFrom: region.realMinimum, region.realMaximum, count: imageSize.width, device=device
   ).expand([imageSize.width, imageSize.height])
-  let ys = Tensor<Float>(
+  let ys = Tensor(
     linearSpaceFrom: region.imaginaryMaximum, region.imaginaryMinimum, count: imageSize.height,
-    on: device
+    device=device
   ).unsqueeze(1).expand([imageSize.width, imageSize.height])
   let Z = ComplexTensor(real: xs, imaginary: ys)
   let C = ComplexTensor(
     real: dsharp.tensor(repeating: constant.real, shape: xs.shape, device=device),
     imaginary: dsharp.tensor(repeating: constant.imaginary, shape: xs.shape, device=device))
-  let divergence = Tensor<Float>(repeating: double(iterations), shape: xs.shape, device=device)
+  let divergence = Tensor(repeating: double(iterations), shape: xs.shape, device=device)
 
   // We'll make sure the initialization of these tensors doesn't carry
   // into the trace for the first iteration.

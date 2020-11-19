@@ -31,15 +31,15 @@ type TensorFlowEnvironmentWrapper {
 
   let reset() : Tensor =
     let state = self.originalEnv.reset()
-    Tensor<Float>(numpy: np.array(state, dtype: np.float32))!
+    Tensor(numpy: np.array(state, dtype: np.float32))!
 
 
   let step(action: Tensor (*<int32>*)) = (
     state: Tensor, reward: Tensor, isDone: Tensor<Bool>, info: PythonObject
   ) = 
     let (state, reward, isDone, info) = originalEnv.step(action.toScalar()).tuple4
-    let tfState = Tensor<Float>(numpy: np.array(state, dtype: np.float32))!
-    let tfReward = Tensor<Float>(numpy: np.array(reward, dtype: np.float32))!
+    let tfState = Tensor(numpy: np.array(state, dtype: np.float32))!
+    let tfReward = Tensor(numpy: np.array(reward, dtype: np.float32))!
     let tfIsDone = Tensor<Bool>(numpy: np.array(isDone, dtype: np.bool))!
     (tfState, tfReward, tfIsDone, info)
 
@@ -122,8 +122,8 @@ let device: Device = Device.default
 let env = TensorFlowEnvironmentWrapper(gym.make("CartPole-v0"))
 
 // Initialize agent
-let qNet = DeepQNetwork(observationSize: 4, hiddenSize: hiddenSize, actionCount: 2)
-let targetQNet = DeepQNetwork(observationSize: 4, hiddenSize: hiddenSize, actionCount: 2)
+let qNet = DeepQNetwork(observationSize: 4, hiddenSize=hiddenSize, actionCount: 2)
+let targetQNet = DeepQNetwork(observationSize: 4, hiddenSize=hiddenSize, actionCount: 2)
 let optimizer = Adam(qNet, learningRate: learningRate)
 let replayBuffer = ReplayBuffer(
   capacity: replayBufferCapacity,
@@ -163,7 +163,7 @@ while episodeIndex < maxEpisode {
     state: state, action: action, reward=reward, nextState: nextState, isDone: isDone)
 
   // Train agent
-  losses.append(agent.train(batchSize= batchSize))
+  losses.append(agent.train(batchSize=batchSize))
 
   // Periodically update Target Net
   if stepIndex % targetNetUpdateRate = 0 then

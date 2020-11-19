@@ -20,7 +20,7 @@ open DiffSharp
 
 type NetD() =
     inherit Model()
-    let module: Sequential<Sequential<Conv2d, Sequential<Function<Tensor<Float>, Tensor<Float>>, Sequential<Conv2d, Sequential<BatchNorm<Float>, Sequential<Function<Tensor<Float>, Tensor<Float>>, Sequential<Conv2d, Sequential<BatchNorm<Float>, Function<Tensor<Float>, Tensor<Float>>>>>>>>>, Sequential<ConvLayer, Sequential<BatchNorm<Float>, Sequential<Function<Tensor<Float>, Tensor<Float>>, ConvLayer>>>>
+    let module: Sequential<Sequential<Conv2d, Sequential<Function<Tensor, Tensor>, Sequential<Conv2d, Sequential<BatchNorm<Float>, Sequential<Function<Tensor, Tensor>, Sequential<Conv2d, Sequential<BatchNorm<Float>, Function<Tensor, Tensor>>>>>>>>, Sequential<ConvLayer, Sequential<BatchNorm<Float>, Sequential<Function<Tensor, Tensor>, ConvLayer>>>>
 
     public init(inChannels: int, lastConvFilters: int) = 
         let kw = 4
@@ -29,22 +29,22 @@ type NetD() =
             Conv2d(kernelSize=(kw, kw, inChannels, lastConvFilters),
                           stride=2,
                           padding=kernelSize/2 (* "same " *),
-                          filterInitializer: { dsharp.randn($0, standardDeviation=dsharp.scalar(0.02)))
-            Function<Tensor<Float>, Tensor<Float>>dsharp.leakyRelu
+                          filterInitializer: { dsharp.randn($0, stddev=dsharp.scalar(0.02)))
+            Function<Tensor, Tensor>dsharp.leakyRelu
 
             Conv2d(kernelSize=(kw, kw, lastConvFilters, 2 * lastConvFilters),
                           stride=2,
                           padding=kernelSize/2 (* "same " *),
-                          filterInitializer: { dsharp.randn($0, standardDeviation=dsharp.scalar(0.02)))
+                          filterInitializer: { dsharp.randn($0, stddev=dsharp.scalar(0.02)))
             BatchNorm2d(numFeatures=2 * lastConvFilters)
-            Function<Tensor<Float>, Tensor<Float>>dsharp.leakyRelu
+            Function<Tensor, Tensor>dsharp.leakyRelu
 
             Conv2d(kernelSize=(kw, kw, 2 * lastConvFilters, 4 * lastConvFilters),
                           stride=2,
                           padding=kernelSize/2 (* "same " *),
-                          filterInitializer: { dsharp.randn($0, standardDeviation=dsharp.scalar(0.02)))
+                          filterInitializer: { dsharp.randn($0, stddev=dsharp.scalar(0.02)))
             BatchNorm2d(numFeatures=4 * lastConvFilters)
-            Function<Tensor<Float>, Tensor<Float>>dsharp.leakyRelu
+            Function<Tensor, Tensor>dsharp.leakyRelu
 
 
         let module2 = Sequential =
@@ -53,7 +53,7 @@ type NetD() =
                       kernelSize=4, stride=1, padding=1)
 
             BatchNorm2d(numFeatures=8 * lastConvFilters)
-            Function<Tensor<Float>, Tensor<Float>>dsharp.leakyRelu
+            Function<Tensor, Tensor>dsharp.leakyRelu
 
             ConvLayer(inChannels=8 * lastConvFilters, outChannels=1,
                       kernelSize=4, stride=1, padding=1)

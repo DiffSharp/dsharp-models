@@ -68,9 +68,9 @@ let maxTimesteps: int = 200
 let updateTimestep: int = 1000
 
 let agent: PPOAgent = PPOAgent(
-    observationSize: observationSize,
-    hiddenSize: hiddenSize,
-    actionCount: actionCount,
+    observationSize=observationSize,
+    hiddenSize=hiddenSize,
+    actionCount=actionCount,
     learningRate: learningRate,
     discount: discount,
     epochs: epochs,

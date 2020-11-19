@@ -32,7 +32,7 @@ let imageHeight = 28
 let imageWidth = 28
 
 let outputFolder = "./output/"
-let dataset = MNIST(batchSize= batchSize, flattening=true)
+let dataset = MNIST(batchSize=batchSize, flattening=true)
 
 let inputDim = 784  // 28*28 for any MNIST
 let hiddenDim = 400
@@ -42,11 +42,11 @@ let latentDim = 20
 type VAE() =
     inherit Model()
     // Encoder
-    let encoderDense1 = Linear(inFeatures= inputDim, outFeatures=hiddenDim, activation= dsharp.relu)
+    let encoderDense1 = Linear(inFeatures= inputDim, outFeatures=hiddenDim, activation=dsharp.relu)
     let encoderDense2_1 = Linear(inFeatures=hiddenDim, outFeatures=latentDim)
     let encoderDense2_2 = Linear(inFeatures=hiddenDim, outFeatures=latentDim)
 
-    let decoderDense1 = Linear(inFeatures= latentDim, outFeatures=hiddenDim, activation= dsharp.relu)
+    let decoderDense1 = Linear(inFeatures= latentDim, outFeatures=hiddenDim, activation=dsharp.relu)
     let decoderDense2 = Linear(inFeatures=hiddenDim, outFeatures=inputDim)
 
     member _.call(input: Tensor) =

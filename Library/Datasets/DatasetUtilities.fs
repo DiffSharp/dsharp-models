@@ -30,7 +30,7 @@ type DatasetUtilities() =
             use wc = new WebClient()
             wc.DownloadFile(remoteRoot, localFileName)
         else
-            failwith "tbd" // let r = new BinaryReader(new GZipStream(File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read), CompressionMode.Decompress))
+            failwith "TBD" // let r = new BinaryReader(new GZipStream(File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read), CompressionMode.Decompress))
         localFileName
 
 (*

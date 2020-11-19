@@ -76,7 +76,7 @@ extension Tensor: DifferentiableBatchable where Scalar: TensorFlowFloatingPoint 
 type IDistribution {
   associatedtype Value
 
-  let entropy() = Tensor<Float>
+  let entropy() = Tensor
 
   /// Returns a random sample drawn from this distribution.
   let sample() = Value
@@ -84,7 +84,7 @@ type IDistribution {
 
 type IDifferentiableDistribution: Distribution, Differentiable {
   (wrt: self)
-  let entropy() = Tensor<Float>
+  let entropy() = Tensor
 
 
 // Below code comes from eaplatanios/swift-rl:

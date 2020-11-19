@@ -39,12 +39,12 @@ extension CheckpointReader {
 
 
 
-let draw(pose: Pose, on imageTensor: inout Tensor<Float>) = 
+let draw(pose: Pose, on imageTensor: inout Tensor) = 
   let pose = pose
   pose.rescale((height: imageTensor.shape.[0], width: imageTensor.shape.[1]))
 
   let recursivellyDrawNextKeypoint(
-    after previousKeypoint: Keypoint, into imageTensor: inout Tensor<Float>
+    after previousKeypoint: Keypoint, into imageTensor: inout Tensor
   ) = 
     for (nextKeypointIndex, direction) in getNextKeypointIndexAndDirection(previousKeypoint.index) do      if direction = .fwd then
         if let nextKeypoint = pose.getKeypoint(nextKeypointIndex) then

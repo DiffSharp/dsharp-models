@@ -6,35 +6,34 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<Compile Include="main.fs" />
-	  <Compile Include="BenchmarksCore\Layers\DenseNet.fs" />
-	  <Compile Include="BenchmarksCore\Layers\Dimensions.fs" />
-	  <Compile Include="BenchmarksCore\Layers\EfficientNet.fs" />
-	  <Compile Include="BenchmarksCore\Layers\LayerSuite.fs" />
-	  <Compile Include="BenchmarksCore\Layers\LayerSuites.fs" />
-	  <Compile Include="BenchmarksCore\Layers\LeNet.fs" />
-	  <Compile Include="BenchmarksCore\Layers\MobileNetV1.fs" />
-	  <Compile Include="BenchmarksCore\Layers\MobileNetV2.fs" />
-	  <Compile Include="BenchmarksCore\Layers\MobileNetV3.fs" />
-	  <Compile Include="BenchmarksCore\Layers\ResNet.fs" />
-	  <Compile Include="BenchmarksCore\Layers\ResNetV2.fs" />
-	  <Compile Include="BenchmarksCore\Layers\ShuffleNetV2.fs" />
-	  <Compile Include="BenchmarksCore\Layers\SqueezeNet.fs" />
-	  <Compile Include="BenchmarksCore\Layers\VGG.fs" />
-	  <Compile Include="BenchmarksCore\Layers\WideResNet.fs" />
-	  <Compile Include="BenchmarksCore\Models\ImageClassificationInference.fs" />
-	  <Compile Include="BenchmarksCore\Models\ImageClassificationTraining.fs" />
-	  <Compile Include="BenchmarksCore\Models\LeNetMNIST.fs" />
-	  <Compile Include="BenchmarksCore\Models\ModelSuites.fs" />
-	  <Compile Include="BenchmarksCore\Models\ResNetCIFAR10.fs" />
-	  <Compile Include="BenchmarksCore\Models\ResNetImageNet.fs" />
-	  <Compile Include="BenchmarksCore\Models\SyntheticImageDataset.fs" />
-	  <Compile Include="BenchmarksCore\Models\WordSeg.fs" />
-	  <Compile Include="BenchmarksCore\BenchmarkArguments.fs" />
-	<Compile Include="BenchmarksCore\BenchmarkColumns.fs" />
-	<Compile Include="BenchmarksCore\BenchmarkCommand.fs" />
-	<Compile Include="BenchmarksCore\BenchmarkSettings.fs" />
-	<Compile Include="BenchmarksCore\Suites.fs" />
+	<Compile Include="LayerSuites.fs" />
+	<Compile Include="ModelSuites.fs" />
+	  <Compile Include="Models\ImageClassificationInference.fs" />
+	  <Compile Include="Models\ImageClassificationTraining.fs" />
+	  <Compile Include="Models\LeNetMNIST.fs" />
+	  <Compile Include="Models\ResNetCIFAR10.fs" />
+	  <Compile Include="Models\ResNetImageNet.fs" />
+	  <Compile Include="Models\SyntheticImageDataset.fs" />
+	  <Compile Include="Models\WordSeg.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Library\Library.fsproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(DIFFSHARP_TESTGPU)' == 'true' AND $([MSBuild]::IsOsPlatform(Linux))">
+    <PackageReference Include="libtorch-cuda-10.2-linux-x64" Version="$(LibTorchNugetVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DIFFSHARP_TESTGPU)' == 'true' AND $([MSBuild]::IsOsPlatform(Windows))">
+    <PackageReference Include="libtorch-cuda-10.2-win-x64" Version="$(LibTorchNugetVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(DIFFSHARP_TESTGPU)' != 'true'">
+    <PackageReference Include="libtorch-cpu" Version="$(LibTorchNugetVersion)" />
   </ItemGroup>
 
 </Project>

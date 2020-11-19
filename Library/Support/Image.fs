@@ -42,7 +42,7 @@ type Image {
     let tensor: Tensor =
         match self.imageData with
         | let .float(data) -> data
-        | let .uint8(data) -> Tensor<Float>(data)
+        | let .uint8(data) -> Tensor(data)
 
 
 
@@ -155,14 +155,14 @@ type Point = (x: int, y: int)
 
 /// Draw line using Bresenham's line drawing algorithm
 let drawLine(
-  on imageTensor: inout Tensor<Float>,
+  on imageTensor: inout Tensor,
   from pt1: Point,
   to pt2: Point,
   color: (r: double, g: double, b: double) = (255.0, 255.0, 255.0)
 ) = 
   let pt1 = pt1
   let pt2 = pt2
-  let colorTensor = Tensor<Float>([color.r, color.g, color.b])
+  let colorTensor = Tensor([color.r, color.g, color.b])
 
   // Rearrange points for current octant
   let steep = abs(pt2.y - pt1.y) > abs(pt2.x - pt1.x)

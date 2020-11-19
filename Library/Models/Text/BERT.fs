@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Models
+module Models.Text.BERT
 
 //open Checkpoints
 open System
@@ -24,9 +24,9 @@ open DiffSharp.Util
 open DiffSharp.Model
 open Checkpoints
 open Datasets
-open Support
-open Models.Utilities
-open Models.TransformerBERT
+open Support.Text
+open Models.Text.Utilities
+open Models.Text.TransformerBERT
 
 type Variant =
     /// - Source: [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](
@@ -52,9 +52,11 @@ type Variant =
         | Albert(embeddingSize, hiddenGroupCount) -> $"albert-E-{embeddingSize}-G-{hiddenGroupCount}"
         | Electra -> "electra"
 
-type Vocabulary with
-    static member FromRoBERTaJSONFile(fileURL: FilePath, dictionaryURL: FilePath) =
-        failwith "tbd"
+[<AutoOpen>]
+module RobertaReader =
+    type Vocabulary with
+        static member FromRoBERTaJSONFile(fileURL: FilePath, dictionaryURL: FilePath) =
+            failwith "TBD"
 (*
         let dictionary = [Int: int](
             uniqueKeysWithValues:
@@ -123,9 +125,9 @@ type BERT(variant: Variant,
           ?typeVocabularySize: int,
           ?initializerStandardDeviation: scalar,
           ?useOneHotEmbeddings: bool) =
-    inherit Model()
+    inherit Model<TextBatch, Tensor>()
 
-    let hiddenSize = defaultArg hiddenSize 768
+    let v_hiddenSize = defaultArg hiddenSize 768
     let hiddenLayerCount = defaultArg hiddenLayerCount 12
     let attentionHeadCount = defaultArg attentionHeadCount 12
     let intermediateSize = defaultArg intermediateSize 3072
@@ -146,7 +148,7 @@ type BERT(variant: Variant,
         match variant with
         | Bert
         | Roberta
-        | Electra -> hiddenSize
+        | Electra -> v_hiddenSize
         | Albert(embeddingSize, _) -> embeddingSize
 
     let tokenEmbedding = 
@@ -179,7 +181,7 @@ type BERT(variant: Variant,
             embeddingSize=embeddingSize,
             embeddingsInitializer=truncatedNormalInitializer(dsharp.tensor(initializerStandardDeviation)))
 
-    let embeddingLayerNorm =  LayerNorm(numFeatures=hiddenSize, axis = -1)
+    let embeddingLayerNorm =  LayerNorm(numFeatures=v_hiddenSize, axis = -1)
 
     // TODO: Make dropout generic over the probability type.
     let embeddingDropout = Dropout(p=hiddenDropoutProbability.toDouble())
@@ -194,7 +196,7 @@ type BERT(variant: Variant,
             // TODO: AD[] Change to optional once supported.
             [| 
                failwith "do Linear weightInitializer"  // TODO: weightInitializer=truncatedNormalInitializer(dsharp.tensor(initializerStandardDeviation))) 
-               Linear(inFeatures= embeddingSize, outFeatures=hiddenSize) |]
+               Linear(inFeatures= embeddingSize, outFeatures=v_hiddenSize) |]
 
     let encoderLayers =
         match variant with
@@ -203,7 +205,7 @@ type BERT(variant: Variant,
         | Electra ->
             [| for _ in 0..hiddenLayerCount-1 ->
                 TransformerEncoderLayer(
-                    hiddenSize=hiddenSize,
+                    hiddenSize=v_hiddenSize,
                     attentionHeadCount=attentionHeadCount,
                     attentionQueryActivation= id,
                     attentionKeyActivation= id,
@@ -216,7 +218,7 @@ type BERT(variant: Variant,
         | Albert(_, hiddenGroupCount) ->
             [| for _ in 0 .. hiddenGroupCount - 1 ->
                 TransformerEncoderLayer(
-                    hiddenSize=hiddenSize,
+                    hiddenSize=v_hiddenSize,
                     attentionHeadCount=attentionHeadCount,
                     attentionQueryActivation=id,
                     attentionKeyActivation=id,
@@ -225,6 +227,8 @@ type BERT(variant: Variant,
                     intermediateActivation= intermediateActivation,
                     hiddenDropoutProbability=hiddenDropoutProbability,
                     attentionDropoutProbability=attentionDropoutProbability) |]
+
+    member _.hiddenSize = v_hiddenSize
 
     member _.regularizationValue =
         TangentVector
@@ -311,7 +315,7 @@ type BERT(variant: Variant,
             tokenTypeIds=dsharp.tensor(tokenTypeIds).unsqueeze(0),
             mask=dsharp.tensor(mask).unsqueeze(0))
 
-    override _.forward(input: Tensor (* TextBatch *) ) : Tensor =
+    override _.forward(input: TextBatch) : Tensor =
         let input : TextBatch = failwith "forward taking non-Tensor inputs"
         let sequenceLength = input.tokenIds.shape.[1]
         //let variant = withoutDerivative(variant)
@@ -360,7 +364,7 @@ type BERT(variant: Variant,
                         TransformerInput(
                             sequence=transformerInput,
                             attentionMask=attentionMask,
-                            batchSize= batchSize)
+                            batchSize=batchSize)
                     encoderLayers.[layerIndex].forward(Unchecked.defaultof<Tensor> (* layerInput *))
 
         | Albert(_, hiddenGroupCount) ->
@@ -372,7 +376,7 @@ type BERT(variant: Variant,
                         TransformerInput(
                             sequence=transformerInput,
                             attentionMask=attentionMask,
-                            batchSize= batchSize)
+                            batchSize=batchSize)
                     encoderLayers.[layerIndex].forward(Unchecked.defaultof<Tensor> (* layerInput *))
 
         // Reshape back to the original tensor shape.
@@ -388,45 +392,45 @@ type BERT(variant: Variant,
         | Albert _
         | Roberta ->
             tokenEmbedding.embeddings <-
-                reader.readTensor(name= "bert/embeddings/word_embeddings")
+                reader.readTensor(name="bert/embeddings/word_embeddings")
             positionEmbedding.embeddings <-
-                reader.readTensor(name= "bert/embeddings/position_embeddings")
+                reader.readTensor(name="bert/embeddings/position_embeddings")
             embeddingLayerNorm.offset.value <-
-                reader.readTensor(name= "bert/embeddings/LayerNorm/beta")
+                reader.readTensor(name="bert/embeddings/LayerNorm/beta")
             embeddingLayerNorm.scale.value <-
-                reader.readTensor(name= "bert/embeddings/LayerNorm/gamma")
+                reader.readTensor(name="bert/embeddings/LayerNorm/gamma")
         | Electra ->
             tokenEmbedding.embeddings <-
-                reader.readTensor(name= "electra/embeddings/word_embeddings")
+                reader.readTensor(name="electra/embeddings/word_embeddings")
             positionEmbedding.embeddings <-
-                reader.readTensor(name= "electra/embeddings/position_embeddings")
+                reader.readTensor(name="electra/embeddings/position_embeddings")
             embeddingLayerNorm.offset.value <-
-                reader.readTensor(name= "electra/embeddings/LayerNorm/beta")
+                reader.readTensor(name="electra/embeddings/LayerNorm/beta")
             embeddingLayerNorm.scale.value <-
-                reader.readTensor(name= "electra/embeddings/LayerNorm/gamma")
+                reader.readTensor(name="electra/embeddings/LayerNorm/gamma")
 
         match variant with
         | Bert _ | Albert _ ->
             tokenTypeEmbedding.embeddings <-
-                reader.readTensor(name= "bert/embeddings/token_type_embeddings")
+                reader.readTensor(name="bert/embeddings/token_type_embeddings")
         | Roberta -> ()
         | Electra ->
             tokenTypeEmbedding.embeddings <-
-                reader.readTensor(name= "electra/embeddings/token_type_embeddings")    
+                reader.readTensor(name="electra/embeddings/token_type_embeddings")    
 
         match variant with
         | Bert | Roberta ->
             for layerIndex in 0 .. encoderLayers.Length - 1 do
-                encoderLayers.[layerIndex].load((* bert: *) reader, prefix="bert/encoder/layer_{layerIndex)")
+                encoderLayers.[layerIndex].loadInto((* bert: *) reader, prefix="bert/encoder/layer_{layerIndex)")
 
         | Albert _ ->
             embeddingProjection.[0].weight.value <-
-                reader.readTensor(name= "bert/encoder/embedding_hidden_mapping_in/kernel")
+                reader.readTensor(name="bert/encoder/embedding_hidden_mapping_in/kernel")
             embeddingProjection.[0].bias.value <-
-                reader.readTensor(name= "bert/encoder/embedding_hidden_mapping_in/bias")
+                reader.readTensor(name="bert/encoder/embedding_hidden_mapping_in/bias")
             for layerIndex in 0 .. encoderLayers.Length - 1 do
                 let prefix = "bert/encoder/transformer/group_{layerIndex)/inner_group_0"
-                encoderLayers.[layerIndex].load((* albert: *) reader, prefix=prefix)
+                encoderLayers.[layerIndex].loadInto((* albert: *) reader, prefix=prefix)
 
         | Electra ->
             for layerIndex in 0 .. encoderLayers.Length - 1 do
@@ -515,7 +519,7 @@ type RoBERTaTokenizer(bytePairEncoder: BytePairEncoder,
     override _.tokenize(text) =
         [| for m in tokenizationRegex.Matches(text) do
                 let range = m.Index 
-                yield bytePairEncoder.encode(text.[range]) |]
+                yield! bytePairEncoder.encode(string text.[range]) |]
 
 //===-----------------------------------------------------------------------------------------===//
 // Pre-Trained Models

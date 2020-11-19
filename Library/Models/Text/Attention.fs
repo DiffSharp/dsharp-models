@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module Models.Attention
+module Models.Text.Attention
 
 open System.Diagnostics
 open DiffSharp
 open DiffSharp.Model
 open DiffSharp.ShapeChecking
-open Models.Utilities
+open Models.Text.Utilities
 
 [<AutoOpen>]
 module Defaults =
@@ -110,7 +110,7 @@ type MultiHeadAttention(sourceSize: int,
         ?valueWeightInitializer: ParameterInitializer,
         ?valueBiasInitializer: ParameterInitializer) = 
 
-    inherit Model()
+    inherit Model<AttentionInput, Tensor>()
 
     let headCount = defaultArg headCount 1
     let headSize = defaultArg headSize 512
@@ -152,8 +152,7 @@ type MultiHeadAttention(sourceSize: int,
                valueBias=dsharp.tensor(0, device=p_valueBias.value.device) |}
 
     
-    override _.forward(input: Tensor (* AttentionInput *) ) : Tensor =
-        let input = Unchecked.defaultof<AttentionInput> // TODO
+    override _.forward(input: AttentionInput) : Tensor =
         Debug.Assert(
             input.source.ndims = 3 || input.batchSize.IsSome,
             "Whenever the input is provided in matrix form, the batch size must also be provided.")
@@ -178,9 +177,9 @@ type MultiHeadAttention(sourceSize: int,
         let k = keyActivation(dsharp.matmul(target, p_keyWeight.value) + p_keyBias.value)  // [B * T; N * H]
         let v = valueActivation(dsharp.matmul(target, p_valueWeight.value) + p_valueBias.value)  // [B * T; N * H]
 
-        let q = q.view([B; F; N; H]).permute(0, 2, 1, 3)  // [B; N; F; H]
-        let k = k.view([B; T; N; H]).permute(0, 2, 1, 3)  // [B; N; T; H]
-        let v = v.view([B; T; N; H]).permute(0, 2, 1, 3)  // [B; N; T; H]
+        let q = q.view([B; F; N; H]).permute([| 0; 2; 1; 3 |])  // [B; N; F; H]
+        let k = k.view([B; T; N; H]).permute([| 0; 2; 1; 3 |])  // [B; N; T; H]
+        let v = v.view([B; T; N; H]).permute([| 0; 2; 1; 3 |])  // [B; N; T; H]
 
         // Take the dot product between the query and the key to get the raw attention scores.
         let attentionScores : Tensor = 
@@ -201,7 +200,7 @@ type MultiHeadAttention(sourceSize: int,
         let attentionProbabilities = attentionDropout.forward(dsharp.softmax(attentionScores, dim = -1))  // [B; N; F; T]
 
         let result = dsharp.matmul(attentionProbabilities, v)  // [B; N; F; H]
-                           .permute(0, 2, 1, 3)  // [B; F; N; H]
+                           .permute([| 0; 2; 1; 3 |])  // [B; F; N; H]
         if matrixResult then result.view([B * F; N * H]) else result.view([B; F; N * H])
 
 

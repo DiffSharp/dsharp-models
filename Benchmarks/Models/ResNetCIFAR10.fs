@@ -11,34 +11,36 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 namespace Benchmark
+
 (*
 open Benchmark
 open Datasets
-open ImageClassificationModels
+open Models.ImageClassification
 open DiffSharp
 
-let ResNetImageNet = BenchmarkSuite(
-  name= "ResNetImageNet",
-  setDiffSha:pchSize(128), WarmupIterations(2), Synthetic(true)
+let ResNetCIFAR10 = BenchmarkSuite(
+  name="ResNetCIFAR10",
+  settings: BatchSize(128), WarmupIterations(2), Synthetic(true)
 ) =  suite in
 
   let inference(state: inout BenchmarkState) =
     if state.settings.synthetic {
       try runImageClassificationInference(
-        model: ResNet50.self, dataset: SyntheticImageNet.self, state: &state)
+        model: ResNet56.self, dataset: SyntheticCIFAR10.self, state: &state)
     else
-      fatalError("Only synthetic ImageNet benchmarks are supported at the moment.")
+      try runImageClassificationInference(
+        model: ResNet56.self, dataset: CIFAR10<SystemRandomNumberGenerator>.self, state: &state)
     }
   }
 
   let training(state: inout BenchmarkState) =
     if state.settings.synthetic {
       try runImageClassificationTraining(
-        model: ResNet50.self, dataset: SyntheticImageNet.self, state: &state)
+        model: ResNet56.self, dataset: SyntheticCIFAR10.self, state: &state)
     else
-      fatalError("Only synthetic ImageNet benchmarks are supported at the moment.")
+      try runImageClassificationTraining(
+        model: ResNet56.self, dataset: CIFAR10<SystemRandomNumberGenerator>.self, state: &state)
     }
   }
 
@@ -48,32 +50,32 @@ let ResNetImageNet = BenchmarkSuite(
   suite.benchmark("training_x10", settings: Backend(.x10), function: training)
 }
 
-type ResNet50() = 
+type ResNet56() = 
   inherit Model()
   let model: ResNet
 
   init() = 
-    model = ResNet(classCount: 1000, depth: ResNet50, downsamplingInFirstStage: true)
+    model = ResNet(classCount=10, depth: ResNet56, downsamplingInFirstStage: false)
   }
 
   
-  let callAsFunction(input: Tensor<Float>) = Tensor<Float> =
+  let callAsFunction(input: Tensor) = Tensor =
     model(input)
   }
 }
 
-extension ResNet50: ImageClassificationModel {
-  static let preferredInputDimensions: int[] { [224, 224, 3] }
-  static let outputLabels: int { 1000 }
+extension ResNet56: ImageClassificationModel {
+  static let preferredInputDimensions: int[] { [32, 32, 3] }
+  static let outputLabels: int { 10 }
 }
 
-final class SyntheticImageNet: SyntheticImageDataset<SystemRandomNumberGenerator>,
+final class SyntheticCIFAR10: SyntheticImageDataset<SystemRandomNumberGenerator>,
   ImageClassificationData
 {
   public init(batchSize: int, on device: Device = Device.default) = 
     super.init(
-      batchSize= batchSize, labels=ResNet50.outputLabels,
-      dimensions: ResNet50.preferredInputDimensions, entropy=SystemRandomNumberGenerator(),
+      batchSize=batchSize, labels=ResNet56.outputLabels,
+      dimensions: ResNet56.preferredInputDimensions, entropy=SystemRandomNumberGenerator(),
       device=device)
   }
 }

@@ -110,10 +110,10 @@ type AccuracyMeasurer: MetricsMeasurer {
   public mutating let accumulate<Output, Target>(
     loss: Tensor?, predictions=Output?, labels=Target?
   ) = 
-    guard let predictions = predictions as? Tensor<Float>, let labels = labels as? Tensor<int32>
+    guard let predictions = predictions as? Tensor, let labels = labels as? Tensor<int32>
     else {
       fatalError(
-        "For accuracy measurements, the model output must be Tensor<Float>, and the labels must be Tensor<Int>."
+        "For accuracy measurements, the model output must be Tensor, and the labels must be Tensor<Int>."
       )
     }
     correctGuessCount <- correctGuessCount + Tensor<int32>(predictions.argmax(squeezingAxis: -1) .== labels).sum()

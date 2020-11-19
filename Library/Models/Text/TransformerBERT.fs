@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module Models.TransformerBERT
+module Models.Text.TransformerBERT
 
 open System.Diagnostics
 open DiffSharp
 open DiffSharp.Model
 open DiffSharp.ShapeChecking
-open Models.Utilities
-open Models.Attention
+open Models.Text.Utilities
+open Models.Text.Attention
 
 type Linear with 
     member m.regularizationValue = 
@@ -137,12 +137,12 @@ type TransformerEncoderLayer(hiddenSize: int,
     let hiddenDropout = Dropout(hiddenDropoutProbability.toDouble())
     let p_attentionWeight = attentionWeightInitializer(Shape [attentionHeadCount * hiddenSize / attentionHeadCount; hiddenSize]) |> Parameter
     let p_attentionBias = attentionBiasInitializer(Shape [hiddenSize]) |> Parameter
-    let m_attentionLayerNorm = LayerNorm( featureCount=hiddenSize, axis= -1) 
+    let m_attentionLayerNorm = LayerNorm(numFeatures=hiddenSize, axis= -1) 
     let p_intermediateWeight = intermediateWeightInitializer(Shape [hiddenSize; intermediateSize]) |> Parameter
     let p_intermediateBias = intermediateBiasInitializer(Shape [intermediateSize]) |> Parameter
     let p_outputWeight = intermediateWeightInitializer(Shape [intermediateSize; hiddenSize]) |> Parameter
     let p_outputBias = intermediateBiasInitializer(Shape [hiddenSize]) |> Parameter
-    let m_outputLayerNorm = LayerNorm(numFeatures=hiddenSize, axis = -1)
+    let m_outputLayerNorm = LayerNorm(numFeatures=hiddenSize, axis= -1)
 
     member _.multiHeadAttention = _multiHeadAttention
     member _.attentionWeight = p_attentionWeight
@@ -166,6 +166,8 @@ type TransformerEncoderLayer(hiddenSize: int,
                outputBias=dsharp.tensor(0, device=p_outputBias.value.device)
                outputLayerNorm=m_outputLayerNorm.regularizationValue |}
 
+    member _.loadInto(reader: Checkpoints.CheckpointReader, prefix: string) = failwith "TBD"
+
     override _.forward(input: Tensor) : Tensor =
         let input = Unchecked.defaultof<TransformerInput> // TBD
         let attentionInput =
@@ -174,7 +176,7 @@ type TransformerEncoderLayer(hiddenSize: int,
                 target=input.sequence,
                 mask=input.attentionMask,
                 ?batchSize= input.batchSize)
-        let attentionOutput = _multiHeadAttention.forward(failwith "tbd" (* attentionInput *) )
+        let attentionOutput = _multiHeadAttention.forward(failwith "TBD" (* attentionInput *) )
 
         // Run a linear projection of `hiddenSize` and then add a residual connection to the input.
         let attentionOutput = dsharp.matmul(attentionOutput, p_attentionWeight.value) + p_attentionBias.value
@@ -244,7 +246,7 @@ type TransformerEncoder(hiddenSize: int,
         ?intermediateBiasInitializer: ParameterInitializer,
         ?outputWeightInitializer: ParameterInitializer,
         ?outputBiasInitializer: ParameterInitializer) = 
-    inherit Model()
+    inherit Model<TransformerInput, Tensor>()
 
     let encoderLayers = 
         [| for _ in 0..layerCount-1 ->
@@ -271,13 +273,11 @@ type TransformerEncoder(hiddenSize: int,
                 ?outputWeightInitializer=outputWeightInitializer,
                 ?outputBiasInitializer=outputBiasInitializer) |]
 
-    let regularizationValue =
+    member _.regularizationValue =
         TangentVector
             {| encoderLayers = TangentVector(encoderLayers |> Array.map (fun x -> x.regularizationValue)) |}
 
-
-    override _.forward(input: Tensor) : Tensor =
-        let input = Unchecked.defaultof<TransformerInput> // TBD
+    override _.forward(input: TransformerInput) : Tensor =
         // The transformer performs sum residuals on all layers and so the input needs to have the
         // same depth as hidden size of the transformer.
         Debug.Assert(
@@ -295,7 +295,7 @@ type TransformerEncoder(hiddenSize: int,
                 TransformerInput(sequence=transformerInput,
                     attentionMask=input.attentionMask,
                     batchSize=batchSize)
-            transformerInput <- encoderLayers.[layerIndex].forward(failwith "tbd"(* layerInput *) )
+            transformerInput <- encoderLayers.[layerIndex].forward(failwith "TBD"(* layerInput *) )
 
         transformerInput.reshapedFromMatrix(input.sequence.shapex)
 

@@ -66,9 +66,9 @@ let workspaceURL = Uri(fileURLWithPath= "bert_models", isDirectory=true,
 let cola = try CoLA(
   taskDirectoryURL: workspaceURL,
   maxSequenceLength: maxSequenceLength,
-  batchSize= batchSize,
+  batchSize=batchSize,
   entropy=SystemRandomNumberGenerator(),
-  on: device
+  device=device
 ) =  example in
   // In this closure, both the input and output text batches must be eager
   // since the text is not padded and x10 requires stable shapes.
@@ -111,7 +111,7 @@ for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated()
     let mutable trainingBatchCount = 0
 
     for batch in epochBatches do
-        let (documents, labels) = (batch.data, Tensor<Float>(batch.label))
+        let (documents, labels) = (batch.data, Tensor(batch.label))
         let (loss, gradients) = 
             valueWithGradient <| fun bertClassifier -> 
                 let logits = model(documents)
@@ -144,7 +144,7 @@ for (epoch, epochBatches) in cola.trainingEpochs.prefix(epochCount).enumerated()
     let devPredictedLabels = [Bool]()
     let devGroundTruth = [Bool]()
     for batch in cola.validationBatches do
-        let (documents, labels) = (batch.data, Tensor<Float>(batch.label))
+        let (documents, labels) = (batch.data, Tensor(batch.label))
         let logits = bertClassifier(documents)
         let loss = dsharp.sigmoidCrossEntropy(logits=logits.squeeze(-1), labels=labels, reduction=dsharp.mean)
         devLossSum <- devLossSum + loss.toScalar()

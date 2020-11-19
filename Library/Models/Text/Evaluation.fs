@@ -14,7 +14,7 @@
 //
 // Adapted from: https://github.com/eaplatanios/nca/blob/master/Sources/NCA/Evaluation.swift
 
-module Models.Evaluation
+module Models.Text.Evaluation
 
 /// Computes the Matthews correlation coefficient.
 ///

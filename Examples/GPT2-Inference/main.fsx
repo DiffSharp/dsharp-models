@@ -50,7 +50,7 @@ print()
 let temporaryDirectory = File.temporaryDirectory </> ("Transformer")
 
 try
-    try gpt.writeCheckpoint(temporaryDirectory, name= "model2.ckpt")
+    try gpt.writeCheckpoint(temporaryDirectory, name="model2.ckpt")
 with
     fatalError("ERROR: Write of checkpoint failed")
 

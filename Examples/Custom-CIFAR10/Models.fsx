@@ -23,13 +23,13 @@ open DiffSharp.Model
 type PyTorchModel() = 
     inherit Model()
 
-    let conv1 = Conv2d(3, 6, 5, activation= dsharp.relu)
+    let conv1 = Conv2d(3, 6, 5, activation=dsharp.relu)
     let pool1 = MaxPool2d(kernelSize=2, stride=2)
-    let conv2 = Conv2d(6, 16, kernelSize=5, activation= dsharp.relu)
+    let conv2 = Conv2d(6, 16, kernelSize=5, activation=dsharp.relu)
     let pool2 = MaxPool2d(kernelSize=2, stride=2)
     let flatten = Flatten()
-    let dense1 = Linear(inFeatures=16 * 5 * 5, outFeatures=120, activation= dsharp.relu)
-    let dense2 = Linear(inFeatures=120, outFeatures=84, activation= dsharp.relu)
+    let dense1 = Linear(inFeatures=16 * 5 * 5, outFeatures=120, activation=dsharp.relu)
+    let dense2 = Linear(inFeatures=120, outFeatures=84, activation=dsharp.relu)
     let dense3 = Linear(inFeatures=84, outFeatures=10, activation= id)
     
     override _.forward(input: Tensor) =
@@ -40,16 +40,16 @@ type PyTorchModel() =
 type KerasModel() = 
     inherit Model()
 
-    let conv1a = Conv2d(4, 32, kernelSize=3, padding=3/2 (* "same" *) , activation= dsharp.relu)
-    let conv1b = Conv2d(32, 32, kernelSize=3, activation= dsharp.relu)
+    let conv1a = Conv2d(4, 32, kernelSize=3, padding=3/2 (* "same" *) , activation=dsharp.relu)
+    let conv1b = Conv2d(32, 32, kernelSize=3, activation=dsharp.relu)
     let pool1 = MaxPool2d(kernelSize=2, stride=2)
     let dropout1 = Dropout2d(p=0.25)
-    let conv2a = Conv2d(32, 64, kernelSize=3, padding=3/2 (* "same" *), activation= dsharp.relu)
-    let conv2b = Conv2d(64, 64, kernelSize=3, activation= dsharp.relu)
+    let conv2a = Conv2d(32, 64, kernelSize=3, padding=3/2 (* "same" *), activation=dsharp.relu)
+    let conv2b = Conv2d(64, 64, kernelSize=3, activation=dsharp.relu)
     let pool2 = MaxPool2d(kernelSize=2, stride=2)
     let dropout2 = Dropout2d(p=0.25)
     let flatten = Flatten()
-    let dense1 = Linear(inFeatures=64 * 6 * 6, outFeatures=512, activation= dsharp.relu)
+    let dense1 = Linear(inFeatures=64 * 6 * 6, outFeatures=512, activation=dsharp.relu)
     let dropout3 = Dropout2d(p=0.5)
     let dense2 = Linear(inFeatures=512, outFeatures=10, activation= id)
 

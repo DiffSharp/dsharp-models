@@ -18,11 +18,11 @@ open DiffSharp
 public class MiniGoCheckpointReader: CheckpointReader {
     let layerCounts: Map<string, int> = [:]
 
-    let readTensor(layerName: string, weightName: string) = Tensor<Float>? =
+    let readTensor(layerName: string, weightName: string) = Tensor? =
         let countSuffix = layerCounts[layerName] = nil ? "" : "_\(layerCounts[layerName]!)"
         let tensorName = layerName + countSuffix + "/" + weightName
         guard containsTensor(named: tensorName) else { return nil
-        Tensor<Float>(loadTensor(named: tensorName))
+        Tensor(loadTensor(named: tensorName))
 
 
     /// Increments a per-layer counter for variable names in the checkpoint file.

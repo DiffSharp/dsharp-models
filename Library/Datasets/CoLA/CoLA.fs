@@ -152,7 +152,7 @@ extension CoLA {
 
     // Create the training sequence of epochs.
     trainingEpochs = TrainingEpochs(
-      samples: trainingExamples, batchSize= batchSize / maxSequenceLength, entropy: entropy
+      samples: trainingExamples, batchSize=batchSize / maxSequenceLength, entropy: entropy
     ) |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledTextBatch> in
       batches |> Seq.map{ 
         (
@@ -187,9 +187,9 @@ extension CoLA where Entropy = SystemRandomNumberGenerator {
     try self.init(
       taskDirectoryURL: taskDirectoryURL,
       maxSequenceLength: maxSequenceLength,
-      batchSize= batchSize,
+      batchSize=batchSize,
       entropy=SystemRandomNumberGenerator(),
-      on: device,
+      device=device,
       exampleMap: exampleMap
     )
 

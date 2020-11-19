@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Models
+module Models.ImageClassification.NeuMF
 
+open System.Diagnostics
 open DiffSharp
 open DiffSharp.Model
 
@@ -47,49 +48,45 @@ type NeuMF(numUsers: int,
 
     do
         Debug.Assert(mlpLayerSizes.[0] % 2 = 0, "Input of first MLP layers must be multiple of 2")
-        Debug.Assert(
-            mlpLayerSizes.count = mlpRegularizations.count,
-            "Size of MLP layers and MLP regularization must be equal")
+        Debug.Assert(mlpLayerSizes.Length = mlpRegularizations.Length, "Size of MLP layers and MLP regularization must be equal")
 
-    let mlpLayerSizes: int[] = [64, 32, 16, 8]
-    let mlpRegularizations: scalar[] = [0, 0, 0, 0]
-
-    let mlpLayers = []
+    let mlpLayerSizes = [| 64; 32; 16; 8 |]
+    let mlpRegularizations= [| 0; 0; 0; 0 |]
 
     // TODO: regularization
     // Embedding Layer
-    let mfUserEmbedding = Embedding<Scalar>(vocabularySize=self.numUsers, embeddingSize=self.numLatentFeatures)
-    let mfItemEmbedding = Embedding<Scalar>(vocabularySize=self.numItems, embeddingSize=self.numLatentFeatures)
-    let mlpUserEmbedding = Embedding<Scalar>(vocabularySize=self.numUsers, embeddingSize=self.mlpLayerSizes.[0] / 2)
-    let mlpItemEmbedding = Embedding<Scalar>(vocabularySize=self.numItems, embeddingSize=self.mlpLayerSizes.[0] / 2)
+    let mfUserEmbedding = Embedding(vocabularySize=numUsers, embeddingSize=numLatentFeatures)
+    let mfItemEmbedding = Embedding(vocabularySize=numItems, embeddingSize=numLatentFeatures)
+    let mlpUserEmbedding = Embedding(vocabularySize=numUsers, embeddingSize=mlpLayerSizes.[0] / 2)
+    let mlpItemEmbedding = Embedding(vocabularySize=numItems, embeddingSize=mlpLayerSizes.[0] / 2)
 
-    do for (inputSize, outputSize) in zip(mlpLayerSizes, mlpLayerSizes.[1..]) do
-         mlpLayers.append(Linear(inFeatures=inputSize, outFeatures=outputSize, activation= dsharp.relu))
+    let mlpLayers = 
+        [| for (inputSize, outputSize) in Array.zip mlpLayerSizes mlpLayerSizes.[1..] do
+             Linear(inFeatures=inputSize, outFeatures=outputSize, activation=dsharp.relu) |]
 
-    let neuMFLayer = Linear(inFeatures=(self.mlpLayerSizes |> Array.last + self.numLatentFeatures), outFeatures=1)
+    let neuMFLayer = Linear(inFeatures=(mlpLayerSizes |> Array.last) + numLatentFeatures, outFeatures=1)
 
-    override _.forward(input: Tensor (*<int32>*)) : Tensor =
+    override _.forward(input: Tensor) : Tensor =
         // Extracting user and item from dataset
-        let userIndices = input.unstacked(alongAxis: 1)[0]
-        let itemIndices = input.unstacked(alongAxis: 1)[1]
+        let userIndices = input.unstack(dim=1).[0]
+        let itemIndices = input.unstack(dim=1).[1]
 
         // MLP part
-        let userEmbeddingMLP = mlpUserEmbedding(userIndices)
-        let itemEmbeddingMLP = mlpItemEmbedding(itemIndices)
+        let userEmbeddingMLP = mlpUserEmbedding.[userIndices]
+        let itemEmbeddingMLP = mlpItemEmbedding.[itemIndices]
 
         // MF part
-        let userEmbeddingMF = mfUserEmbedding(userIndices)
-        let itemEmbeddingMF = mfItemEmbedding(itemIndices)
+        let userEmbeddingMF = mfUserEmbedding.[userIndices]
+        let itemEmbeddingMF = mfItemEmbedding.[itemIndices]
 
         let mfVector = userEmbeddingMF * itemEmbeddingMF
 
-        let mlpVector = userEmbeddingMLP.cat(itemEmbeddingMLP, alongAxis: -1)
-        mlpVector = mlpLayers.differentiableReduce(mlpVector){ $1($0)
+        let mlpVector = userEmbeddingMLP.cat(itemEmbeddingMLP, dim = -1)
+        let mlpVector = (mlpVector, mlpLayers) ||> Array.fold (fun last layer -> layer.forward last) 
 
         // Concatenate MF and MLP parts
-        let vector = mlpVector.cat(mfVector, alongAxis: -1)
+        let vector = mlpVector.cat(mfVector, dim = -1)
 
         // Final prediction layer
         neuMFLayer.forward(vector)
-
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Models
+module Models.ImageClassification.DenseNet121
 
 open DiffSharp
 open DiffSharp.Model
@@ -52,9 +52,7 @@ type DenseBlock(repetitionCount: int, inChannels:int, ?growthRate: int) =
             ConvPair(inChannels=filterCount, growthRate=growthRate) |]
     
     override _.forward(input) =
-        failwith "tbd" 
-        //pairs.differentiableReduce(input) =  last, layer 
-        //    layer(last)
+        (input, pairs) ||> Array.fold (fun last layer -> layer.forward last) 
 
 type TransitionLayer(inChannels:int) = 
     inherit Model()

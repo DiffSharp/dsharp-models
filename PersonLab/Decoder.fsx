@@ -22,18 +22,18 @@ open DiffSharp
 // This whole struct should probably be merged into the PersonLab model struct when we no longer
 // need to do CPUTensor wrapping when SwiftRT fixes the GPU->CPU copy issue.
 type PoseDecoder {
-  let heatmap: CPUTensor<Float>
-  let offsets: CPUTensor<Float>
-  let displacementsFwd: CPUTensor<Float>
-  let displacementsBwd: CPUTensor<Float>
+  let heatmap: CPUTensor
+  let offsets: CPUTensor
+  let displacementsFwd: CPUTensor
+  let displacementsBwd: CPUTensor
   let config: Config
 
   init(for results: PersonlabHeadsResults, with config: Config) = 
     // Hardcoded to batch size = 1 at the moment
-    self.heatmap = CPUTensor<Float>(results.heatmap[0])
-    self.offsets = CPUTensor<Float>(results.offsets[0])
-    self.displacementsFwd = CPUTensor<Float>(results.displacementsFwd[0])
-    self.displacementsBwd = CPUTensor<Float>(results.displacementsBwd[0])
+    self.heatmap = CPUTensor(results.heatmap[0])
+    self.offsets = CPUTensor(results.offsets[0])
+    self.displacementsFwd = CPUTensor(results.displacementsFwd[0])
+    self.displacementsBwd = CPUTensor(results.displacementsBwd[0])
     self.config = config
 
 
@@ -77,7 +77,7 @@ type PoseDecoder {
 
   let followDisplacement(
     from previousKeypoint: Keypoint, to nextKeypointIndex: KeypointIndex,
-    using displacements: CPUTensor<Float>
+    using displacements: CPUTensor
   ) = Keypoint {
     let displacementKeypointIndexY = keypointPairToDisplacementIndexMap[
       Set([previousKeypoint.index, nextKeypointIndex])]!

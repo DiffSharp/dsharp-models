@@ -50,8 +50,8 @@ let lambdaL1 = dsharp.scalar(100)
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
     print($"Epoch {epoch} started at: \(Date())")
     
-    let discriminatorTotalLoss = Tensor<Float>(0)
-    let generatorTotalLoss = Tensor<Float>(0)
+    let discriminatorTotalLoss = Tensor(0)
+    let generatorTotalLoss = Tensor(0)
     let discriminatorCount = 0
     
     for batch in epochBatches do
@@ -71,7 +71,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         let sourceImages = croppedImages[0].unsqueeze(0)
         let targetImages = croppedImages[1].unsqueeze(0)
         
-        let generatorGradient = dsharp.grad(generator) =  g -> Tensor<Float> in
+        let generatorGradient = dsharp.grad(generator) =  g -> Tensor in
             let fakeImages = g(sourceImages)
             let fakeAB = sourceImages.cat(fakeImages, alongAxis: 3)
             let fakePrediction = discriminator(fakeAB)
@@ -86,7 +86,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
 
         
         let fakeImages = generator(sourceImages)
-        let descriminatorGradient = dsharp.grad(discriminator) =  d -> Tensor<Float> in
+        let descriminatorGradient = dsharp.grad(discriminator) =  d -> Tensor in
             let fakeAB = sourceImages.cat(fakeImages,
                                                    alongAxis: 3)
             let fakePrediction = d(fakeAB)
@@ -129,7 +129,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
 
 model.mode <- Mode.Eval
 
-let totalLoss = Tensor<Float>(0)
+let totalLoss = Tensor(0)
 let count = 0
 
 let resultsFolder = Directory.Create(path: __SOURCE_DIRECTORY__ + "/results")

@@ -47,7 +47,7 @@ type CIFAR10 {
   ///   dependent on other operations.
   public init(batchSize: int, entropy: Entropy, device: Device) = 
     self.init(
-      batchSize= batchSize,
+      batchSize=batchSize,
       entropy: entropy,
       device=device,
       remoteBinaryArchiveLocation: Uri(
@@ -76,25 +76,25 @@ type CIFAR10 {
     downloadCIFAR10IfNotPresent(remoteBinaryArchiveLocation, localStorageDirectory)
     
     let mean: Tensor?
-    let standardDeviation=Tensor?
+    let stddev=Tensor?
     if normalizing then
-      mean = Tensor<Float>([0.4913996898, 0.4821584196, 0.4465309242], device=device)
-      standardDeviation = Tensor<Float>([0.2470322324, 0.2434851280, 0.2615878417], device=device)
+      mean = Tensor([0.4913996898, 0.4821584196, 0.4465309242], device=device)
+      standardDeviation = Tensor([0.2470322324, 0.2434851280, 0.2615878417], device=device)
 
     
     // Training data
     let trainingSamples = loadCIFARTrainingFiles(in: localStorageDirectory)
-    training = TrainingEpochs(samples: trainingSamples, batchSize= batchSize, entropy: entropy)
+    training = TrainingEpochs(samples: trainingSamples, batchSize=batchSize, entropy: entropy)
        |> Seq.map (fun batches -> LazyMapSequence<Batches, LabeledImage> in
         batches |> Seq.map{
-          makeBatch(samples: $0, mean: mean, standardDeviation=standardDeviation, device=device)
+          makeBatch(samples: $0, mean: mean, stddev=standardDeviation, device=device)
 
 
       
     // Validation data
     let validationSamples = loadCIFARTestFile(in: localStorageDirectory)
     validation = validationSamples.inBatches(of: batchSize) |> Seq.map {
-      makeBatch(samples: $0, mean: mean, standardDeviation=standardDeviation, device=device)
+      makeBatch(samples: $0, mean: mean, stddev=standardDeviation, device=device)
 
 
 
@@ -102,7 +102,7 @@ type CIFAR10 {
 extension CIFAR10: ImageClassificationData where Entropy = SystemRandomNumberGenerator {
   /// Creates an instance with `batchSize`.
   public init(batchSize: int, on device: Device = Device.default) = 
-    self.init(batchSize= batchSize, device=device)
+    self.init(batchSize=batchSize, device=device)
 
 
 
@@ -160,12 +160,12 @@ let loadCIFARTestFile(in localStorageDirectory: Uri) = [(data: byte[], label: in
 
 
 let makeBatch<BatchSamples: Collection>(
-  samples: BatchSamples, mean: Tensor?, standardDeviation=Tensor?, device: Device
+  samples: BatchSamples, mean: Tensor?, stddev=Tensor?, device: Device
 ) = LabeledImage where BatchSamples.Element = (data: byte[], label: int32) = 
   let bytes = samples |> Seq.map (fun x -> x.data).reduce(into: [], +=)
   let images = Tensor<byte>(shape=[samples.count, 3, 32, 32], scalars=bytes, device=device)
   
-  let imageTensor = Tensor<Float>(images.permute([0, 2, 3, 1]))
+  let imageTensor = Tensor(images.permute([0, 2, 3, 1]))
   imageTensor /= 255.0
   if let mean = mean, let standardDeviation = standardDeviation then
     imageTensor = (imageTensor - mean) / standardDeviation

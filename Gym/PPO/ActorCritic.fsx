@@ -12,44 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+
+open System.Diagnostics
 open DiffSharp
+open DiffSharp.Model
 
 /// The actor network that returns a probability for each action.
 ///
 /// Actor-Critic methods has an actor network and a critic network. The actor network is the policy
 /// of the agent: it is used to select actions.
-type ActorNetwork() =
+type ActorNetwork(observationSize: int, hiddenSize: int, actionCount: int) =
     inherit Model()
-    type Input = Tensor<Float>
-    type Output = Tensor<Float>
-
-    let l1, l2, l3: Dense
-
-    init(observationSize: int, hiddenSize: int, actionCount: int) = 
-        l1 = Linear(
-            inputSize= observationSize,
-            outputSize=hiddenSize,
+    let l1 = 
+        Linear(
+            inFeatures= observationSize,
+            outFeatures=hiddenSize,
             activation= tanh,
             weightInitializer=heNormal()
         )
-        l2 = Linear(
-            inputSize= hiddenSize,
-            outputSize=hiddenSize,
+    let l2 = 
+        Linear(
+            inFeatures= hiddenSize,
+            outFeatures=hiddenSize,
             activation= tanh,
             weightInitializer=heNormal()
         )
-        l3 = Linear(
-            inputSize= hiddenSize,
-            outputSize=actionCount,
+    let l3 = 
+        Linear(
+            inFeatures= hiddenSize,
+            outFeatures=actionCount,
             activation= softmax,
             weightInitializer=heNormal()
         )
-
-
     
     override _.forward(input: Tensor) =
-        input |> l1, l2, l3)
-
+        input |> l1.forward |> l2.forward |> l3.forward
 
 
 /// The critic network that returns the estimated value of each action, given a state.
@@ -57,65 +57,54 @@ type ActorNetwork() =
 /// Actor-Critic methods has an actor network and a critic network. The critic network is used to
 /// estimate the value of the state-action pair. With these value functions, the critic can evaluate
 /// the actions made by the actor.
-type CriticNetwork() =
+type CriticNetwork(observationSize: int, hiddenSize: int) =
     inherit Model()
-    type Input = Tensor<Float>
-    type Output = Tensor<Float>
-
-    let l1, l2, l3: Dense
-
-    init(observationSize: int, hiddenSize: int) = 
-        l1 = Linear(
-            inputSize= observationSize,
-            outputSize=hiddenSize,
-            activation= dsharp.relu,
+    let l1 =
+        Linear(
+            inFeatures= observationSize,
+            outFeatures=hiddenSize,
+            activation=dsharp.relu,
             weightInitializer=heNormal()
         )
-        l2 = Linear(
-            inputSize= hiddenSize,
-            outputSize=hiddenSize,
-            activation= dsharp.relu,
+    let l2 = 
+        Linear(
+            inFeatures= hiddenSize,
+            outFeatures=hiddenSize,
+            activation=dsharp.relu,
             weightInitializer=heNormal()
         )
-        l3 = Linear(
-            inputSize= hiddenSize,
-            outputSize=1,
+    let l3 =
+        Linear(
+            inFeatures= hiddenSize,
+            outFeatures=1,
             weightInitializer=heNormal()
         )
-
-
     
     override _.forward(input: Tensor) =
-        input |> l1, l2, l3)
-
-
+        input |> l1.forward |> l2.forward |>  l3.forward
 
 /// The actor-critic that contains actor and critic networks for action selection and evaluation.
 ///
 /// Weight are often shared between the actor network and the critic network, but in this example,
 /// they are separated networks.
-type ActorCritic() =
+type ActorCritic(observationSize: int, hiddenSize: int, actionCount: int) =
     inherit Model()
-    let actorNetwork: ActorNetwork
-    let criticNetwork: CriticNetwork
-
-    init(observationSize: int, hiddenSize: int, actionCount: int) = 
-        self.actorNetwork = ActorNetwork(
-            observationSize: observationSize,
-            hiddenSize: hiddenSize,
-            actionCount: actionCount
+    let actorNetwork =
+        ActorNetwork(
+            observationSize=observationSize,
+            hiddenSize=hiddenSize,
+            actionCount=actionCount
         )
-        self.criticNetwork = CriticNetwork(
-            observationSize: observationSize,
-            hiddenSize: hiddenSize
+    let criticNetwork =
+        CriticNetwork(
+            observationSize=observationSize,
+            hiddenSize=hiddenSize
         )
 
-
-    
-    override _.forward(state: Tensor) = Categorical<int32> {
+    override _.forward(state: Tensor) (* : Categorical<int32> *) =
         Debug.Assert(state.ndims = 2, "The input must be 2-D ([batch size, state size]).")
         let actionProbs = self.actorNetwork(state).flattened()
-        let dist = Categorical<int32>(probabilities: actionProbs)
+        let dist = Categorical(probabilities: actionProbs)
         dist
 
 

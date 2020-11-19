@@ -168,7 +168,7 @@ let getBpc(loss: double, characterCount: int) =
 
 
 let hasNaN<T: KeyPathIterable>(t: T) = Bool {
-  for kp in t.recursivelyAllKeyPaths(Tensor<Float>.self) do    if t[keyPath: kp].isNaN.any() =  return true
+  for kp in t.recursivelyAllKeyPaths(Tensor.self) do    if t[keyPath: kp].isNaN.any() =  return true
 
   return false
 

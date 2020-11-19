@@ -7,6 +7,7 @@ open DiffSharp.Model
 open DiffSharp.Optim
 open DiffSharp.Util
 open DiffSharp.ShapeChecking
+open System.Runtime.CompilerServices
 
 [<AutoOpen>]
 module DiffSharpExtensions =
@@ -23,24 +24,13 @@ module DiffSharpExtensions =
 
         member t.reshape(shape: Shape) = t.view(shape)
 
+        member t.cat(t2: Tensor, dim: int) : Tensor =
+            dsharp.cat([t;t2], dim)
+            //t.split(([|  |]: int[]), dim=dim)
+
         member t.sqr() = t * t
 
-        member t.toInt32() = t.toScalar() |> Convert.ToInt32
-
-        member t.toFloat32() = t.toScalar() |> Convert.ToSingle
-
-        member t.gelu() : Tensor = failwith "TBD"
-
-        member t.permute([<ParamArray>] permutation: int[]) : Tensor = failwith "TBD"
-
         member t.rsqrt() = 1.0 / t.sqrt()
-
-        member t.swish() = failwith "tbd"
-        member t.hardSwish() = failwith "tbd"
-        member t.relu6() = failwith "tbd"
-        member t.hardSigmoid() = failwith "tbd"
-
-        member t.argmax(dim: int) : Tensor = failwith "tbd"
 
         member t.unsqueeze (dims: seq<int>) =
             let dims = dims |> Seq.toArrayQuick
@@ -81,6 +71,23 @@ module DiffSharpExtensions =
                 res <- m.forward res
             res
 
+        member t.gelu() : Tensor = failwith "TBD - TorchSharp in progress"
+
+        member t.silu() = failwith "tbd - TorchSharp in progress"
+
+        member t.hardswish() = failwith "tbd - TorchSharp in progress"
+
+        member t.relu6() = failwith "tbd - TorchSharp in progress"
+
+        member t.hardsigmoid() = failwith "tbd - TorchSharp in progress"
+
+        member t.argmax(dim: int) : Tensor = failwith "TBD"
+
+        member t.permute(permutation: seq<int>) : Tensor = failwith "TBD"
+
+        member t.split(count: int, dim: int) : Tensor[] = failwith "TBD"
+            //t.split(([|  |]: int[]), dim=dim)
+
     type Sequential([<ParamArray>] models: Model[]) =
         inherit Model()
         do base.add(Array.map box models)
@@ -91,7 +98,7 @@ module DiffSharpExtensions =
     type Function(f: Tensor -> Tensor) =
         inherit Model()
 
-        override _.ToString() = sprintf "Function()"
+        override _.ToString() = sprintf "Function(%O)" f
 
         override m.forward(value) = f value
 
@@ -102,16 +109,14 @@ module DiffSharpExtensions =
 
         override m.forward(value) = value.flatten()
 
-      
-
     type dsharp with 
         static member gelu(input: Tensor) = input.gelu()
 
-        static member permute(input: Tensor, [<ParamArray>] permutation: int[]) = input.permute(permutation)
+        static member permute(input: Tensor, [<ParamArray>] permutation: seq<int>) = input.permute(permutation)
 
         static member rsqrt(input: Tensor) = input.rsqrt()
 
-        static member hardSigmoid(input: Tensor) = input.hardSigmoid()
+        static member hardsigmoid(input: Tensor) = input.hardsigmoid()
 
         static member squeeze (input: Tensor, dims: seq<int>) = input.squeeze(dims)
 
@@ -138,99 +143,131 @@ module DiffSharpExtensions =
 
         //static member scalar(t: scalar, ?dtype, ?device, ?backend) = dsharp.full(1, t, ?dtype=dtype, ?device=device, ?backend=backend)
 
-        static member randn(shape: seq<int>, stddev: scalar, ?mean: scalar) = dsharp.randn(shape=shape)
+        static member randn(shape: seq<int>, ?stddev: scalar, ?mean: scalar, ?dtype, ?device, ?backend) =
+            failwith "TBD"
+            dsharp.randn(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend)
 
-        static member sigmoidCrossEntropy(logits:Tensor, labels:Tensor, ?reduction:string) = logits.oneLike()
+        static member rand(shape: seq<int>, low: scalar, high: scalar, ?dtype, ?device, ?backend) =
+            dsharp.rand(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend)
 
-        static member swish(input:Tensor) : Tensor = input.swish()
-        static member dsharp.hardSwish(input:Tensor) : Tensor = input.hardSwish()
+        static member sigmoidCrossEntropy(logits:Tensor, labels:Tensor, ?reduction:string) =
+            failwith "TBD"
+            logits.oneLike()
+
+        static member silu(input:Tensor) : Tensor = input.silu()
+
+        static member hardswish(input:Tensor) : Tensor = input.hardswish()
+
         static member relu6(input:Tensor) : Tensor = input.relu6()
 
-    type Model with 
-        member m.grad(input, loss) = 
-            m.reverseDiff()
-            dsharp.grad (fun t -> loss (m.forward t)) input
-        member m.gradv(input, loss) = 
-            m.reverseDiff()
-            dsharp.gradv (fun t -> loss (m.forward t)) input
+    [<Extension>]
+    type ModelExtensions() =
+        [<Extension>]
+        static member grad(model: Model<Tensor, Tensor>, input, loss) = 
+            model.reverseDiff()
+            dsharp.grad (fun t -> loss (model.forward t)) input
 
-    type ZeroPadding2d((int*int) * (int * int)) =
+        [<Extension>]
+        static member gradv(model: Model<Tensor, Tensor>, input, loss) = 
+            model.reverseDiff()
+            dsharp.gradv (fun t -> loss (model.forward t)) input
+
+        [<Extension>]
+        static member appliedForBackpropagation(model: Model<Tensor, Tensor>, input) : Tensor * (Tensor -> Tensor * Tensor)= 
+            failwith "tbd"
+            //m.reverseDiff()
+            //dsharp.gradv (fun t -> loss (m.forward t)) input
+
+    type ZeroPadding2d(padding: (int*int) * (int * int)) =
        inherit Model()
-       override m.forward(value) = value // TBD
+       override m.forward(value) = failwith "TBD"; value
 
     type AvgPool2d(kernelSize: int, ?stride: int, ?padding: int) =
        inherit Model()
-       override m.forward(value) = value // TBD
+       override m.forward(value) = failwith "TBD"; value
 
     type GlobalAvgPool2d() =
        inherit Model()
-       override m.forward(value) = value // TBD
+       override m.forward(value) = failwith "TBD"; value
 
     type UpSampling2d(size: int) =
        inherit Model()
-       override m.forward(value) = value // TBD
+       override m.forward(value) = failwith "TBD"; value
 
-    type LayerNorm(featureCount: int, axis: int) =
+    type LayerNorm(numFeatures: int, axis: int) =
        inherit Model()
        let p_offset = Parameter(dsharp.zero())
        let p_scale = Parameter(dsharp.zero())
        member _.offset = p_offset
        member _.scale = p_scale
-       override m.forward(value) = value // TBD
+       override m.forward(value) = failwith "TBD"; value
 
     type MaxPool2d(kernelSize: int, stride: int, ?padding: int) =
        inherit Model()
-       override m.forward(value) = value // TBD
+       override m.forward(value) = failwith "TBD"; value
+
+    type MaxPool3d(?kernelSize: int, ?stride: int, ?padding: int, ?kernelSizes: seq<int>, ?strides: seq<int>, ?paddings: seq<int>) =
+       inherit Model()
+       override m.forward(value) = failwith "TBD"; value
 
     type DepthwiseConv2d(inChannels: int, outChannels: int, ?kernelSize: int, ?kernelSizes: seq<int>, ?stride: int, ?padding: int, ?strides: seq<int>, ?paddings: seq<int>) =
        inherit Model()
-       override m.forward(value) = value // TBD
+       override m.forward(value) = failwith "TBD"; value
 
     type RMSProp(model: Model, ?learningRate: Tensor, ?decay: double) =
         inherit ModelOptimizer(model)
         let learningRate = defaultArg learningRate (dsharp.tensor(1e-3))
         /// <summary>TBD</summary>
-        override o.updateRule name t = failwith "tbd"
+        override o.updateRule name t = failwith "TBD"
 
     type AdaDelta(model: Model) =
         inherit ModelOptimizer(model)
         /// <summary>TBD</summary>
-        override o.updateRule name t = failwith "tbd"
+        override o.updateRule name t = failwith "TBD"; failwith "TBD"
 
     type OptimizerWeightStepState() =
-        member this.Item with get (parameter: Parameter) : Tensor = failwith "tbd"
-        member this.weight : Tensor = failwith "tbd" 
-        member this.grad : Tensor = failwith "tbd" 
-        member this.step with get () : Tensor = failwith "tbd"  and set (v: Tensor) = failwith "tbd"
+        member _.Item with get (parameter: Parameter) : Tensor = failwith "TBD"
+        member _.weight : Tensor = failwith "TBD" 
+        member _.grad : Tensor = failwith "TBD" 
+        member _.step with get () : Tensor = failwith "TBD"  and set (v: Tensor) = failwith "TBD"
+
     type OptimizerState() =
-        member this.Item 
-            with get (state: OptimizerWeightStepState, parameter: Parameter) : Tensor = failwith "tbd"
-            and set (state: OptimizerWeightStepState, parameter: Parameter) (v: Tensor) = failwith "tbd"
+        member _.Item 
+            with get (state: OptimizerWeightStepState, parameter: Parameter) : Tensor = failwith "TBD"
+            and set (state: OptimizerWeightStepState, parameter: Parameter) (v: Tensor) = failwith "TBD"
+
     type ParameterGroupOptimizer() =
         inherit Optimizer()
         /// <summary>TBD</summary>
-        override o.updateRule name t = failwith "tbd"
+        override o.updateRule name t = failwith "TBD"
 
     type ParameterGroupOptimizerBuilder() =
-        member _.makeParameter(name: string, initial: Tensor) : Parameter = failwith "tbd"
-        member _.makeStateParameter(name: string) : Parameter = failwith "tbd"
-        member _.appendCallback(callback: OptimizerWeightStepState * OptimizerState -> unit) = ()
-        member _.makeOptimizer() = ()
+        member _.makeParameter(name: string, initial: Tensor) : Parameter = failwith "TBD"
+        member _.makeStateParameter(name: string) : Parameter = failwith "TBD"
+        member _.appendCallback(callback: OptimizerWeightStepState * OptimizerState -> unit) = failwith "TBD"
+        member _.makeOptimizer() = failwith "TBD"
 
     let scalar (x: scalar) : scalar = x
 
-    type Embedding(vocabularySize: int, embeddingSize: int, embeddingsInitializer: Shape -> Tensor) =
-        let mutable t = Dictionary<Tensor, Tensor>()
-        member _.Item with get (v: Tensor) = t.[v]
-        member _.embeddings 
-             with get() = 
-                 t |> Seq.map (fun (KeyValue(a,b)) -> dsharp.stack [a;b]) |> dsharp.stack
-             and set(vs: Tensor) = 
-                 t <- 
-                     vs.unstack() 
-                     |> Array.map (fun ab -> match ab.unstack() with [| a; b |] -> KeyValuePair(a,b) | _ -> failwith "expected pair")
-                     |> Dictionary
+    type Embedding(embeddings: Tensor) =
+        member val t = 
+            embeddings.unstack() 
+            |> Array.map (fun ab -> match ab.unstack() with [| a; b |] -> KeyValuePair(a,b) | _ -> failwith "expected pair")
+            |> Dictionary
+            with get, set
+        
+        new (vocabularySize: int, embeddingSize: int, embeddingsInitializer: Shape -> Tensor) =
+            Embedding(failwith "TBD")
 
-    let truncatedNormalInitializer(standardDeviation: Tensor) : Shape -> Tensor = failwith "truncatedNormalInitializer"
+        new (vocabularySize: int, embeddingSize: int) =
+            Embedding(failwith "TBD")
+
+        member e.Item with get (v: Tensor) = e.t.[v]
+        member e.embeddings 
+             with get() = embeddings
+             and set(embeddings: Tensor) = 
+                 e.t <- Embedding(embeddings).t
+
+    let truncatedNormalInitializer(standardDeviation: Tensor) : Shape -> Tensor = failwith "TBD"
 
     type TangentVector(x:obj) = class end

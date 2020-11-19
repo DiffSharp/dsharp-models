@@ -87,14 +87,14 @@ type UNetSkipConnectionInnermost() =
                                stride=2,
                                padding=kernelSize/2 (* "same " *),
                                filterInitializer: { dsharp.randn($0,
-                                                            standardDeviation=dsharp.scalar(0.02)))
+                                                            stddev=dsharp.scalar(0.02)))
         self.upNorm = BatchNorm2d(numFeatures=outChannels)
         
         self.upConv = ConvTranspose2d(kernelSize=(4, 4, innerChannels, outChannels),
                                        stride=2,
                                        padding=kernelSize/2 (* "same " *),
                                        filterInitializer: { dsharp.randn($0,
-                                                                    standardDeviation=dsharp.scalar(0.02)))
+                                                                    stddev=dsharp.scalar(0.02)))
 
     
     
@@ -109,7 +109,7 @@ type UNetSkipConnectionInnermost() =
 
 
 
-type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor<Float>, Sublayer.Output =: Tensor =
+type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor, Sublayer.Output =: Tensor =
     let downConv: Conv2d
     let downNorm: BatchNorm<Float>
     let upConv: ConvTranspose2d
@@ -127,7 +127,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
         self.downConv = Conv2d(kernelSize=(4, 4, inChannels, innerChannels),
                                stride=2,
                                padding=kernelSize/2 (* "same " *),
-                               filterInitializer: { dsharp.randn($0, standardDeviation=dsharp.scalar(0.02)))
+                               filterInitializer: { dsharp.randn($0, stddev=dsharp.scalar(0.02)))
         self.downNorm = BatchNorm2d(numFeatures=innerChannels)
         self.upNorm = BatchNorm2d(numFeatures=outChannels)
         
@@ -135,7 +135,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
                                        stride=2,
                                        padding=kernelSize/2 (* "same " *),
                                        filterInitializer: { dsharp.randn($0,
-                                                                    standardDeviation=dsharp.scalar(0.02)))
+                                                                    stddev=dsharp.scalar(0.02)))
     
         self.submodule = submodule
         
@@ -157,7 +157,7 @@ type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.Vec
 
 
 
-type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor<Float>, Sublayer.Output =: Tensor =
+type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor, Sublayer.Output =: Tensor =
     let downConv: Conv2d
     let upConv: ConvTranspose2d
     
@@ -171,13 +171,13 @@ type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentV
                                stride=2,
                                padding=kernelSize/2 (* "same " *),
                                filterInitializer: { dsharp.randn($0,
-                                                            standardDeviation=dsharp.scalar(0.02)))
+                                                            stddev=dsharp.scalar(0.02)))
         self.upConv = ConvTranspose2d(kernelSize=(4, 4, outChannels, innerChannels * 2),
                                        stride=2,
                                        padding=kernelSize/2 (* "same " *),
                                        activation= tanh,
                                        filterInitializer: { dsharp.randn($0,
-                                                                    standardDeviation=dsharp.scalar(0.02)))
+                                                                    stddev=dsharp.scalar(0.02)))
     
         self.submodule = submodule
 

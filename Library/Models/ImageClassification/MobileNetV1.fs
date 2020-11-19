@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Models
+module Models.ImageClassification.MobileNetV1
 
 open DiffSharp
 open DiffSharp.Model
@@ -31,15 +31,15 @@ type ConvBlock(filterCount: int, ?widthMultiplier: double, ?stride) =
     let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
     do Debug.Assert(widthMultiplier > 0.0, "Width multiplier must be positive")
 
-    let scaledFilterCount = int (double filterCount * widthMultiplier)
-    let conv = Conv2d(3, scaledFilterCount, kernelSize=3, ?stride=stride (* , padding="valid" *))
-    let batchNorm = BatchNorm2d(numFeatures=scaledFilterCount)
+    let scaledChannels = int (double filterCount * widthMultiplier)
+    let conv = Conv2d(3, scaledChannels, kernelSize=3, ?stride=stride (* , padding="valid" *))
+    let batchNorm = BatchNorm2d(numFeatures=scaledChannels)
     
     override _.forward(input) =
         let convolved = input |> zeroPad.forward |> conv.forward |> batchNorm.forward
         dsharp.relu6(convolved)
 
-type DepthwiseConvBlock(filterCount: int, pointwiseFilterCount: int, stride: int, ?widthMultiplier: double, ?depthMultiplier: int) =
+type DepthwiseConvBlock(filterCount: int, pointwiseChannels: int, stride: int, ?widthMultiplier: double, ?depthMultiplier: int) =
     inherit Model()
     let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
     let widthMultiplier = defaultArg widthMultiplier 1.0
@@ -48,13 +48,13 @@ type DepthwiseConvBlock(filterCount: int, pointwiseFilterCount: int, stride: int
         Debug.Assert(widthMultiplier > 0.0, "Width multiplier must be positive")
         Debug.Assert(depthMultiplier > 0, "Depth multiplier must be positive")
 
-    let scaledFilterCount = int(double(filterCount) * widthMultiplier)
-    let scaledPointwiseFilterCount = int(double(pointwiseFilterCount) * widthMultiplier)
+    let scaledChannels = int(double(filterCount) * widthMultiplier)
+    let scaledPointwiseChannels = int(double(pointwiseChannels) * widthMultiplier)
 
-    let dConv = DepthwiseConv2d(scaledFilterCount, depthMultiplier, kernelSize=3, stride=stride (* , padding: strides = (1, 1) ? .same : .valid *) )
-    let batchNorm1 = BatchNorm2d( scaledFilterCount * depthMultiplier)
-    let conv = Conv2d(scaledFilterCount * depthMultiplier, scaledPointwiseFilterCount, kernelSize=1, stride=1, padding=0 (* "same " *))
-    let batchNorm2 = BatchNorm2d(numFeatures=scaledPointwiseFilterCount)
+    let dConv = DepthwiseConv2d(scaledChannels, depthMultiplier, kernelSize=3, stride=stride (* , padding: strides = (1, 1) ? .same : .valid *) )
+    let batchNorm1 = BatchNorm2d( scaledChannels * depthMultiplier)
+    let conv = Conv2d(scaledChannels * depthMultiplier, scaledPointwiseChannels, kernelSize=1, stride=1, padding=0 (* "same " *))
+    let batchNorm2 = BatchNorm2d(numFeatures=scaledPointwiseChannels)
     
     override _.forward(input) =
         let convolved1 =
@@ -80,91 +80,91 @@ type MobileNetV1(classCount: int, ?widthMultiplier: double, ?depthMultiplier: in
     let dConvBlock1 =
         DepthwiseConvBlock(
             filterCount=32,
-            pointwiseFilterCount=64,
+            pointwiseChannels=64,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=1)
     let dConvBlock2 =
         DepthwiseConvBlock(
             filterCount=64,
-            pointwiseFilterCount=128,
+            pointwiseChannels=128,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=2)
     let dConvBlock3 =
         DepthwiseConvBlock(
             filterCount=128,
-            pointwiseFilterCount=128,
+            pointwiseChannels=128,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=1)
     let dConvBlock4 =
         DepthwiseConvBlock(
             filterCount=128,
-            pointwiseFilterCount=256,
+            pointwiseChannels=256,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=2)
     let dConvBlock5 =
         DepthwiseConvBlock(
             filterCount=256,
-            pointwiseFilterCount=256,
+            pointwiseChannels=256,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=1)
     let dConvBlock6 =
         DepthwiseConvBlock(
             filterCount=256,
-            pointwiseFilterCount=512,
+            pointwiseChannels=512,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=2)
     let dConvBlock7 =
         DepthwiseConvBlock(
             filterCount=512,
-            pointwiseFilterCount=512,
+            pointwiseChannels=512,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=1)
     let dConvBlock8 =
         DepthwiseConvBlock(
             filterCount=512,
-            pointwiseFilterCount=512,
+            pointwiseChannels=512,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=1)
     let dConvBlock9 =
         DepthwiseConvBlock(
             filterCount=512,
-            pointwiseFilterCount=512,
+            pointwiseChannels=512,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=1)
     let dConvBlock10 =
         DepthwiseConvBlock(
             filterCount=512,
-            pointwiseFilterCount=512,
+            pointwiseChannels=512,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=1)
     let dConvBlock11 =
         DepthwiseConvBlock(
             filterCount=512,
-            pointwiseFilterCount=512,
+            pointwiseChannels=512,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=1)
     let dConvBlock12 = 
         DepthwiseConvBlock(
             filterCount=512,
-            pointwiseFilterCount=1024,
+            pointwiseChannels=1024,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=2)
     let dConvBlock13 = 
         DepthwiseConvBlock(
             filterCount=1024,
-            pointwiseFilterCount=1024,
+            pointwiseChannels=1024,
             widthMultiplier=widthMultiplier,
             depthMultiplier=depthMultiplier,
             stride=1)

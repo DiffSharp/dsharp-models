@@ -75,7 +75,7 @@ where Texts: Collection, Texts.Index==Int, Texts.Element==[Int] {
     dropLast: bool = false
   ) = 
     self.init(
-      batchSize= batchSize,
+      batchSize=batchSize,
       sequenceLength=sequenceLength,
       numericalizedTexts: numericalizedTexts,
       lengths: numericalizedTexts.map (fun x -> x.count),

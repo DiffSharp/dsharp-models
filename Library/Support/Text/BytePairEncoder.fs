@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Datasets
+namespace Support.Text
 
 open DiffSharp
 open Support
@@ -34,7 +34,8 @@ type Variant =
 // TODO: Find a nice way to support caching.
 /// A cache used to store encoded tokens and thus speed up encoding.
 //  let cache: [String: string[]]
-type BytePairEncoder(vocabulary: Vocabulary, mergePairs: Map<(string * string), int>, ?useCache: bool) = 
+type BytePairEncoder(vocabulary: Vocabulary, mergePairs: ((string * string) * int)[], ?useCache: bool) = 
+    let mergePairs = Map.ofArray mergePairs
     let useCache = defaultArg useCache true
     let reversedMergePairs = Map.ofSeq (mergePairs |> Seq.map (fun kvp -> fst kvp.Key + snd kvp.Key, kvp.Key))
  
@@ -103,14 +104,14 @@ type BytePairEncoder(vocabulary: Vocabulary, mergePairs: Map<(string * string), 
         match variant with
         | Gpt2 ->
             for m in matches do
-                failwith "tbd"
+                failwith "TBD"
                 //let start = token.index(token.startIndex, offsetBy: m.range.lowerBound, limitedBy: token.endIndex)
                 //let fin = token.index(token.startIndex, offsetBy: m.range.upperBound, limitedBy: token.endIndex) 
                 //if ok then
                 //  parts.Add(String(token.[start..fin-1]))
 
         | Roberta ->
-            failwith "tbd"
+            failwith "TBD"
             //let mutable lastEnd = token.startIndex
             //for m in matches do
             //    let start = token.index(token.startIndex, offsetBy: m.range.lowerBound)
@@ -149,7 +150,7 @@ type BytePairEncoder(vocabulary: Vocabulary, mergePairs: Map<(string * string), 
         newTokenParts.ToArray()
 
     static let encodedToken(token: string) : string =
-        failwith "tbd"
+        failwith "TBD"
         //String(String.UnicodeScalarView(token.utf8.map { BytePairEncoder.bytesToUnicode[$0]!))
 
     /// Decodes the provided BPE-coded token to a sequence of tokens.
@@ -160,7 +161,7 @@ type BytePairEncoder(vocabulary: Vocabulary, mergePairs: Map<(string * string), 
     static member decode(token: string) =
         let buffer = ResizeArray<byte>()
 
-        failwith "tbd"
+        failwith "TBD"
         //for scalar in token.unicodeScalars do
         //    buffer.Add(BytePairEncoder.unicodeToBytes.[scalar])
 
@@ -181,7 +182,6 @@ type BytePairEncoder(vocabulary: Vocabulary, mergePairs: Map<(string * string), 
                 let tokens = line.Split(" ")
                 if tokens.Length <= 2 then 
                     ((tokens.[0], tokens.[1]), index) |]
-            |> Map.ofSeq
         BytePairEncoder(vocabulary, pairs, ?useCache=useCache)
 
     /// Encodes the provided token to a sequence of BPE-coded tokens.
@@ -205,7 +205,7 @@ type BytePairEncoder(vocabulary: Vocabulary, mergePairs: Map<(string * string), 
                 // Separate each character.
                 for token in tokens do
                     for i in 0..token.Length-1 do
-                        failwith "tbd"
+                        failwith "TBD"
                         //let index = token.index(token.startIndex, offsetBy: i)
                         //parts.Add(String(token.[index]))
 

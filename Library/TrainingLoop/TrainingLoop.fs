@@ -20,7 +20,7 @@ open DiffSharp
 // Workaround https://bugs.swift.org/browse/TF-1122 that prevents us from registering a
 // loss function inside our TrainingLoop struct
 public final class LossFunctionWrapper<Output: Differentiable, Target> {
-  type F = (Output, Target) = Tensor<Float>
+  type F = (Output, Target) = Tensor
   let f: F
   init(f: @escaping F) =  self.f = f }
 }
@@ -309,7 +309,7 @@ extension TrainingLoop {
     guard let data = lastStepInput else { return }
     guard let target = lastStepTarget else { return }
     (lastStepLoss, lastStepGradient) = valueWithGradient<| fun model -> = 
-      (model: Model) = Tensor<Float> in
+      (model: Model) = Tensor in
       let predictions = model(data)
       lastStepOutput = predictions
       lossFunction.f(predictions, target)
@@ -403,7 +403,7 @@ extension TrainingLoop {
     defer { self.callbacks = Array(self.callbacks.prefix(callbacksCount)) }
     epochCount = epochs
 
-    model.move(to: device)
+    model.move(device)
     optimizer = Opt(copying: optimizer, to: device)
 
     try

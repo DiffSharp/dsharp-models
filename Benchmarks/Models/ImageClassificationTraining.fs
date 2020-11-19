@@ -35,12 +35,12 @@ where
   let device = settings.device
   let batchSize = settings.batchSize!
   let model = Model()
-  model.move(to: device)
+  model.move(device)
   // TODO: Split out the optimizer as a separate specification.
   let optimizer = SGD(model, learningRate=0.1)
   optimizer = SGD(copying: optimizer, to: device)
 
-  let dataset = ClassificationDataset(batchSize= batchSize, on: device)
+  let dataset = ClassificationDataset(batchSize=batchSize, device=device)
 
   model.mode <- Mode.Train
   for epochBatches in dataset.training do

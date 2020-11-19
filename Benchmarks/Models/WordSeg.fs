@@ -21,15 +21,15 @@ open DiffSharp
 open TextModels
 
 let WordSegScore = wordSegSuite(
-  name= "WordSegScore",
+  name="WordSegScore",
   operation= score)
 
 let WordSegScoreAndGradient = wordSegSuite(
-  name= "WordSegScoreAndGradient",
+  name="WordSegScoreAndGradient",
   operation= scoreAndGradient)
 
 let WordSegViterbi = wordSegSuite(
-  name= "WordSegViterbi",
+  name="WordSegViterbi",
   operation= viterbi)
 
 let maximumSequenceLength = 18
@@ -101,7 +101,7 @@ let wordSegBenchmark(operation: @escaping (SNLM, CharacterSequence, Device) = Vo
     )
 
     let model = SNLM(parameters: modelParameters)
-    model.move(to: device)
+    model.move(device)
 
     while true do
       operation(model, sentence, device)
@@ -146,7 +146,7 @@ let scoreAndGradient(model: SNLM, sentence: CharacterSequence, device: Device) =
     let score = lattice[sentence.count].semiringScore
     let expectedLength = exp(score.logr - score.logp)
     let loss = -1 * score.logp + lambd * expectedLength
-    dsharp.tensor(loss, on: device)
+    dsharp.tensor(loss, device=device)
   }
 }
 

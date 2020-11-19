@@ -229,7 +229,7 @@ type TextUnsupervised {
 
 
     LanguageModelDataset(
-      batchSize= batchSize,
+      batchSize=batchSize,
       sequenceLength=sequenceLength,
       numericalizedTexts: encodedDocs,
       lengths: encodedDocs.map (fun x -> x.count),
@@ -247,7 +247,7 @@ type TextUnsupervised {
   {
     try loadDirectory(
       named: variantDetails.trainingDirectoryName, in: localStorageDirectory, bpe: bpe,
-      variantDetails: variantDetails, batchSize= batchSize, sequenceLength=sequenceLength,
+      variantDetails: variantDetails, batchSize=batchSize, sequenceLength=sequenceLength,
       documentCount: documentCount)
 
 
@@ -261,7 +261,7 @@ type TextUnsupervised {
   {
     try loadDirectory(
       named: variantDetails.validationDirectoryName, in: localStorageDirectory, bpe: bpe,
-      variantDetails: variantDetails, batchSize= batchSize, sequenceLength=sequenceLength,
+      variantDetails: variantDetails, batchSize=batchSize, sequenceLength=sequenceLength,
       documentCount: documentCount)
 
 
@@ -283,7 +283,7 @@ extension TextUnsupervised where Entropy = SystemRandomNumberGenerator {
       trainingDocumentCount: trainingDocumentCount,
       validationDocumentCount: validationDocumentCount,
       entropy=SystemRandomNumberGenerator(),
-      on: device
+      device=device
     )
 
 

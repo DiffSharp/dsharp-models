@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Support
+namespace Support.Text
 
 open System
 open System.IO
@@ -92,7 +92,6 @@ module Tokenization =
 
         afterCJK
 
-
 /// Vocabulary that can be used for tokenizing strings.
 type Vocabulary(tokensToIds: Map<string, int>) =
     let idsToTokens = Map<int, string>(tokensToIds |> Seq.map (fun (KeyValue(a,b)) -> (b,a)))
@@ -126,7 +125,7 @@ type Vocabulary(tokensToIds: Map<string, int>) =
         |> String.concat "\n"
         |> fun s -> File.WriteAllText(fileURL, s)
 
-    static member FromSentencePieceModel(fileURL: FilePath) : Vocabulary = failwith "tbd"
+    static member FromSentencePieceModel(fileURL: FilePath) : Vocabulary = failwith "TBD"
     //    let data = Data.ReadAllBytes(fileURL)
     //    Vocabulary(
     //        (Sentencepiece_ModelProto(data))
@@ -141,7 +140,7 @@ type Vocabulary(tokensToIds: Map<string, int>) =
         let j = Json.JsonDocument.Parse(json)
         //let tokensToIds =  JSONDecoder().decode(Map<string, int>.self, from: json.data(using: .utf8)!)
         //Vocabulary(tokensToIds)
-        failwith "tbd"
+        failwith "TBD"
 
 /// Text tokenizer which is used to split strings into arrays of tokens.
 [<AbstractClass>]
@@ -217,7 +216,7 @@ type GreedySubwordTokenizer(vocabulary: Vocabulary, ?unknownToken: string , ?max
                             currentSubstring <- substring
                             start <- fin
                         else
-                            failwith "tbd"
+                            failwith "TBD"
                             //fin <- token.Length //???? was end = token.index(end, offsetBy: -1)
 
                     // Check if the substring is good.

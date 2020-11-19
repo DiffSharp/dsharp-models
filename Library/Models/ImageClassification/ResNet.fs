@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Models
+module Models.ImageClassification.ResNet
 
 open DiffSharp
 open DiffSharp.Model
@@ -52,7 +52,7 @@ type Depth =
 type ConvBN(inChannels, outChannels, kernelSize:int, ?stride: int, ?padding: int) =
     inherit Model()
 
-    let conv = Conv2d(inChannels, outChannels, kernelSize=kernelSize, ?stride=stride, ?padding=padding)
+    let conv = Conv2d(inChannels, outChannels, kernelSize=kernelSize, ?stride=stride, ?padding=padding, bias=false)
     let norm = BatchNorm2d(numFeatures=inChannels, momentum=dsharp.scalar 0.9, eps=1e-5)
     
     override _.forward(input) =
@@ -97,10 +97,8 @@ type ResidualBlock(inputFilters: int, filters: int, stride: int, useLaterStride:
             else
                 input
 
-        let earlyConvsReduced : Tensor= 
-            failwith "tbd"
-            //earlyConvs.differentiableReduce(input) =  last, layer in
-            //dsharp.relu(layer(last))
+        let earlyConvsReduced = 
+            (input, earlyConvs) ||> Array.fold (fun last layer -> layer.forward last |> dsharp.relu) 
 
         let lastConvResult = lastConv.forward(earlyConvsReduced)
 
@@ -142,7 +140,7 @@ type ResNet(classCount: int, depth: Depth, ?downsamplingInFirstStage: bool, ?use
             ConvBN(3, inputFilters, kernelSize=3, padding=1 (* "same " *)),
             MaxPool2d(kernelSize=1, stride=1)  // no-op
 
-    let mutable lastInputFilterCount = inputFilters
+    let mutable lastInputChannels = inputFilters
     let residualBlocks =
         [| 
             for (blockSizeIndex, blockSize) in Array.indexed depth.layerBlockSizes do
@@ -151,9 +149,9 @@ type ResNet(classCount: int, depth: Depth, ?downsamplingInFirstStage: bool, ?use
                     let filters = inputFilters * int(2.0 ** double blockSizeIndex)
                     let residualBlock = 
                         ResidualBlock(
-                            inputFilters=lastInputFilterCount, filters=filters, stride=stride,
+                            inputFilters=lastInputChannels, filters=filters, stride=stride,
                             useLaterStride=useLaterStride, isBasic=depth.usesBasicBlocks)
-                    lastInputFilterCount <- filters * (if depth.usesBasicBlocks then 1 else 4)
+                    lastInputChannels <- filters * (if depth.usesBasicBlocks then 1 else 4)
                     residualBlock 
         |]
 
@@ -165,10 +163,6 @@ type ResNet(classCount: int, depth: Depth, ?downsamplingInFirstStage: bool, ?use
     
     override _.forward(input) =
         let inputLayer = maxPool.forward(dsharp.relu(initialLayer.forward(input)))
-        let blocksReduced = 
-           failwith "tbd"
-          //residualBlocks.differentiableReduce(inputLayer) =  last, layer in
-        //    layer(last)
-
+        let blocksReduced = (input, residualBlocks) ||> Array.fold (fun last layer -> layer.forward last) 
         blocksReduced |> avgPool.forward |> flatten.forward |> classifier.forward
 

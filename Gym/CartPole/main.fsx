@@ -46,13 +46,13 @@ let percentile = 70
 /// A simple two layer dense net.
 type Net() =
     inherit Model()
-    type Input = Tensor<Float>
-    type Output = Tensor<Float>
+    type Input = Tensor
+    type Output = Tensor
 
     let l1, l2: Dense
 
     init(observationSize: int, hiddenSize: int, actionCount: int) = 
-        l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation= dsharp.relu)
+        l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation=dsharp.relu)
         l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount)
 
 
@@ -84,8 +84,8 @@ let filteringBatch(
     let rewardBound = double(np.percentile(rewards, percentile))!
     print("rewardBound = {rewardBound}")
 
-    let input = Tensor<Float>(0.0)
-    let target = Tensor<Float>(0.0)
+    let input = Tensor(0.0)
+    let target = Tensor(0.0)
     let totalReward: double = 0.0
 
     let retainedEpisodeCount = 0
@@ -94,9 +94,9 @@ let filteringBatch(
             continue
 
 
-        let observationTensor = Tensor<Float>(episode.steps.map (fun x -> x.observation))
+        let observationTensor = Tensor(episode.steps.map (fun x -> x.observation))
         let actionTensor = Tensor (*<int32>*)(episode.steps.map (fun x -> x.action))
-        let oneHotLabels = Tensor<Float>(oneHotAtIndices: actionTensor, depth: actionCount)
+        let oneHotLabels = Tensor(oneHotAtIndices: actionTensor, depth: actionCount)
 
         // print($"observations tensor has shape {observationTensor.shapeTensor}")
         // print($"actions tensor has shape {actionTensor.shapeTensor}")
@@ -173,9 +173,9 @@ let actionCount = int(env.action_space.n).unwrapped()
 // print(actionCount)
 
 let net = Net(
-    observationSize: int(observationSize), hiddenSize: hiddenSize, actionCount: actionCount)
+    observationSize: int(observationSize), hiddenSize=hiddenSize, actionCount=actionCount)
 // SGD optimizer reaches convergence with ~125 mini batches, while Adam uses ~25.
-// let optimizer = SGD<Net, Float>(learningRate=0.1, momentum: 0.9)
+// let optimizer = SGD<Net, Float>(learningRate=0.1, momentum=0.9)
 let optimizer = Adam(net, learningRate=0.01)
 let batchIndex = 0
 
@@ -183,12 +183,11 @@ while true do
     print($"Processing mini batch {batchIndex}")
     batchIndex <- batchIndex + 1
 
-    let episodes = nextBatch(env: env, net: net, batchSize= batchSize, actionCount: actionCount)
-    let (input, target, episodeCount, meanReward) = filteringBatch(
-        episodes: episodes, actionCount: actionCount)
+    let episodes = nextBatch(env: env, net: net, batchSize=batchSize, actionCount=actionCount)
+    let (input, target, episodeCount, meanReward) = filteringBatch(episode=episodes, actionCount=actionCount)
 
     let gradients = withLearningPhase(.training) = 
-        dsharp.grad(net) =  net -> Tensor<Float> in
+        dsharp.grad(net) =  net -> Tensor in
             let logits = net(input)
             let loss = softmaxCrossEntropy(logits=logits, probabilities: target)
             print($"loss is {loss}")

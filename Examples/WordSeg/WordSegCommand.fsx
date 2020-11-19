@@ -74,7 +74,7 @@ type WordSegCommand: ParsableCommand {
     let settings = WordSegSettings(
       trainingPath: trainingPath,
       validationPath: validationPath, testPath: testPath,
-      hiddenSize: hiddenSize, dropoutProbability: dropoutProbability,
+      hiddenSize=hiddenSize, dropoutProbability: dropoutProbability,
       order: order, lambd: lambd, maxEpochs: maxEpochs,
       learningRate: learningRate, backend: backend,
       maxLength: maxLength, minFrequency: minFrequency)

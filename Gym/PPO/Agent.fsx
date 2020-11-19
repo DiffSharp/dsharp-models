@@ -57,7 +57,7 @@ type PPOAgent(
     let actorOptimizer = Adam(actorCritic.actorNetwork, learningRate: learningRate)
     let criticOptimizer = Adam(actorCritic.criticNetwork, learningRate: learningRate)
     let step(env: PythonObject, state: PythonObject) : (PythonObject * Bool * Float) =
-        let tfState: Tensor = Tensor<Float>(numpy: np.array([state], dtype: np.float32))!
+        let tfState: Tensor = Tensor(numpy: np.array([state], dtype: np.float32))!
         let dist: Categorical<int32> = oldActorCritic(tfState)
         let action: int32 = dist.sample().toScalar()
         let (newState, reward, isDone, _) = env.step(action).tuple4
@@ -83,20 +83,20 @@ type PPOAgent(
             discountedReward = memory.rewards[i] + (discount * discountedReward)
             rewards.insert(discountedReward, at: 0)
 
-        let tfRewards = Tensor<Float>(rewards)
+        let tfRewards = Tensor(rewards)
         tfRewards = (tfRewards - tfRewards.mean()) / (tfRewards.stddev() + 1e-5)
 
         // Retrieve stored states, actions, and log probabilities
-        let oldStates: Tensor = Tensor<Float>(numpy: np.array(memory.states, dtype: np.float32))!
+        let oldStates: Tensor = Tensor(numpy: np.array(memory.states, dtype: np.float32))!
         let oldActions: Tensor (*<int32>*) = Tensor (*<int32>*)(numpy: np.array(memory.actions, dtype: np.int32))!
-        let oldLogProbs: Tensor = Tensor<Float>(numpy: np.array(memory.logProbs, dtype: np.float32))!
+        let oldLogProbs: Tensor = Tensor(numpy: np.array(memory.logProbs, dtype: np.float32))!
 
         // Optimize actor and critic
         let actorLosses: double[] = [| |]
         let criticLosses: double[] = [| |]
         for _ in 0..epochs-1 do
             // Optimize policy network (actor)
-            let (actorLoss, actorGradients) = valueWithGradient(at: self.actorCritic.actorNetwork) =  actorNetwork -> Tensor<Float> in
+            let (actorLoss, actorGradients) = valueWithGradient(at: self.actorCritic.actorNetwork) =  actorNetwork -> Tensor in
                 let npIndices = np.stack([np.arange(oldActions.shape.[0], dtype: np.int32), oldActions.makeNumpyArray()], axis: 1)
                 let tfIndices = Tensor (*<int32>*)(numpy: npIndices)!
                 let actionProbs = actorNetwork(oldStates).dimensionGathering(atIndices: tfIndices)
@@ -110,7 +110,7 @@ type PPOAgent(
                     ratios * advantages,
                     ratios.clipped(min:1 - self.clipEpsilon, max: 1 + self.clipEpsilon) * advantages
                 ]).min(dim=0).flattened()
-                let entropyBonus: Tensor = Tensor<Float>(self.entropyCoefficient * dist.entropy())
+                let entropyBonus: Tensor = Tensor(self.entropyCoefficient * dist.entropy())
                 let loss: Tensor = -1 * (surrogateObjective + entropyBonus)
 
                 loss.mean()
@@ -119,7 +119,7 @@ type PPOAgent(
             actorLosses.append(actorLoss.toScalar())
 
             // Optimize value network (critic)
-            let (criticLoss, criticGradients) = valueWithGradient(at: self.actorCritic.criticNetwork) =  criticNetwork -> Tensor<Float> in
+            let (criticLoss, criticGradients) = valueWithGradient(at: self.actorCritic.criticNetwork) =  criticNetwork -> Tensor in
                 let stateValues = criticNetwork(oldStates).flattened()
                 let loss: Tensor = 0.5 * pow(stateValues - tfRewards, 2)
 

@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-namespace Models
+module Models.ImageClassification.ResNetV2
 
 open DiffSharp
+open DiffSharp.Model
 
 // Original Paper:
 // "Deep Residual Learning for Image Recognition"
@@ -48,37 +49,35 @@ type Depth =
 // A convolution and batchnorm layer
 type ConvBNV2(inFilters: int,
         outFilters: int,
-        kernelSize: int = 1,
-        stride: int = 1,
-        padding: Padding = .same,
-        isLast: bool = false) =
+        ?kernelSize: int,
+        ?stride: int,
+        ?padding: int,
+        ?isLast: bool) =
     inherit Model()
+    let kernelSize = defaultArg kernelSize 1
+    let stride = defaultArg stride 1
+    let padding = defaultArg padding (kernelSize/2)
+    let isLast = defaultArg isLast false
 
-    self.conv = Conv2d(
-        kernelSize=(kernelSize, kernelSize, inFilters, outFilters), 
-        strides = [stride, stride), 
-        padding: padding,
-        useBias: false)
-    self.isLast = isLast
-    if isLast then
-        //Initialize the last BatchNorm layer to scale zero
-        self.norm = BatchNorm2d((
-                axis = -1, 
-                momentum: 0.9, 
-                offset: dsharp.zeros([outFilters]),
-                scale: dsharp.zeros([outFilters]),
-                epsilon: 1e-5,
-                runningMean: dsharp.tensor(0),
-                runningVariance: dsharp.tensor(1))
-    else
-        self.norm = BatchNorm2d(numFeatures=outFilters, momentum: 0.9, epsilon: 1e-5)
-
+    let conv = Conv2d(inFilters, outFilters, kernelSize=kernelSize, stride=stride,  padding=padding, bias=false)
+    let isLast = isLast
+    let norm =
+        if isLast then
+            failwith "tbd - check this - no numFeatures"
+            //Initialize the last BatchNorm layer to scale zero
+            //BatchNorm2d(
+            //    momentum=0.9, 
+            //    //offset=dsharp.zeros([outFilters]),
+            //    scale=dsharp.zeros([outFilters]),
+            //    eps=1e-5)
+            //    //runningMean=dsharp.tensor(0),
+            //    //runningVariance=dsharp.tensor(1))
+        else
+            BatchNorm2d(numFeatures=outFilters, momentum=dsharp.scalar 0.9, eps=1e-5)
 
     override _.forward(input) =
-        let convResult = input |> conv, norm)
-        isLast ? convResult : dsharp.relu(convResult)
-
-
+        let convResult = input |> conv.forward |> norm.forward
+        if isLast then convResult else dsharp.relu(convResult)
 
 // The shortcut in a Residual Block
 // Workaround optionals not being differentiable, can be simplified when it's the case
@@ -86,18 +85,17 @@ type ConvBNV2(inFilters: int,
 type Shortcut(inFilters: int, outFilters: int, stride: int) =
     inherit Model()
     
-    let avgPool = AvgPool2d<Float>(kernelSize=2, strides = [stride, stride))
+    let avgPool = AvgPool2d(kernelSize=2, stride = stride)
     let needsPool = (stride <> 1)
     let needsProjection = (inFilters <> outFilters)
-    let projection = ConvBNV2(
-        inFilters: needsProjection ? inFilters  : 1, 
-        outFilters: needsProjection ? outFilters : 1
-    )
+    let projection = 
+        ConvBNV2(inFilters= (if needsProjection then inFilters else 1), 
+           outFilters=(if needsProjection then outFilters else 1))
 
     override _.forward(input) =
         let res = input
-        if needsProjection then res = projection(res)
-        if needsPool       then res = avgPool(res)
+        let res = if needsProjection then projection.forward (res) else res
+        let res = if needsPool then avgPool.forward(res) else res
         res
 
 // Residual block for a ResNet V2
@@ -105,24 +103,24 @@ type Shortcut(inFilters: int, outFilters: int, stride: int) =
 type ResidualBlockV2(inFilters: int, outFilters: int, stride: int, expansion: int) =
     inherit Model()
 
-    if expansion = 1 then
-        convs = [
-            ConvBNV2(inFilters: inFilters,  outFilters: outFilters, kernelSize: 3, stride: stride),
-            ConvBNV2(inFilters: outFilters, outFilters: outFilters, kernelSize: 3, isLast: true)
-        ]
-    else
-        convs = [
-            ConvBNV2(inFilters: inFilters,    outFilters: outFilters/4),
-            ConvBNV2(inFilters: outFilters/4, outFilters: outFilters/4, kernelSize: 3, stride: stride),
-            ConvBNV2(inFilters: outFilters/4, outFilters: outFilters, isLast: true)
-        ]
+    let convs =
+        if expansion = 1 then
+            [|
+                ConvBNV2(inFilters=inFilters,  outFilters=outFilters, kernelSize=3, stride=stride)
+                ConvBNV2(inFilters=outFilters, outFilters=outFilters, kernelSize=3, isLast=true)
+            |]
+        else
+            [|
+                ConvBNV2(inFilters=inFilters,    outFilters=outFilters/4)
+                ConvBNV2(inFilters=outFilters/4, outFilters=outFilters/4, kernelSize=3, stride=stride)
+                ConvBNV2(inFilters=outFilters/4, outFilters=outFilters, isLast=true)
+            |]
 
-    shortcut = Shortcut(inFilters: inFilters, outFilters: outFilters, stride: stride)
+    let shortcut = Shortcut(inFilters=inFilters, outFilters=outFilters, stride=stride)
 
-   
     override _.forward(input) =
-        let convResult = convs.differentiableReduce(input) =  $1($0)
-        dsharp.relu(convResult + shortcut(input))
+        let convResult =(input, convs) ||> Array.fold (fun last layer -> layer.forward last) 
+        dsharp.relu(convResult + shortcut.forward(input))
 
 /// An implementation of the ResNet v2 architectures, at various depths.
 ///
@@ -137,32 +135,34 @@ type ResidualBlockV2(inFilters: int, outFilters: int, stride: int, expansion: in
 ///         Resnet-A trick uses 64-64-64, research at fastai suggests 32-32-64 is better
 type ResNetV2(classCount: int, 
         depth: Depth, 
-        inputChannels: int = 3, 
-        stemFilters: int[] = [32, 32, 64]) =
+        ?inputChannels: int, 
+        ?stemFilters: int[]) =
     inherit Model()
     let avgPool = GlobalAvgPool2d()
     let flatten = Flatten()
+    let inputChannels = defaultArg inputChannels 3
+    let stemFilters = defaultArg stemFilters [|32; 32; 64 |]
 
-    let filters = [inputChannels] + stemFilters
-    inputStem = Array(0..<3).map { i in
-        ConvBNV2(inFilters: filters[i], outFilters: filters[i+1], kernelSize: 3, stride: i==0 ? 2 : 1)
+    let filters = Array.append [| inputChannels |] stemFilters
+    let inputStem = [| for i in 0 .. 2 -> ConvBNV2(inFilters=filters.[i], outFilters=filters.[i+1], kernelSize=3, stride=(if i=0 then 2 else 1)) |]
 
-    maxPool = MaxPool2d((3, 3), stride=2, padding=kernelSize/2 (* "same " *))
-    let sizes = [64 / depth.expansion, 64, 128, 256, 512]
-    for (iBlock, nBlocks) in depth.layerBlockSizes.enumerated() do
-        let (nIn, nOut) = (sizes[iBlock] * depth.expansion, sizes[iBlock+1] * depth.expansion)
-        for j in 0..nBlocks-1 do
-            residualBlocks.append(ResidualBlockV2(
-                inFilters: j==0 ? nIn : nOut,  
-                outFilters: nOut, 
-                stride: (iBlock <> 0) && (j = 0) ? 2 : 1, 
-                expansion: depth.expansion
-            ))
+    let maxPool = MaxPool2d(kernelSize=3, stride=2, padding=1 (* "same " *))
+    let sizes = [| 64 / depth.expansion; 64; 128; 256; 512 |]
+    let residualBlocks =
+        [|  for (iBlock, nBlocks) in Array.indexed depth.layerBlockSizes do
+                let (nIn, nOut) = (sizes.[iBlock] * depth.expansion, sizes.[iBlock+1] * depth.expansion)
+                for j in 0..nBlocks-1 do
+                    ResidualBlockV2(
+                        inFilters= (if j=0 then nIn else nOut),  
+                        outFilters=nOut, 
+                        stride= (if iBlock <> 0 && (j = 0) then 2 else 1), 
+                        expansion=depth.expansion
+                    )
+            |]
 
-
-    classifier = Linear(inFeatures=512 * depth.expansion, outFeatures=classCount)
+    let classifier = Linear(inFeatures=512 * depth.expansion, outFeatures=classCount)
 
     override _.forward(input) =
-        let inputLayer = maxPool(inputStem.differentiableReduce(input) =  $1($0))
-        let blocksReduced = residualBlocks.differentiableReduce(inputLayer) =  $1($0)
-        blocksReduced |> avgPool, flatten, classifier)
+        let inputLayer = (input, inputStem) ||> Array.fold (fun last layer -> layer.forward last)  |> maxPool.forward
+        let blocksReduced = (inputLayer, residualBlocks) ||> Array.fold (fun last layer -> layer.forward last)
+        blocksReduced |> avgPool.forward |> flatten.forward |> classifier.forward

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 open Datasets
-open ImageClassificationModels
+open Models.ImageClassification
 open DiffSharp
 open TrainingLoop
 
@@ -26,8 +26,8 @@ open TrainingLoop
 #endif
 
 let dataset = Imagenette(batchSize= 64, inputSize= Resized320, outFeatures=224, device=device)
-let model = MobileNetV1(classCount: 10)
-let optimizer = SGD(model, learningRate=0.02, momentum: 0.9)
+let model = MobileNetV1(classCount=10)
+let optimizer = SGD(model, learningRate=0.02, momentum=0.9)
 
 let trainingLoop = TrainingLoop(
   training: dataset.training,

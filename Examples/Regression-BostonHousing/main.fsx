@@ -26,8 +26,8 @@ let dataset = BostonHousing()
 // Create Model
 type RegressionModel() = 
     inherit Model()
-    let layer1 = Linear(inFeatures=13, outFeatures=64, activation= dsharp.relu)
-    let layer2 = Linear(inFeatures=64, outFeatures=32, activation= dsharp.relu)
+    let layer1 = Linear(inFeatures=13, outFeatures=64, activation=dsharp.relu)
+    let layer2 = Linear(inFeatures=64, outFeatures=32, activation=dsharp.relu)
     let layer3 = Linear(inFeatures=32, outFeatures=1)
     
     override _.forward(input) =
@@ -45,7 +45,7 @@ let numberOfBatch = int(ceil(Double(dataset.numTrainRecords) / double(batchSize)
 let shuffle = true
 
 let meanAbsoluteError(predictions=Tensor, truths: Tensor) =
-    abs(Tensor<Float>(predictions - truths)).mean().toScalar()
+    abs(Tensor(predictions - truths)).mean().toScalar()
 
 
 print("Starting training..")
@@ -66,7 +66,7 @@ for epoch in 1..epochCount do
 
         let batchStart = r * batchSize
         let batchEnd = min(dataset.numTrainRecords, batchStart + batchSize)
-        let (loss, grad) = valueWithGradient<| fun model -> =  (model: RegressionModel) = Tensor<Float> in
+        let (loss, grad) = valueWithGradient<| fun model -> =  (model: RegressionModel) = Tensor in
             let logits = model(dataset.xTrain[batchStart..<batchEnd])
             meanSquaredError(predicted=logits, expected=dataset.yTrain[batchStart..<batchEnd])
 

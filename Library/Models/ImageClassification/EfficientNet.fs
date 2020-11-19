@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module Models.EfficientNet
+module Models.ImageClassification.EfficientNet
 
 open DiffSharp
 open DiffSharp.Model
@@ -27,8 +27,8 @@ open DiffSharp.Model
 /// original: https://github.com/tensorflow/tpu/blob/d6f2ef3edfeb4b1c2039b81014dc5271a7753832/models/official/efficientnet/efficientnet_model.py#L138
 let resizeDepth(blockCount: int, depth: double) =
     /// Multiply + round up the number of blocks based on depth multiplier
-    let newFilterCount = depth * double(blockCount) |> ceil
-    int newFilterCount
+    let newChannels = depth * double(blockCount) |> ceil
+    int newChannels
 
 let makeDivisible(filter: int, width: double) =
     let divisor = 8.0
@@ -37,11 +37,11 @@ let makeDivisible(filter: int, width: double) =
     let filterAdd = double(filterMult) + (divisor / 2.0)
     let div = filterAdd / divisor |> floor
     let div = div * double(divisor)
-    let mutable newFilterCount = max 1 (int div)
-    if newFilterCount < int(0.9 * double filter) then
-        newFilterCount <- newFilterCount + int(divisor)
+    let mutable newChannels = max 1 (int div)
+    if newChannels < int(0.9 * double filter) then
+        newChannels <- newChannels + int(divisor)
 
-    int newFilterCount
+    int newChannels
 
 let roundFilterPair((f1, f2), width: double) =
     makeDivisible(f1, width),makeDivisible(f2, width)
@@ -59,10 +59,10 @@ type InitialMBConvBlock(filters: (int * int), width: double) =
     let batchNormConv2 = BatchNorm2d(numFeatures=filterMult2)
 
     override _.forward(input) =
-        let depthwise = input |> dConv.forward |> batchNormDConv.forward |> dsharp.swish
+        let depthwise = input |> dConv.forward |> batchNormDConv.forward |> dsharp.silu
         let seAvgPoolReshaped = depthwise |> seAveragePool.forward |> fun t -> t.view([ input.shape.[0]; 1; 1; hiddenDimension ])
         let squeezeExcite =   
-            seAvgPoolReshaped |> seReduceConv.forward  |> dsharp.swish |> seExpandConv.forward
+            seAvgPoolReshaped |> seReduceConv.forward  |> dsharp.silu |> seExpandConv.forward
             |> fun t -> depthwise * dsharp.sigmoid(t)
         squeezeExcite |> conv2.forward |> batchNormConv2.forward
 
@@ -90,18 +90,18 @@ type MBConvBlock(filters, width: double, ?depthMultiplier, ?strides, ?kernel) =
     let batchNormConv2 = BatchNorm2d(numFeatures=filterMult2)
     
     override _.forward(input) =
-        let piecewise = dsharp.swish(batchNormConv1.forward(conv1.forward(input)))
+        let piecewise = dsharp.silu(batchNormConv1.forward(conv1.forward(input)))
         let depthwise =
             if (stride1, stride2) = (1, 1) then
-                dsharp.swish(batchNormDConv.forward(dConv.forward(piecewise)))
+                dsharp.silu(batchNormDConv.forward(dConv.forward(piecewise)))
             else
-                dsharp.swish(batchNormDConv.forward(dConv.forward(zeroPad.forward(piecewise))))
+                dsharp.silu(batchNormDConv.forward(dConv.forward(zeroPad.forward(piecewise))))
 
         let seAvgPoolReshaped = 
             seAveragePool.forward(depthwise).view([
                 input.shape.[0]; 1; 1; hiddenDimension
             ])
-        let squeezeExcite = depthwise * dsharp.sigmoid(seExpandConv.forward(dsharp.swish(seReduceConv.forward(seAvgPoolReshaped))))
+        let squeezeExcite = depthwise * dsharp.sigmoid(seExpandConv.forward(dsharp.silu(seReduceConv.forward(seAvgPoolReshaped))))
         let piecewiseLinear = batchNormConv2.forward(conv2.forward(squeezeExcite))
 
         if addResLayer then
@@ -127,8 +127,7 @@ type MBConvBlockStack(filters: (int * int),
               MBConvBlock((filters2, filters2),width, kernel=kernel) |]
 
     override _.forward(input) =
-        failwith "tbd"
-        //blocks.differentiableReduce(input) =  $1($0)
+        (input, blocks) ||> Array.fold (fun last layer -> layer.forward last) 
 
 type Kind =
     | EfficientnetB0
@@ -141,7 +140,6 @@ type Kind =
     | EfficientnetB7
     | EfficientnetB8
     | EfficientnetL2
-
 
 /// default settings are efficientnetB0 (baseline) network
 /// resolution is here to show what the network can take as input, it doesn't set anything!
@@ -179,14 +177,14 @@ type EfficientNet(?classCount: int,
     let outputClassifier = Linear(inFeatures= makeDivisible(1280, width), outFeatures=classCount)
 
     override _.forward(input) =
-        let convolved = input |> zeroPad.forward |> inputConv .forward |> inputConvBatchNorm .forward |> dsharp.swish
+        let convolved = input |> zeroPad.forward |> inputConv .forward |> inputConvBatchNorm .forward |> dsharp.silu
         let initialBlock = convolved |> initialMBConv.forward
         let backbone = 
             initialBlock 
             |> residualBlockStack1.forward |> residualBlockStack2.forward 
             |> residualBlockStack3.forward |> residualBlockStack4.forward
             |> residualBlockStack5.forward |> residualBlockStack6.forward
-        let output = backbone |> outputConv.forward |> outputConvBatchNorm.forward |> dsharp.swish
+        let output = backbone |> outputConv.forward |> outputConvBatchNorm.forward |> dsharp.silu
         output |> avgPool.forward |> dropoutProb.forward |> outputClassifier.forward
 
     new (kind: Kind, ?classCount: int) = 
@@ -213,6 +211,3 @@ type EfficientNet(?classCount: int,
         | EfficientnetL2 ->
             // https://arxiv.org/abs/1911.04252
             EfficientNet(classCount=classCount, width=4.3, depth=5.3, resolution=800, dropout=0.5)
-
-
-

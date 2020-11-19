@@ -42,7 +42,7 @@ type CatchAgent(learningRate, initialReward) =
     //interface Agent
     //type Action = CatchAction
 
-    let model = Sequential(Linear(inFeatures=3, outFeatures=50, activation= dsharp.sigmoid), Linear(inFeatures=50, outFeatures=3, activation= dsharp.sigmoid))
+    let model = Sequential(Linear(inFeatures=3, outFeatures=50, activation=dsharp.sigmoid), Linear(inFeatures=50, outFeatures=3, activation=dsharp.sigmoid))
 
     let learningRate: double = learningRate
     let optimizer = Adam(model, dsharp.tensor(learningRate))
@@ -50,16 +50,16 @@ type CatchAgent(learningRate, initialReward) =
 
     /// Performs one "step" (or parameter update) based on the specified
     /// observation and reward.
-    let step(observation: Observation, reward: Reward) = 
+    member _.step(observation: Observation, reward: Reward) = 
         previousReward <- reward
 
         let x = dsharp.tensor(observation).rankLifted()
         let (ŷ, backprop) = model.appliedForBackpropagation(x)
         let maxIndex = ŷ.argmax().toScalar()
 
-        let δloss = -log(dsharp.tensor(ŷ.max(), dtype=Dtype.Float32)).expand(like: ŷ) * previousReward
+        let δloss = -log(dsharp.tensor(ŷ.max(), dtype=Dtype.Float32)).expand( ŷ.shape) * previousReward
         let (δmodel, _) = backprop(δloss)
-        optimizer.update(&model, along=δmodel)
+        optimizer.updateRule(model, along=δmodel)
 
         enum<CatchAction>(int(maxIndex))
 
@@ -70,7 +70,7 @@ type CatchAgent(learningRate, initialReward) =
     /// Otherwise, returns `none`.
     ///
     /// - Note: This function is for reference and is not used by `CatchAgent`.
-    let perfectAction(observation: Observation) = 
+    member _.perfectAction(observation: Observation) = 
         let paddleX = observation.[0].toScalar() :?> float32
         let ballX = observation.[1].toScalar() :?> float32
         if paddleX = ballX then CatchAction.None
@@ -94,10 +94,10 @@ type CatchEnvironment(rowCount: int, columnCount: int) =
     ///   less than or equal to 1.
     /// - Otherwise, returns -1.
     /// If the ball is not in the bottom row, returns 0.
-    let reward =
+    let reward : Reward =
         if ballPosition.y = rowCount then
-            if abs(ballPosition.x - paddlePosition.x) <= 1 then 1 else -1
-        else 0
+            if abs(ballPosition.x - paddlePosition.x) <= 1 then 1.0f else -1.0f
+        else 0.0f
 
     /// Returns an obeservation of the game grid.
     let observation =
@@ -123,7 +123,7 @@ type CatchEnvironment(rowCount: int, columnCount: int) =
 
     do reset() |> ignore
 
-    member _.step(newObservation: Tensor, reward: double) = 
+    member _.step(newObservation: Tensor, reward: Reward) = 
         // Update state.
         match action with
         | CatchAction.Left when paddlePosition.x > 0 ->
@@ -142,36 +142,37 @@ type CatchEnvironment(rowCount: int, columnCount: int) =
         else
             (newObservation, currentReward)
 
+    member env.run() = 
+        let mutable winCount = 0
+        let mutable totalWinCount = 0
+        let agent = CatchAgent(initialReward=reward, learningRate=0.05)
+
+        // Setup environment and agent.
+        agent.Model.mode <- Mode.Train
+        let maxIterations = 5000
+        let mutable gameCount = 0
+        while gameCount < maxIterations do
+            let (observation, reward) = env.step(action)
+            let action = agent.step(observation=observation, reward=reward)
+
+            if reward <> 0.0f then
+                gameCount <- gameCount + 1
+                if reward > 0.0f then
+                    winCount <- winCount + 1
+                    totalWinCount <- totalWinCount + 1
+
+                if gameCount % 20 = 0 then
+                    print("Win rate (last 20 games): \(double(winCount) / 20)")
+                    print($"""
+                          Win rate (total): \
+                          \(double(totalWinCount) / double(gameCount)) \
+                          [{totalWinCount}/{gameCount}]
+                          """)
+                    winCount = 0
+
+        print($"""
+              Win rate (final): \(double(totalWinCount) / double(gameCount)) \
+              [{totalWinCount}/{gameCount}]
+              """)
 
 let env = CatchEnvironment(rowCount=5, columnCount=5)
-let mutable winCount = 0
-let mutable totalWinCount = 0
-let agent = CatchAgent(initialReward=reward, learningRate=0.05)
-
-// Setup environment and agent.
-agent.Model.mode <- Mode.Train
-let maxIterations = 5000
-let mutable gameCount = 0
-while gameCount < maxIterations do
-    let (observation, reward) = env.step(action)
-    let action = agent.step(observation=observation, reward=reward)
-
-    if not reward.isZero then
-        gameCount <- gameCount + 1
-        if reward > 0 then
-            winCount <- winCount + 1
-            totalWinCount <- totalWinCount + 1
-
-        if gameCount % 20 = 0 then
-            print("Win rate (last 20 games): \(double(winCount) / 20)")
-            print($"""
-                  Win rate (total): \
-                  \(double(totalWinCount) / double(gameCount)) \
-                  [{totalWinCount}/{gameCount}]
-                  """)
-            winCount = 0
-
-print($"""
-      Win rate (final): \(double(totalWinCount) / double(gameCount)) \
-      [{totalWinCount}/{gameCount}]
-      """)

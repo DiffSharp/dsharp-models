@@ -19,7 +19,7 @@ open Benchmark
 let registerCustomColumns() = 
   BenchmarkColumn.register(
     BenchmarkColumn(
-      name= "avg_exp_per_second",
+      name="avg_exp_per_second",
       value: { result in
         if let batchSize = result.settings.batchSize =
           let count = result.measurements.count
@@ -35,7 +35,7 @@ let registerCustomColumns() =
       unit: .inverseTime))
   BenchmarkColumn.register(
     BenchmarkColumn(
-      name= "exp_per_second",
+      name="exp_per_second",
       value: { result in
         if let batchSize = result.settings.batchSize =
           let count = result.measurements.count
@@ -63,7 +63,7 @@ let registerCustomColumns() =
     BenchmarkColumn.registry["max"]!.renamed("time_max"))
   BenchmarkColumn.register(
     BenchmarkColumn(
-      name= "wall_time",
+      name="wall_time",
       value: (fun x -> x.measurements.reduce(0, +) + $0.warmupMeasurements.reduce(0, +) },
       unit: .time))
 }

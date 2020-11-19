@@ -27,7 +27,7 @@ let epochCount = 20
 let zDim = 100
 let outputFolder = "./output/"
 
-let dataset = MNIST(batchSize= batchSize,  flattening=false, normalizing=true)
+let dataset = MNIST(batchSize=batchSize,  flattening=false, normalizing=true)
 
 type Generator() = 
     inherit Model()
@@ -94,7 +94,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
 
         // Train generator.
         let noiseG = dsharp.randn([batchSize; zDim])
-        let δgenerator = dsharp.grad(generator) =  generator -> Tensor<Float> in
+        let δgenerator = dsharp.grad(generator) =  generator -> Tensor in
             let fakeImages = generator(noiseG)
             let fakeLabels = discriminator(fakeImages)
             let loss = generatorLoss(fakeLabels: fakeLabels)
@@ -106,7 +106,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         let noiseD = dsharp.randn([batchSize; zDim])
         let fakeImages = generator(noiseD)
 
-        let δdiscriminator = dsharp.grad(discriminator) =  discriminator -> Tensor<Float> in
+        let δdiscriminator = dsharp.grad(discriminator) =  discriminator -> Tensor in
             let realLabels = discriminator(realImages)
             let fakeLabels = discriminator(fakeImages)
             let loss = discriminatorLoss(realLabels: realLabels, fakeLabels: fakeLabels)
@@ -130,4 +130,4 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
 // Generate another image.
 let noise1 = dsharp.randn([1; 100])
 let generatedImage = generator(noise1)
-dsharp.saveImage(generatedImage, shape=[28; 28], format="grayscale", directory=outputFolder, name= "final")
+dsharp.saveImage(generatedImage, shape=[28; 28], format="grayscale", directory=outputFolder, name="final")

@@ -35,15 +35,15 @@ type ReplayBuffer {
   let combined: bool
 
   /// The states that the agent observed.
-  let states: [Tensor<Float>] = []
+  let states: [Tensor] = []
   /// The actions that the agent took.
-  let actions: [Tensor (*<int32>*)] = []
+  let actions: Tensor[] = []
   /// The rewards that the agent received from the environment after taking
   /// an action.
-  let rewards: [Tensor<Float>] = []
+  let rewards: [Tensor] = []
   /// The next states that the agent received from the environment after taking
   /// an action.
-  let nextStates: [Tensor<Float>] = []
+  let nextStates: [Tensor] = []
   /// The episode-terminal flag that the agent received after taking an action.
   let isDones: [Tensor<Bool>] = []
   /// The current size of the replay buffer.

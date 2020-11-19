@@ -25,7 +25,7 @@ type Keypoint {
   let score: double
 
   init(
-    heatmapY: int, heatmapX: int, index: int, score: double, offsets: CPUTensor<Float>,
+    heatmapY: int, heatmapX: int, index: int, score: double, offsets: CPUTensor,
     outputStride: int
   ) = 
     self.y = double(heatmapY) * double(outputStride) + offsets[heatmapY, heatmapX, index]

@@ -26,8 +26,8 @@ open DiffSharp
 
 type CheckpointReader(checkpointLocation: Uri, modelName: string) =
   
-    member _.readTensor(name: string) : Tensor = failwith "tbd"
-    member _.localCheckpointLocation : FilePath = failwith "tbd"
+    member _.readTensor(name: string) : Tensor = failwith "TBD"
+    member _.localCheckpointLocation : FilePath = failwith "TBD"
 
 (*
 
