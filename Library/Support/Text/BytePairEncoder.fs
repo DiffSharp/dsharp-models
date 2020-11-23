@@ -170,7 +170,7 @@ type BytePairEncoder(vocabulary: Vocabulary, mergePairs: ((string * string) * in
         //with _ -> 
         //    "\u{FFFD}"
 
-    new (vocabularyFile: FilePath, mergesFile: FilePath, ?encoding: Encoding, ?useCache: bool) =
+    static member FromVocabularyFile(vocabularyFile: FilePath, mergesFile: FilePath, ?encoding: Encoding, ?useCache: bool) =
         let vocabulary: Vocabulary = Vocabulary.FromJsonFile(vocabularyFile)
 
         let lines =
@@ -194,15 +194,15 @@ type BytePairEncoder(vocabulary: Vocabulary, mergePairs: ((string * string) * in
         let variant = defaultArg variant Roberta
         // if let cached = cache[token] then return cached
         // let token = " " + token
-
+         
         let parts = 
-            match variant with
+            match variant with 
             | Gpt2 ->
                 // Split into parts before encoding.
                 let unencodedTokens = splittingWithDelimiters(token, gpt2GlossaryRegex, Gpt2)
                 // Encode each token.
                 let tokens = unencodedTokens |> Array.map encodedToken
-                // Separate each character.
+                // Separate each character. 
                 for token in tokens do
                     for i in 0..token.Length-1 do
                         failwith "TBD"

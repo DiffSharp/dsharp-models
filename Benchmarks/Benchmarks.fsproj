@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\DiffSharp\src\DiffSharp.Backends.Torch\DiffSharp.Backends.Torch.fsproj" />
     <ProjectReference Include="..\Library\Library.fsproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(DIFFSHARP_TESTGPU)' == 'true' AND $([MSBuild]::IsOsPlatform(Linux))">

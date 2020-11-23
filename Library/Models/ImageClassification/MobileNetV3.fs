@@ -112,7 +112,7 @@ type InvertedResidualBlock(filters: (int * int),
     let useSELayer = defaultArg useSELayer false
     let activation = defaultArg activation Relu
     let filters0, filters1 = filters
-    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d(0,1)
 
     let addResLayer = filters0 = filters1 && stride = 1
 
@@ -164,7 +164,7 @@ type MobileNetV3Large(?classCount: int, ?widthMultiplier: double, ?dropout: doub
     let classCount = defaultArg classCount 1000
     let widthMultiplier = defaultArg widthMultiplier 1.0
     let dropout = defaultArg dropout 0.2
-    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d(0,1)
 
     let avgPool = GlobalAvgPool2d()
     let flatten = Flatten()
@@ -212,7 +212,7 @@ type MobileNetV3Small(?classCount: int, ?widthMultiplier: double, ?dropout: doub
     let classCount = defaultArg classCount 10000
     let widthMultiplier = defaultArg widthMultiplier 1.0
     let dropout = defaultArg dropout 0.2
-    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d(0,1)
 
     let avgPool = GlobalAvgPool2d()
     let flatten = Flatten()

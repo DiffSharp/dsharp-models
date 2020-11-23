@@ -16,6 +16,7 @@ module Models.ImageClassification.EfficientNet
 
 open DiffSharp
 open DiffSharp.Model
+open DiffSharp.ShapeChecking
 
 // Original Paper:
 // "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks"
@@ -43,14 +44,15 @@ let makeDivisible(filter: int, width: double) =
 
     int newChannels
 
-let roundFilterPair((f1, f2), width: double) =
+let roundFilterPair(f1, f2, width: double) =
     makeDivisible(f1, width),makeDivisible(f2, width)
 
-type InitialMBConvBlock(filters: (int * int), width: double) = 
+[<ShapeCheck(32, 16)>]
+type InitialMBConvBlock(inChannels: int, outChannels: int, width: double) = 
     inherit Model()
 
-    let hiddenDimension, filterMult2 = roundFilterPair(filters, width)
-    let dConv = DepthwiseConv2d(hiddenDimension, 1, kernelSize=2, stride=1,padding=1 (* "same " *))
+    let hiddenDimension, filterMult2 = roundFilterPair(inChannels, outChannels, width)
+    let dConv = DepthwiseConv2d(hiddenDimension, 1, kernelSize=3, stride=1,padding=1 (* "same " *))
     let seReduceConv = Conv2d(hiddenDimension, makeDivisible(8, width), kernelSize=1, stride=1, padding=0 (* "same " *))
     let seExpandConv = Conv2d(makeDivisible(8, width), hiddenDimension, kernelSize=1, stride=1, padding=0 (* "same " *))
     let conv2 = Conv2d(hiddenDimension, filterMult2, kernelSize=1, stride=1, padding=0 (* "same " *))
@@ -58,49 +60,52 @@ type InitialMBConvBlock(filters: (int * int), width: double) =
     let seAveragePool = GlobalAvgPool2d()
     let batchNormConv2 = BatchNorm2d(numFeatures=filterMult2)
 
+    [<ShapeCheck("N,inChannels,H,W", ReturnShape="N,outChannels,H,W")>]
     override _.forward(input) =
-        let depthwise = input |> dConv.forward |> batchNormDConv.forward |> dsharp.silu
-        let seAvgPoolReshaped = depthwise |> seAveragePool.forward |> fun t -> t.view([ input.shape.[0]; 1; 1; hiddenDimension ])
+        let depthwise = input |> dConv.forward |> batchNormDConv.forward |> dsharp.silu 
+        let seAvgPoolReshaped = depthwise |> seAveragePool.forward |> fun t -> t.view(Shape [ input.shapex.[0]; Int hiddenDimension; 1I; 1I ])
         let squeezeExcite =   
             seAvgPoolReshaped |> seReduceConv.forward  |> dsharp.silu |> seExpandConv.forward
             |> fun t -> depthwise * dsharp.sigmoid(t)
         squeezeExcite |> conv2.forward |> batchNormConv2.forward
 
-type MBConvBlock(filters, width: double, ?depthMultiplier, ?strides, ?kernel) =
+[<ShapeCheck(32, 16, 1.0, 6, 2, 3)>]
+type MBConvBlock(inChannels, outChannels, width: double, ?depthMultiplier, ?stride, ?kernel) =
     inherit Model()
-    let kernel = defaultArg kernel (3,3)
-    let (stride1, stride2) = defaultArg strides (1,1)
+    let kernel = defaultArg kernel 3
+    let stride = defaultArg stride 1
     let depthMultiplier = defaultArg depthMultiplier 6
-    let (kernel1, kernel2) = kernel
-    let (filters1, filters2) = filters
-    let addResLayer = (filters1 = filters2) && (stride1, stride2) = (1, 1)
-
-    let filterMult1, filterMult2 = roundFilterPair(filters, width)
+    let addResLayer = (inChannels = outChannels) && stride = 1
+    
+    let filterMult1, filterMult2 = roundFilterPair(inChannels, outChannels, width)
     let hiddenDimension = filterMult1 * depthMultiplier
     let reducedDimension = max 1 (int (filterMult1 / 4))
     let conv1 = Conv2d(filterMult1, hiddenDimension, kernelSize=1, stride=1,padding=0 (* "same " *))
-    let dConv = DepthwiseConv2d(hiddenDimension, 1, kernelSizes=[kernel1; kernel2], strides=[stride1;stride2] (* , paddings=(if strides = (1, 1) then ".same" else ".valid" *))
+    let dConv = DepthwiseConv2d(hiddenDimension, 1, kernelSize=kernel, stride=stride, padding=(stride-1 + kernel-1)/2 (* , paddings=(if strides = (1, 1) then ".same" else ".valid" *))
     let seReduceConv = Conv2d(hiddenDimension, reducedDimension, kernelSize=1, stride=1,padding=0 (* "same " *))
     let seExpandConv = Conv2d(reducedDimension, hiddenDimension, kernelSize=1, stride=1, padding=0 (* "same " *))
     let conv2 = Conv2d(hiddenDimension, filterMult2, 1, stride=1, padding=0 (* "same " *))
     let batchNormConv1 = BatchNorm2d(numFeatures=hiddenDimension)
-    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d(1,1)
     let batchNormDConv = BatchNorm2d(numFeatures=hiddenDimension)
     let seAveragePool = GlobalAvgPool2d()
     let batchNormConv2 = BatchNorm2d(numFeatures=filterMult2)
     
+    [<ShapeCheck("N,inChannels,H,W", ReturnShape="N,outChannels,1+(1+H/stride),1+(1+W/stride)")>]
     override _.forward(input) =
-        let piecewise = dsharp.silu(batchNormConv1.forward(conv1.forward(input)))
+     
+        let piecewise = input |> conv1.forward |> batchNormConv1.forward |> dsharp.silu
+        
         let depthwise =
-            if (stride1, stride2) = (1, 1) then
-                dsharp.silu(batchNormDConv.forward(dConv.forward(piecewise)))
+            if stride = 1 then
+                piecewise |> dConv.forward |> batchNormDConv.forward |> dsharp.silu
             else
-                dsharp.silu(batchNormDConv.forward(dConv.forward(zeroPad.forward(piecewise))))
-
+                piecewise |> zeroPad.forward |> dConv.forward |> batchNormDConv.forward |> dsharp.silu
+                
         let seAvgPoolReshaped = 
-            seAveragePool.forward(depthwise).view([
-                input.shape.[0]; 1; 1; hiddenDimension
-            ])
+            seAveragePool.forward(depthwise).view(Shape [
+                input.shapex.[0]; Int hiddenDimension; 1I; 1I
+            ]) 
         let squeezeExcite = depthwise * dsharp.sigmoid(seExpandConv.forward(dsharp.silu(seReduceConv.forward(seAvgPoolReshaped))))
         let piecewiseLinear = batchNormConv2.forward(conv2.forward(squeezeExcite))
 
@@ -109,25 +114,26 @@ type MBConvBlock(filters, width: double, ?depthMultiplier, ?strides, ?kernel) =
         else
             piecewiseLinear
 
-type MBConvBlockStack(filters: (int * int),
+[<ShapeCheck(32, 16, 1.0, 2)>]
+type MBConvBlockStack(inChannels: int, outChannels: int,
         width: double,
         blockCount: int,
         depth: double,
-        ?initialStrides: (int * int),
-        ?kernel: (int * int)) =
+        ?initialStride: int,
+        ?kernel: int) =
     inherit Model()
-    let initialStrides = defaultArg initialStrides (2, 2)
-    let kernel = defaultArg kernel (3, 3)
-    let (kernel1, kernel2) = kernel
-    let (filters1, filters2) = filters
+    let initialStride = defaultArg initialStride 2
+    let kernel = defaultArg kernel 3
     let blockMult = resizeDepth(blockCount, depth)
     let blocks = 
-        [| MBConvBlock((filters1, filters2), width, strides=initialStrides, kernel=kernel)
+        [| MBConvBlock(inChannels, outChannels, width, stride=initialStride, kernel=kernel)
            for _ in 1..blockMult-1 do
-              MBConvBlock((filters2, filters2),width, kernel=kernel) |]
+              MBConvBlock(outChannels, outChannels,width, kernel=kernel) |]
 
+    [<ShapeCheck("N,inChannels,H,W", ReturnShape="N,outChannels,1+(1+H/2),1+(1+W/2)")>]
     override _.forward(input) =
-        (input, blocks) ||> Array.fold (fun last layer -> layer.forward last) 
+        let res = (input, blocks) ||> Array.fold (fun last layer -> layer.forward last) 
+        res
 
 type Kind =
     | EfficientnetB0
@@ -143,13 +149,14 @@ type Kind =
 
 /// default settings are efficientnetB0 (baseline) network
 /// resolution is here to show what the network can take as input, it doesn't set anything!
+[<ShapeCheck(15)>]
 type EfficientNet(?classCount: int,
         ?width: double,
         ?depth: double,
         ?resolution: int,
         ?dropout: double) =
     inherit Model()
-    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d(0,1)
 
     let classCount = defaultArg classCount 1000
     let width = defaultArg width 1.0
@@ -160,14 +167,14 @@ type EfficientNet(?classCount: int,
     let inputConv = Conv2d(3, makeDivisible(32, width), kernelSize=3, stride=2 (* , padding="valid" *))
     let inputConvBatchNorm = BatchNorm2d(numFeatures=makeDivisible(32, width))
 
-    let initialMBConv = InitialMBConvBlock(filters=(32, 16), width=width)
+    let initialMBConv = InitialMBConvBlock(32, 16, width=width)
 
-    let residualBlockStack1 = MBConvBlockStack(filters=(16, 24), width=width, blockCount=2, depth=depth)
-    let residualBlockStack2 = MBConvBlockStack(filters=(24, 40), width=width, kernel=(5, 5), blockCount=2, depth=depth)
-    let residualBlockStack3 = MBConvBlockStack(filters=(40, 80), width=width, blockCount=3, depth=depth)
-    let residualBlockStack4 = MBConvBlockStack(filters=(80, 112), width=width, initialStrides=(1, 1), kernel=(5, 5), blockCount=3, depth=depth)
-    let residualBlockStack5 = MBConvBlockStack(filters=(112, 192), width=width, kernel=(5, 5), blockCount=4, depth=depth)
-    let residualBlockStack6 = MBConvBlockStack(filters=(192, 320), width=width, initialStrides=(1, 1), blockCount=1, depth=depth)
+    let residualBlockStack1 = MBConvBlockStack(16, 24, width=width, blockCount=2, depth=depth)
+    let residualBlockStack2 = MBConvBlockStack(24, 40, width=width, kernel=5, blockCount=2, depth=depth)
+    let residualBlockStack3 = MBConvBlockStack(40, 80, width=width, blockCount=3, depth=depth)
+    let residualBlockStack4 = MBConvBlockStack(80, 112, width=width, initialStride=1, kernel=5, blockCount=3, depth=depth)
+    let residualBlockStack5 = MBConvBlockStack(112, 192, width=width, kernel=5, blockCount=4, depth=depth)
+    let residualBlockStack6 = MBConvBlockStack(192, 320, width=width, initialStride=1, blockCount=1, depth=depth)
 
     let outputConv = Conv2d(makeDivisible(320, width), makeDivisible(1280, width), kernelSize=1,stride=1, padding=0 (* "same " *))
     let outputConvBatchNorm = BatchNorm2d(numFeatures=makeDivisible(1280, width))
@@ -176,6 +183,7 @@ type EfficientNet(?classCount: int,
     let dropoutProb = Dropout(dropout)
     let outputClassifier = Linear(inFeatures= makeDivisible(1280, width), outFeatures=classCount)
 
+    [<ShapeCheck("N,3,H,W", ReturnShape="N,classCount")>]
     override _.forward(input) =
         let convolved = input |> zeroPad.forward |> inputConv .forward |> inputConvBatchNorm .forward |> dsharp.silu
         let initialBlock = convolved |> initialMBConv.forward
@@ -187,12 +195,12 @@ type EfficientNet(?classCount: int,
         let output = backbone |> outputConv.forward |> outputConvBatchNorm.forward |> dsharp.silu
         output |> avgPool.forward |> dropoutProb.forward |> outputClassifier.forward
 
-    new (kind: Kind, ?classCount: int) = 
+    static member Create (kind: Kind, ?classCount: int) = 
         let classCount = defaultArg classCount 1000
         match kind with
         | EfficientnetB0 ->
             EfficientNet(classCount=classCount, width=1.0, depth=1.0, resolution=224, dropout=0.2)
-        | EfficientnetB1 ->
+        | EfficientnetB1 -> 
             EfficientNet(classCount=classCount, width=1.0, depth=1.1, resolution=240, dropout=0.2)
         | EfficientnetB2 ->
             EfficientNet(classCount=classCount, width=1.1, depth=1.2, resolution=260, dropout=0.3)

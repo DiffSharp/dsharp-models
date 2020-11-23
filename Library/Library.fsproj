@@ -21,7 +21,7 @@
 	<Compile Include="Extensions\Extensions.fs" />
 	<Compile Include="Support\Text\TextBatch.fs" />
 	<Compile Include="Support\Text\Tokenization.fs" />
-	<Compile Include="Support\Text\BytePairEncoder.fs" />
+    <Compile Include="Support\Text\BytePairEncoder.fs" />
 	<Compile Include="Checkpoints\CheckpointIndexReader.fs" />
     <Compile Include="Checkpoints\CheckpointIndexWriter.fs" />
     <Compile Include="Checkpoints\CheckpointReader.fs" />
@@ -89,6 +89,7 @@
     <Compile Include="Models\Text\Evaluation.fs" />
     <Compile Include="Models\Text\ScheduledParameters.fs" />
     <Compile Include="Models\Text\WeightDecayedAdam.fs" />
-  </ItemGroup>
+
+	</ItemGroup>
 
 </Project>

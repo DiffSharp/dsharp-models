@@ -110,6 +110,7 @@ module RobertaReader =
 ///   - typeVocabularySize: Vocabulary size for the token type IDs passed into the BERT model.
 ///   - initializerStandardDeviation: Standard deviation of the truncated Normal initializer
 ///     used for initializing all weight matrices.
+
 type BERT(variant: Variant,
           vocabulary: Vocabulary,
           tokenizer: Tokenizer,
@@ -315,7 +316,7 @@ type BERT(variant: Variant,
             tokenTypeIds=dsharp.tensor(tokenTypeIds).unsqueeze(0),
             mask=dsharp.tensor(mask).unsqueeze(0))
 
-    override _.forward(input: TextBatch) : Tensor =
+    override _.forward(input: TextBatch) : Tensor = 
         let input : TextBatch = failwith "forward taking non-Tensor inputs"
         let sequenceLength = input.tokenIds.shape.[1]
         //let variant = withoutDerivative(variant)
@@ -467,7 +468,6 @@ type BERT(variant: Variant,
                     reader.readTensor(name=  $"{prefix}/output/LayerNorm/beta")
                 encoderLayers.[layerIndex].outputLayerNorm.scale.value <-
                     reader.readTensor(name=  $"{prefix}/output/LayerNorm/gamma")
-
 
 //===-----------------------------------------------------------------------------------------===//
 // Tokenization

@@ -108,7 +108,7 @@ type WideResNet(?depthFactor: int, ?widenFactor: int) =
         let finalNorm = dsharp.relu(norm.forward(inputLayer))
         finalNorm |> avgPool.forward |> flatten.forward |> classifier.forward
 
-    new(kind: Kind) = 
+    static member Create (kind: Kind) = 
         match kind with
         | WideResNet16 | WideResNet16k8 ->
             WideResNet(depthFactor=2, widenFactor=8)

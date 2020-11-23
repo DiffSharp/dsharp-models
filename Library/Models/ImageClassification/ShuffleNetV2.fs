@@ -46,13 +46,13 @@ type ChannelShuffle(?groups: int) =
 type InvertedResidual(filters: (int * int), stride: int) =
     inherit Model()
     let includeBranch = (stride<>1)
-    let zeropad = ZeroPadding2d(((1, 1), (1, 1)))
+    let zeropad = ZeroPadding2d(1,1)
 
     let filters0, filters1 = filters
     let branchChannels = filters1 / 2
     let branch = 
         Sequential(
-            ZeroPadding2d(((1, 1), (1, 1))),
+            ZeroPadding2d(1,1),
             DepthwiseConv2d(filters0, 1, kernelSize=3, stride = stride (* ,padding="valid" *)),
             BatchNorm2d(numFeatures=filters0),
             Conv2d(filters0, branchChannels, kernelSize=1, stride=1 (* , padding="valid" *),bias=false),
@@ -82,7 +82,7 @@ type InvertedResidual(filters: (int * int), stride: int) =
 
 type ShuffleNetV2(stagesRepeat, stagesOutputChannels, classCount: int) =
     inherit Model()
-    let zeroPad: ZeroPadding2d = ZeroPadding2d(((1, 1), (1, 1)))
+    let zeroPad: ZeroPadding2d = ZeroPadding2d(1,1)
     
     let (stagesRepeat0, stagesRepeat1, stagesRepeat2) = stagesRepeat
     let (stagesOutputChannels0, stagesOutputChannels1, stagesOutputChannels2, stagesOutputChannels3, stagesOutputChannels4) = stagesOutputChannels
@@ -124,7 +124,7 @@ type ShuffleNetV2(stagesRepeat, stagesOutputChannels, classCount: int) =
         let output = dsharp.relu(conv2.forward(output))
         output |> globalPool.forward |> dense.forward
 
-    new (kind: Kind) = 
+    static member Create (kind: Kind) = 
         match kind with
         | ShuffleNetV2x05 ->
             ShuffleNetV2(

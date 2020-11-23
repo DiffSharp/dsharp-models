@@ -71,19 +71,30 @@ module DiffSharpExtensions =
                 res <- m.forward res
             res
 
-        member t.gelu() : Tensor = failwith "TBD - TorchSharp in progress"
+        member t.gelu() : Tensor = 
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
 
-        member t.silu() = failwith "tbd - TorchSharp in progress"
+        member t.silu() = 
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
 
-        member t.hardswish() = failwith "tbd - TorchSharp in progress"
+        member t.hardswish() = 
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
 
-        member t.relu6() = failwith "tbd - TorchSharp in progress"
+        member t.relu6() = 
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
 
-        member t.hardsigmoid() = failwith "tbd - TorchSharp in progress"
+        member t.hardsigmoid() = 
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
 
         member t.argmax(dim: int) : Tensor = failwith "TBD"
 
-        member t.permute(permutation: seq<int>) : Tensor = failwith "TBD"
+        member t.permute(permutation: seq<int>) : Tensor = 
+            if t.backend = Backend.ShapeChecking then 
+                let idxs = Array.ofSeq permutation
+                let newShape = Array.permute (fun i -> idxs.[i]) t.shapex.Dims
+                t.zerosLike(Shape newShape)
+            else 
+                failwith "TBD"
 
         member t.split(count: int, dim: int) : Tensor[] = failwith "TBD"
             //t.split(([|  |]: int[]), dim=dim)
@@ -107,7 +118,7 @@ module DiffSharpExtensions =
 
         override _.ToString() = sprintf "Flatten()"
 
-        override m.forward(value) = value.flatten()
+        override m.forward(value) = value.flatten(startDim=(if value.dim=1 then 0 else 1))
 
     type dsharp with 
         static member gelu(input: Tensor) = input.gelu()
@@ -144,15 +155,20 @@ module DiffSharpExtensions =
         //static member scalar(t: scalar, ?dtype, ?device, ?backend) = dsharp.full(1, t, ?dtype=dtype, ?device=device, ?backend=backend)
 
         static member randn(shape: seq<int>, ?stddev: scalar, ?mean: scalar, ?dtype, ?device, ?backend) =
-            failwith "TBD"
-            dsharp.randn(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend)
+            let _backend = defaultArg backend Backend.Default
+            if _backend = Backend.ShapeChecking then 
+                dsharp.randn(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend)
+            else 
+                failwith "TBD"
 
         static member rand(shape: seq<int>, low: scalar, high: scalar, ?dtype, ?device, ?backend) =
             dsharp.rand(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend)
 
         static member sigmoidCrossEntropy(logits:Tensor, labels:Tensor, ?reduction:string) =
-            failwith "TBD"
-            logits.oneLike()
+            if logits.backend = Backend.ShapeChecking then 
+                logits.oneLike() 
+            else 
+                failwith "TBD"
 
         static member silu(input:Tensor) : Tensor = input.silu()
 
@@ -178,17 +194,22 @@ module DiffSharpExtensions =
             //m.reverseDiff()
             //dsharp.gradv (fun t -> loss (m.forward t)) input
 
-    type ZeroPadding2d(padding: (int*int) * (int * int)) =
+    type ZeroPadding2d(p0: int, p1: int) =
        inherit Model()
-       override m.forward(value) = failwith "TBD"; value
+       override m.forward(value) = 
+           value.pad([0; 0; p0; p1])
 
     type AvgPool2d(kernelSize: int, ?stride: int, ?padding: int) =
        inherit Model()
-       override m.forward(value) = failwith "TBD"; value
+       
+       override m.forward(value) = value.maxpool2d(kernelSize, ?stride=stride, ?padding=padding) //failwith "TBD"; value
 
     type GlobalAvgPool2d() =
        inherit Model()
-       override m.forward(value) = failwith "TBD"; value
+       override m.forward(value) = 
+           // TODO: this is fake
+           value.zerosLike(Shape [value.shapex.[0]; value.shapex.[1]])
+            //value.maxpool2d(kernelSizes=[value.shapex.[2]; value.shapex.[3]]).view([value.shapex.[0]; value.shapex.[1]]) //failwith "TBD"; value
 
     type UpSampling2d(size: int) =
        inherit Model()
@@ -202,17 +223,21 @@ module DiffSharpExtensions =
        member _.scale = p_scale
        override m.forward(value) = failwith "TBD"; value
 
-    type MaxPool2d(kernelSize: int, stride: int, ?padding: int) =
+    type MaxPool2d(?kernelSize: int, ?stride: int, ?padding: int) =
        inherit Model()
-       override m.forward(value) = failwith "TBD"; value
+       override m.forward(value) = value.maxpool2d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding) //failwith "TBD"; value
 
     type MaxPool3d(?kernelSize: int, ?stride: int, ?padding: int, ?kernelSizes: seq<int>, ?strides: seq<int>, ?paddings: seq<int>) =
        inherit Model()
-       override m.forward(value) = failwith "TBD"; value
+       override m.forward(value) = 
+           // TODO: this is fake for sizes
+           value.maxpool3d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding, ?strides=strides, ?paddings=paddings) //failwith "TBD"; value
 
-    type DepthwiseConv2d(inChannels: int, outChannels: int, ?kernelSize: int, ?kernelSizes: seq<int>, ?stride: int, ?padding: int, ?strides: seq<int>, ?paddings: seq<int>) =
+    type DepthwiseConv2d(inChannels: int, channelMultiplier: int, ?kernelSize: int, ?kernelSizes: seq<int>, ?stride: int, ?padding: int, ?strides: seq<int>, ?paddings: seq<int>) =
        inherit Model()
-       override m.forward(value) = failwith "TBD"; value
+       // TODO this is fake
+       let fake_conv2d = Conv2d(inChannels=inChannels, outChannels=(inChannels*channelMultiplier), ?kernelSize=kernelSize, ?kernelSizes=kernelSizes, ?stride=stride, ?padding=padding, ?strides=strides, ?paddings=paddings) //failwith "TBD"; value
+       override m.forward(value) = fake_conv2d.forward(value)
 
     type RMSProp(model: Model, ?learningRate: Tensor, ?decay: double) =
         inherit ModelOptimizer(model)

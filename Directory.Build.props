@@ -3,7 +3,7 @@
   <PropertyGroup>
 
     <LibTorchNugetVersion>1.7.0.1</LibTorchNugetVersion>
-    <TorchSharpVersion>0.3.52338</TorchSharpVersion>
+    <TorchSharpVersion>0.3.52345</TorchSharpVersion>
     <FSharpCoreVersion>5.0.0</FSharpCoreVersion>
   </PropertyGroup>
 

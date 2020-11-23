@@ -59,7 +59,7 @@ type InvertedBottleneckBlock(filters: (int * int),
     let filters0, filters1 = filters
     let depthMultiplier = defaultArg depthMultiplier 6
     let stride0, stride1 = defaultArg strides (1,1)
-    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d(0,1)
 
     let addResLayer = filters0 = filters1 && (stride0, stride1) = (1, 1)
 
@@ -107,7 +107,7 @@ type MobileNetV2(?classCount: int, ?widthMultiplier: double) =
     inherit Model()
     let classCount = defaultArg classCount 1000
     let widthMultiplier = defaultArg widthMultiplier 1.0
-    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d(0,1)
     let avgPool = GlobalAvgPool2d()
 
     let inputConv = Conv2d(3, makeDivisible(32, widthMultiplier), kernelSize=3, stride=2 (* , padding="valid" *))

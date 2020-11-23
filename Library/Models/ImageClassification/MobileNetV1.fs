@@ -28,7 +28,7 @@ open System.Diagnostics
 type ConvBlock(filterCount: int, ?widthMultiplier: double, ?stride) =
     inherit Model()
     let widthMultiplier = defaultArg widthMultiplier 1.0
-    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d(0,1)
     do Debug.Assert(widthMultiplier > 0.0, "Width multiplier must be positive")
 
     let scaledChannels = int (double filterCount * widthMultiplier)
@@ -41,7 +41,7 @@ type ConvBlock(filterCount: int, ?widthMultiplier: double, ?stride) =
 
 type DepthwiseConvBlock(filterCount: int, pointwiseChannels: int, stride: int, ?widthMultiplier: double, ?depthMultiplier: int) =
     inherit Model()
-    let zeroPad = ZeroPadding2d(((0, 1), (0, 1)))
+    let zeroPad = ZeroPadding2d(0,1)
     let widthMultiplier = defaultArg widthMultiplier 1.0
     let depthMultiplier = defaultArg depthMultiplier 1
     do

@@ -25,7 +25,7 @@ open DiffSharp.Model
 open Support.Text
 
 type BERTClassifier(bert: BERT, classCount: int) = 
-    inherit Model<TextBatch, Tensor>() //: Module, Regularizable {
+    inherit Model<TextBatch, Tensor>() 
 
     let dense = Linear(inFeatures=bert.hiddenSize, outFeatures=classCount)
     let regularizationValue: TangentVector =

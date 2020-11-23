@@ -71,83 +71,83 @@ type LayerBenchmarks() =
 
     [<Benchmark>]
     member _.EfficientNetB0_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetB0, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetB0, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB0_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetB0, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetB0, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB1_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetB1, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetB1, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB1_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetB1, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetB1, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB2_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetB2, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetB2, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB2_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetB2, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetB2, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB3_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetB3, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetB3, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB3_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetB3, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetB3, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB4_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetB4, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetB4, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB4_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetB4, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetB4, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB5_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetB5, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetB5, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB5_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetB5, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetB5, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB6_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetB6, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetB6, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB6_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetB6, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetB6, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB7_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetB7, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetB7, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB7_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetB7, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetB7, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB8_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetB8, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetB8, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB8_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetB8, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetB8, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetL2_Eval() =
-        makeEvalBenchmark(EfficientNet(kind=EfficientnetL2, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(EfficientNet.Create(kind=EfficientnetL2, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetL2_Gradient() =
-        makeGradientBenchmark(EfficientNet(kind=EfficientnetL2, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(EfficientNet.Create(kind=EfficientnetL2, classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.LeNet_Eval() =
@@ -376,28 +376,28 @@ let ShuffleNetV2Suites = [
     inputDimensions=imageNetInput,
     outputDimensions=imageNetOutput
   ) = 
-    ShuffleNetV2(kind: .shuffleNetV2x05)
+    ShuffleNetV2.Create(kind=ShuffleNetV2x05)
   },
   makeLayerSuite(
     name="ShuffleNetV2x10",
     inputDimensions=imageNetInput,
     outputDimensions=imageNetOutput
   ) = 
-    ShuffleNetV2(kind: .shuffleNetV2x10)
+    ShuffleNetV2.Create(kind=ShuffleNetV2x10)
   },
   makeLayerSuite(
     name="ShuffleNetV2x15",
     inputDimensions=imageNetInput,
     outputDimensions=imageNetOutput
   ) = 
-    ShuffleNetV2(kind: .shuffleNetV2x15)
+    ShuffleNetV2.Create(kind=ShuffleNetV2x15)
   },
   makeLayerSuite(
     name="ShuffleNetV2x20",
     inputDimensions=imageNetInput,
     outputDimensions=imageNetOutput
   ) = 
-    ShuffleNetV2(kind: .shuffleNetV2x20)
+    ShuffleNetV2.Create(kind=ShuffleNetV2x20)
   },
 ]
 *)
@@ -450,70 +450,70 @@ let WideResNetSuites = [
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet16)
+    WideResNet.Create(kind= WideResNet16)
   },
   makeLayerSuite(
     name="WideResNet16k10",
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet16k10)
+    WideResNet.Create(kind= WideResNet16k10)
   },
   makeLayerSuite(
     name="WideResNet22",
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet22)
+    WideResNet.Create(kind= WideResNet22)
   },
   makeLayerSuite(
     name="WideResNet22k10",
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet22k10)
+    WideResNet.Create(kind= WideResNet22k10)
   },
   makeLayerSuite(
     name="WideResNet28",
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet28)
+    WideResNet.Create(kind= WideResNet28)
   },
   makeLayerSuite(
     name="WideResNet28k12",
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet28k12)
+    WideResNet.Create(kind= WideResNet28k12)
   },
   makeLayerSuite(
     name="WideResNet40k1",
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet40k1)
+    WideResNet.Create(kind= WideResNet40k1)
   },
   makeLayerSuite(
     name="WideResNet40k2",
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet40k2)
+    WideResNet.Create(kind= WideResNet40k2)
   },
   makeLayerSuite(
     name="WideResNet40k4",
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet40k4)
+    WideResNet.Create(kind= WideResNet40k4)
   },
   makeLayerSuite(
     name="WideResNet40k8",
     inputDimensions=cifarInput,
     outputDimensions=cifarOutput
   ) = 
-    WideResNet(kind: .wideResNet40k8)
+    WideResNet.Create(kind= WideResNet40k8)
   },
 ]
 *)

@@ -16,6 +16,7 @@ module Models.ImageClassification.LeNet_5
 
 open DiffSharp
 open DiffSharp.Model
+open DiffSharp.ShapeChecking
 
 // Original Paper:
 // "Gradient-Based Learning Applied to Document Recognition"
@@ -25,6 +26,7 @@ open DiffSharp.Model
 // Note: this implementation connects all the feature maps in the second convolutional layer.
 // Additionally, ReLU is used instead of dsharp.sigmoid activations.
 
+[<ShapeCheck()>]
 type LeNet() =
     inherit Model()
     let conv1 = Conv2d(1, 6, kernelSize=5, padding=5/2 (* "same " *), activation=dsharp.relu)
@@ -35,9 +37,12 @@ type LeNet() =
     let fc1 = Linear(inFeatures=400, outFeatures=120, activation=dsharp.relu)
     let fc2 = Linear(inFeatures=120, outFeatures=84, activation=dsharp.relu)
     let fc3 = Linear(inFeatures=84, outFeatures=10)
-
+  
+    [<ShapeCheck("N,1,H,W", ReturnShape="N,10")>] // Note, restricted to B&W
     override _.forward(input) =
+
         let convolved = input |> conv1.forward |> pool1.forward |> conv2.forward |> pool2.forward
-        convolved |> flatten.forward |> fc1.forward |> fc2.forward |> fc3.forward
+        let res = convolved |> flatten.forward |> fc1.forward |> fc2.forward |> fc3.forward
+        res
 
 
