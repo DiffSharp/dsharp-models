@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Clone DiffSHarp
+      run: git clone https://github.com/DiffSharp/DiffSharp ../DiffSharp -b feature/sym
     - uses: actions/checkout@v2
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
