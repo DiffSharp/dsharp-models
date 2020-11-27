@@ -19,7 +19,7 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Library", "Library\Library.
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DiffSharp", "DiffSharp", "{0EC5F6F9-E67D-4B0A-84C7-8C63843F9423}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{B769BA92-332F-4B8B-A5E3-332E06F0D3F3}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "tests\Tests.fsproj", "{B769BA92-332F-4B8B-A5E3-332E06F0D3F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
