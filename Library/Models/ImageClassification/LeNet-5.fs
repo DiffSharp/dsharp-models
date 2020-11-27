@@ -37,6 +37,10 @@ type LeNet() =
     let fc1 = Linear(inFeatures=400, outFeatures=120, activation=dsharp.relu)
     let fc2 = Linear(inFeatures=120, outFeatures=84, activation=dsharp.relu)
     let fc3 = Linear(inFeatures=84, outFeatures=10)
+
+    // Note, we may automate this next line
+    do base.add [ conv1, nameof(conv1); pool1, nameof(pool1); conv2, nameof(conv2); pool2, nameof(pool2); 
+                  flatten, nameof(flatten); fc1, nameof(fc1); fc2, nameof(fc2); fc3, nameof(fc3) ]
   
     [<ShapeCheck("N,1,H,W", ReturnShape="N,10")>] // Note, restricted to B&W
     override _.forward(input) =

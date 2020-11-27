@@ -72,19 +72,19 @@ module DiffSharpExtensions =
             res
 
         member t.gelu() : Tensor = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
 
         member t.silu() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
 
         member t.hardswish() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
 
         member t.relu6() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
 
         member t.hardsigmoid() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
+            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
 
         member t.argmax(dim: int) : Tensor = failwith "TBD"
 
@@ -154,12 +154,17 @@ module DiffSharpExtensions =
 
         //static member scalar(t: scalar, ?dtype, ?device, ?backend) = dsharp.full(1, t, ?dtype=dtype, ?device=device, ?backend=backend)
 
-        static member randn(shape: seq<int>, ?stddev: scalar, ?mean: scalar, ?dtype, ?device, ?backend) =
+        /// <summary>Returns a tensor filled with random numbers from a normal distribution with the given mean and standard deviation.</summary>
+        /// <param name="shape">The desired shape of returned tensor.</param>
+        /// <param name="stddev">The desired standard deviation of returned tensor.</param>
+        /// <param name="mean">The desired mean of returned tensor.</param>
+        /// <param name="dtype">The desired element type of returned tensor. Default: if None, uses Dtype.Default.</param>
+        /// <param name="device">The desired device of returned tensor. Default: if None, uses Device.Default.</param>
+        /// <param name="backend">The desired backend of returned tensor. Default: if None, uses Backend.Default.</param>
+        static member randn(shape: seq<int>, stddev: scalar, ?mean: scalar, ?dtype, ?device, ?backend) =
             let _backend = defaultArg backend Backend.Default
-            if _backend = Backend.ShapeChecking then 
-                dsharp.randn(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend)
-            else 
-                failwith "TBD"
+            let mean = defaultArg mean (0.0 :> scalar)
+            dsharp.randn(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend) * stddev + mean
 
         static member rand(shape: seq<int>, low: scalar, high: scalar, ?dtype, ?device, ?backend) =
             dsharp.rand(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend)
@@ -179,14 +184,20 @@ module DiffSharpExtensions =
     [<Extension>]
     type ModelExtensions() =
         [<Extension>]
-        static member grad(model: Model<Tensor, Tensor>, input, loss) = 
+        static member grad(model: Model<Tensor, Tensor>, input, loss: Tensor -> Tensor) = 
             model.reverseDiff()
-            dsharp.grad (fun t -> loss (model.forward t)) input
+            let output = model.forward(input)
+            (loss output).reverse()
+            model.parameters.derivative
 
         [<Extension>]
-        static member gradv(model: Model<Tensor, Tensor>, input, loss) = 
+        static member gradv(model: Model<Tensor, Tensor>, input, loss: Tensor -> Tensor) = 
             model.reverseDiff()
-            dsharp.gradv (fun t -> loss (model.forward t)) input
+            let output = model.forward(input)
+            (loss output).reverse()
+            output, model.parameters.derivative
+            //model.reverseDiff()
+            //dsharp.gradv (fun t -> model.forwardLoss (fun a b -> dsharp.mseLoss(a,b)) input t model.parameters) input
 
         [<Extension>]
         static member appliedForBackpropagation(model: Model<Tensor, Tensor>, input) : Tensor * (Tensor -> Tensor * Tensor)= 
@@ -296,3 +307,4 @@ module DiffSharpExtensions =
     let truncatedNormalInitializer(standardDeviation: Tensor) : Shape -> Tensor = failwith "TBD"
 
     type TangentVector(x:obj) = class end
+

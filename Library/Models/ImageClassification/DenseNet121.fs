@@ -89,6 +89,15 @@ type DenseNet121(classCount: int) =
     let globalAvgPool = GlobalAvgPool2d()
     let dense = Linear(inFeatures=1024, outFeatures=classCount)
 
+    // Note, we may automate this next line
+    do base.add [ conv, nameof(conv); maxpool, nameof(maxpool); 
+                  denseBlock1, nameof(denseBlock1); transitionLayer1, nameof(transitionLayer1); 
+                  denseBlock2, nameof(denseBlock2); transitionLayer2, nameof(transitionLayer2);
+                  denseBlock3, nameof(denseBlock3); transitionLayer3, nameof(transitionLayer3);
+                  denseBlock4, nameof(denseBlock4);
+                  globalAvgPool, nameof(globalAvgPool);
+                  dense, nameof(dense) ]
+
     [<ShapeCheck("N,3,H,W", ReturnShape="N,classCount")>]
     override _.forward(input) =
         let inputLayer = input |> conv.forward |> maxpool.forward
