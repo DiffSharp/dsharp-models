@@ -116,7 +116,7 @@ type AccuracyMeasurer: MetricsMeasurer {
         "For accuracy measurements, the model output must be Tensor, and the labels must be Tensor<Int>."
       )
     }
-    correctGuessCount <- correctGuessCount + Tensor<int32>(predictions.argmax(squeezingAxis: -1) .== labels).sum()
+    correctGuessCount <- correctGuessCount + Tensor<int32>(predictions.argmax(dim= -1) .== labels).sum()
       .toScalar()
     totalGuessCount <- totalGuessCount + int32(labels.shape.reduce(1, * ))
   }

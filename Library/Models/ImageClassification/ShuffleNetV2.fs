@@ -68,7 +68,7 @@ type InvertedResidual(filters: (int * int), stride: int) =
 
     override _.forward(input) =
         if not includeBranch then
-            let splitInput = input.split(count=2, dim=3)
+            let splitInput = input.chunk(count=2, dim=3)
             let input1 = splitInput.[0]
             let input2 = splitInput.[1]
             let output2 = dsharp.relu(input2 |> conv1.forward |> batchNorm1.forward)

@@ -12,93 +12,95 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-open PythonKit
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r "System.Runtime.Extensions.dll"
+#r "System.Reflection.Emit.dll"
+#r @"..\..\..\DiffSharp\tests\DiffSharp.Benchmarks.Python\bin\Release\netcoreapp3.1\Python.Runtime.dll"
+
 open DiffSharp
+open Python
+open Python.Runtime
+open FSharp.Reflection
+open System
 
 let iterationCount = 10000
 let learningPhase = iterationCount * 5 / 100
+let rnd = Random()
 
-type Strategy = Bool
+type Strategy = bool
 
-// Initialize Python. This comment is a hook for internal use, do not remove.
+type PyObject with 
+    member t.toInt() = (t.AsManagedObject(typeof<int>) :?> int)
+    member t.toBool() = (t.AsManagedObject(typeof<bool>) :?> bool)
+    member t.toString() = (t.AsManagedObject(typeof<string>) :?> string)
+    member t.toArb() : 'T = (t.AsManagedObject(typeof<'T>) :?> 'T)
+    member t.toArbTuple3() : 'T1 * 'T2 * 'T3 =
+        t.Item(0).toArb(), t.Item(1).toArb(), t.Item(2).toArb()
 
-let gym = Python.import("gym")
-let environment = gym.make("Blackjack-v0")
+let (?) (pyobj: PyObject) (nm:string) : 'T = 
+    let t = typeof<'T>
+    let ds,r = 
+        if FSharpType.IsFunction(t) then
+            let d,r = FSharpType.GetFunctionElements(t)
+            let els = if typeof<unit> = d then [| |] elif Reflection.FSharpType.IsTuple(d) then Reflection.FSharpType.GetTupleElements(d) else [| d |]
+            els, r
+        else
+            [| |], t
+    let postConv = 
+        if r = typeof<PyObject> then 
+            (fun (a: PyObject) -> box a)
+        else (fun (a: PyObject) -> a.AsManagedObject(r))
+    match ds with 
+    | [| |] -> pyobj.InvokeMethod(nm) |> box |> unbox
+    | [| d1 |] -> 
+        printfn "aaaaaaaaaaa"
+        FSharpValue.MakeFunction(t, (fun arg -> pyobj.InvokeMethod(nm, arg.ToPython()) |> postConv)) |> unbox
+    | _ -> 
+        FSharpValue.MakeFunction(t, (fun arg -> let args = FSharpValue.GetTupleFields(arg) in pyobj.InvokeMethod(nm, [| for arg in args -> arg.ToPython() |]) |> postConv)) |> unbox
 
-type BlackjackState {
-    let playerSum: int = 0
-    let dealerCard: int = 0
-    let useableAce: int = 0
+let gil = Py.GIL()
+//let scope = Py.CreateScope()
+// https://gym.openai.com/docs/
+// pip install gym
 
-    init(pythonState: PythonObject) = 
-        self.playerSum = int(pythonState[0]) ?? 0
-        self.dealerCard = int(pythonState[1]) ?? 0
-        self.useableAce = int(pythonState[2]) ?? 0
+let gym = Py.Import("gym")
+let environment : PyObject = gym?make("Blackjack-v0")
 
+    //let gym = Python.import("gym")
+//let environment = gym.make("Blackjack-v0")
 
+type BlackjackState(pythonState: PyObject) =
+    member _.playerSum : int = pythonState?playerSum
+    member _.dealerCard: int = pythonState?dealerCard
+    member _.useableAce: int = pythonState?useableAce
 
-type SolverType: CaseIterable {
-    | random, markov, qlearning, normal
+type SolverType =
+    | Random
+    | Markov
+    | Qlearning
+    | Normal
+    static member allCases = [Random; Markov; Qlearning; Normal]
 
-
-type Solver {
-    let Q: [[double[][]]] = []
-    let alpha: double = 0.5
-    let gamma: double = 0.2
-
+type Solver() =
     let playerStateCount = 32 // 21 + 10 + 1 offset
     let dealerVisibleStateCount = 11 // 10 + 1 offset
     let aceStateCount = 2 // useable / not bool
     let playerActionCount = 2 // hit / stay
+    let Q = Array.init playerStateCount (fun i -> 
+              Array.init dealerVisibleStateCount (fun j -> 
+                 Array.init aceStateCount (fun _ -> 
+                    Array.init playerActionCount (fun _ -> 0.0))))
+    let alpha: double = 0.5
+    let gamma: double = 0.2
 
-    init() = 
-        Q = Array.replicate Array.replicate Array.replicate Array.replicate 0.0,
-                                                                     count: playerActionCount),
-                                                    count: aceStateCount),
-                                   count: dealerVisibleStateCount),
-                  count: playerStateCount)
+    let randomStrategy() =
+        rnd.NextDouble() < 0.5
 
-
-    let updateQLearningStrategy(prior: BlackjackState,
-                                 action: int,
-                                 reward: int,
-                                 post: BlackjackState) = 
-        let oldQ = Q[prior.playerSum][prior.dealerCard][prior.useableAce][action]
-        let priorQ = (1 - alpha) * oldQ
-
-        let maxReward = max(Q[post.playerSum][post.dealerCard][post.useableAce][0],
-                            Q[post.playerSum][post.dealerCard][post.useableAce][1])
-        let postQ = alpha * (double(reward) + gamma * maxReward)
-
-        Q[prior.playerSum][prior.dealerCard][prior.useableAce][action] += priorQ + postQ
-
-
-    let qLearningStrategy(observation: BlackjackState, iteration: int) = Strategy =
-        let qLookup = Q[observation.playerSum][observation.dealerCard][observation.useableAce]
-        let stayReward = qLookup[0]
-        let hitReward = qLookup[1]
-
-        if iteration < Int.random(in: 1..learningPhase) then
-            randomStrategy()
-        else
-            // quit learning after initial phase
-            if iteration > learningPhase then alpha = 0.0
-
-
-        if hitReward = stayReward then
-            randomStrategy()
-        else
-            hitReward > stayReward
-
-
-
-    let randomStrategy() = Strategy =
-        Strategy.random()
-
-
-    let markovStrategy(observation: BlackjackState) = Strategy =
+    let markovStrategy(observation: BlackjackState) =
         // hit @ 80% probability unless over 18, in which case do the reverse
-        let flip = Float.random(in: 0..<1)
+        let flip = rnd.NextDouble()
         let threshHold: double = 0.8
 
         if observation.playerSum < 18 then
@@ -106,79 +108,96 @@ type Solver {
         else
             flip > threshHold
 
-
-
     let normalStrategyLookup(playerSum: int) =
         // see figure 11: https://ieeexplore.ieee.org/document/1299399/
         match playerSum with
-        | 10 -> return "HHHHHSSHHH"
-        | 11 -> return "HHSSSSSSHH"
-        | 12 -> return "HSHHHHHHHH"
-        | 13 -> return "HSSHHHHHHH"
-        | 14 -> return "HSHHHHHHHH"
-        | 15 -> return "HSSHHHHHHH"
-        | 16 -> return "HSSSSSHHHH"
-        | 17 -> return "HSSSSHHHHH"
-        | 18 -> return "SSSSSSSSSS"
-        | 19 -> return "SSSSSSSSSS"
-        | 20 -> return "SSSSSSSSSS"
-        | 21 -> return "SSSSSSSSSS"
-        | _ -> return "HHHHHHHHHH"
+        | 10 -> "HHHHHSSHHH"
+        | 11 -> "HHSSSSSSHH"
+        | 12 -> "HSHHHHHHHH"
+        | 13 -> "HSSHHHHHHH"
+        | 14 -> "HSHHHHHHHH"
+        | 15 -> "HSSHHHHHHH"
+        | 16 -> "HSSSSSHHHH"
+        | 17 -> "HSSSSHHHHH"
+        | 18 -> "SSSSSSSSSS"
+        | 19 -> "SSSSSSSSSS"
+        | 20 -> "SSSSSSSSSS"
+        | 21 -> "SSSSSSSSSS"
+        | _ -> "HHHHHHHHHH"
 
-
-
-    let normalStrategy(observation: BlackjackState) = Strategy =
+    let normalStrategy(observation: BlackjackState) =
         if observation.playerSum = 0 then
             true
+        else
+            let lookupString = normalStrategyLookup(observation.playerSum)
+            lookupString.[observation.dealerCard - 1] = 'H'
 
-        let lookupString = normalStrategyLookup(playerSum: observation.playerSum)
-        Array(lookupString)[observation.dealerCard - 1] = "H"
+    let qLearningStrategy(observation: BlackjackState, iteration: int) : Strategy =
+        let qLookup = Q.[observation.playerSum].[observation.dealerCard].[observation.useableAce]
+        let stayReward = qLookup.[0]
+        let hitReward = qLookup.[1]
 
-
-    let strategy(observation: BlackjackState, solver: SolverType, iteration: int) = Strategy =
-        match solver with
-        | .random ->
+        if iteration < rnd.Next(learningPhase) + 1 then
             randomStrategy()
-        | .markov ->
-            markovStrategy(observation=observation)
-        | .qlearning ->
-            qLearningStrategy(observation=observation, iteration: iteration)
-        | .normal ->
-            normalStrategy(observation=observation)
+        elif iteration > learningPhase then
+            // quit learning after initial phase
+            alpha = 0.0 
+        elif hitReward = stayReward then
+            randomStrategy()
+        else
+            hitReward > stayReward
 
+    member _.strategy(observation: BlackjackState, solver: SolverType, iteration: int) =
+        match solver with
+        | Random ->
+            randomStrategy()
+        | Markov ->
+            markovStrategy(observation)
+        | Qlearning ->
+            qLearningStrategy(observation, iteration)
+        | Normal ->
+            normalStrategy(observation)
 
+    member _.updateQLearningStrategy(prior: BlackjackState, action: int, reward: int, post: BlackjackState) = 
+        let oldQ = Q.[prior.playerSum].[prior.dealerCard].[prior.useableAce].[action]
+        let priorQ = (1. - alpha) * oldQ
+
+        let maxReward = max(Q.[post.playerSum].[post.dealerCard].[post.useableAce].[0])
+                           (Q.[post.playerSum].[post.dealerCard].[post.useableAce].[1])
+        let postQ = alpha * (double reward + gamma * maxReward)
+
+        Q.[prior.playerSum].[prior.dealerCard].[prior.useableAce].[action] <- oldQ + priorQ + postQ // check me, oldQ twice??
 
 
 let learner = Solver()
 
-for solver in SolverType.allCases do
-    let totalReward = 0
+let solver = SolverType.Random
 
-    for i in 1..iterationCount do
-        let isDone = false
-        environment.reset()
+//for solver in SolverType.allCases do
+let mutable totalReward = 0
+let i = 1
+//    for i in 1..iterationCount do
+let mutable isDone = false
+environment.InvokeMethod("reset") |> ignore
 
-        while not isDone {
-            let priorState = BlackjackState(pythonState: environment._get_obs())
-            let action: int = learner.strategy(observation: priorState,
-                                               solver: solver,
-                                               iteration: i) ? 1 : 0
+//        while not isDone do
+let priorState = BlackjackState(pythonState=environment?_get_obs())
+let action: int = 
+    if learner.strategy(observation=priorState, solver=solver, iteration=i) then 1 else 0
 
-            let (pythonPostState, reward, done, _) = environment.step(action).tuple4
+let (pythonPostState: PyObject, reward: int, finished: bool) = environment?step(action)
 
-            if solver = .qlearning then
-                let postState = BlackjackState(pythonState: pythonPostState)
-                learner.updateQLearningStrategy(prior: priorState,
-                                                action: action,
-                                                reward: int(reward) ?? 0,
-                                                post: postState)
-
-
-            if done = true then
-                totalReward <- totalReward + int(reward) ?? 0
-                isDone = true
+if solver = Qlearning then
+    let postState = BlackjackState(pythonState=pythonPostState)
+    learner.updateQLearningStrategy(prior=priorState,
+                                    action=action,
+                                    reward=reward (* int(reward) ?? 0 *),
+                                    post=postState)
 
 
+if finished then
+    totalReward <- totalReward + reward (* int(reward) ?? 0 *)
+    isDone <- true
 
-    print($"Solver: {solver}, Total reward: {totalReward} / {iterationCount} trials")
+printfn $"Solver: {solver}, Total reward: {totalReward} / {iterationCount} trials"
 

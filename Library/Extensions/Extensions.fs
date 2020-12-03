@@ -14,7 +14,11 @@ module DiffSharpExtensions =
 
     type FilePath = string
     type RandomNumberGenerator = System.Random
+
     let (</>) (a: FilePath) (b: string) : FilePath = Path.Combine(a,b)
+
+    let scalar (x: scalar) : scalar = x
+
     type Tensor with 
         member t.ndims = t.dim
 
@@ -57,10 +61,10 @@ module DiffSharpExtensions =
             (t, Array.rev (Array.sort dims)) ||> Array.fold (fun input dim -> dsharp.stddev(input, dim, ?keepDim=keepDim))
 
         member t.moments () =
-               dsharp.mean(t), dsharp.stddev(t)
+            dsharp.mean(t), dsharp.stddev(t)
 
         member t.moments (dim: int, ?keepDim: bool) =
-               t.mean(dim, ?keepDim=keepDim), t.stddev(dim, ?keepDim=keepDim)
+            t.mean(dim, ?keepDim=keepDim), t.stddev(dim, ?keepDim=keepDim)
 
         member t.moments (dims: seq<int>, ?keepDim: bool) =
             t.mean(dims, ?keepDim=keepDim), t.stddev(dims, ?keepDim=keepDim)
@@ -71,33 +75,16 @@ module DiffSharpExtensions =
                 res <- m.forward res
             res
 
-        member t.gelu() : Tensor = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
+        member t.argmax(dim: int) : Tensor = failwith "TBD - argmax along dimension"
 
-        member t.silu() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
-
-        member t.hardswish() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
-
-        member t.relu6() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
-
-        member t.hardsigmoid() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - DiffSharp in progress"
-
-        member t.argmax(dim: int) : Tensor = failwith "TBD"
-
-        member t.permute(permutation: seq<int>) : Tensor = 
-            if t.backend = Backend.ShapeChecking then 
-                let idxs = Array.ofSeq permutation
-                let newShape = Array.permute (fun i -> idxs.[i]) t.shapex.Dims
-                t.zerosLike(Shape newShape)
-            else 
-                failwith "TBD"
-
-        member t.split(count: int, dim: int) : Tensor[] = failwith "TBD"
-            //t.split(([|  |]: int[]), dim=dim)
+        member a.chunk(count: int, ?dim: int) =
+            let dim = defaultArg dim 0
+            let n = a.shape.[dim]
+            let n = 5
+            let count = 3
+            let sz = (n + count - 1) / count
+            let sizes = [| for i in 0 .. count-1 do let k = min (n - i * sz) sz in if k > 0 then yield k |]
+            a.split(sizes, dim=dim)
 
     type Sequential([<ParamArray>] models: Model[]) =
         inherit Model()
@@ -113,12 +100,26 @@ module DiffSharpExtensions =
 
         override m.forward(value) = f value
 
-    type Flatten() =
-        inherit Model()
+    [<AutoOpen>]
+    type Functions =
+        static member ZeroPadding2d(p0: int, p1: int) =
+           Function (fun value -> value.pad([0; 0; p0; p1]))
 
-        override _.ToString() = sprintf "Flatten()"
+        static member AvgPool2d(kernelSize: int, ?stride: int, ?padding: int) =
+            Function (fun input -> input.avgpool2d(kernelSize, ?stride=stride, ?padding=padding))
 
-        override m.forward(value) = value.flatten(startDim=(if value.dim=1 then 0 else 1))
+        static member GlobalAvgPool2d() =
+            // See https://discuss.pytorch.org/t/global-average-pooling-in-pytorch/6721/18
+            Function (fun x -> dsharp.mean(x.view([ x.shapex.[0]; x.shapex.[1]; -1I]), dim=2))
+           
+        static member Flatten() =
+            Function (fun value -> value.flatten(startDim=(if value.dim=1 then 0 else 1)))
+
+        static member MaxPool2d(?kernelSize: int, ?stride: int, ?padding: int, ?kernelSizes: seq<int>, ?strides: seq<int>, ?paddings: seq<int>) =
+           Function (fun value -> value.maxpool2d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding, ?kernelSizes=kernelSizes, ?strides=strides, ?paddings=paddings))
+
+        static member MaxPool3d(?kernelSize: int, ?stride: int, ?padding: int, ?kernelSizes: seq<int>, ?strides: seq<int>, ?paddings: seq<int>) =
+           Function (fun value -> value.maxpool3d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding, ?kernelSizes=kernelSizes, ?strides=strides, ?paddings=paddings))
 
     type dsharp with 
         static member gelu(input: Tensor) = input.gelu()
@@ -205,23 +206,6 @@ module DiffSharpExtensions =
             //m.reverseDiff()
             //dsharp.gradv (fun t -> loss (m.forward t)) input
 
-    type ZeroPadding2d(p0: int, p1: int) =
-       inherit Model()
-       override m.forward(value) = 
-           value.pad([0; 0; p0; p1])
-
-    type AvgPool2d(kernelSize: int, ?stride: int, ?padding: int) =
-       inherit Model()
-       
-       override m.forward(value) = value.maxpool2d(kernelSize, ?stride=stride, ?padding=padding) //failwith "TBD"; value
-
-    type GlobalAvgPool2d() =
-       inherit Model()
-       override m.forward(value) = 
-           // TODO: this is fake
-           value.zerosLike(Shape [value.shapex.[0]; value.shapex.[1]])
-            //value.maxpool2d(kernelSizes=[value.shapex.[2]; value.shapex.[3]]).view([value.shapex.[0]; value.shapex.[1]]) //failwith "TBD"; value
-
     type UpSampling2d(size: int) =
        inherit Model()
        override m.forward(value) = failwith "TBD"; value
@@ -233,16 +217,6 @@ module DiffSharpExtensions =
        member _.offset = p_offset
        member _.scale = p_scale
        override m.forward(value) = failwith "TBD"; value
-
-    type MaxPool2d(?kernelSize: int, ?stride: int, ?padding: int) =
-       inherit Model()
-       override m.forward(value) = value.maxpool2d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding) //failwith "TBD"; value
-
-    type MaxPool3d(?kernelSize: int, ?stride: int, ?padding: int, ?kernelSizes: seq<int>, ?strides: seq<int>, ?paddings: seq<int>) =
-       inherit Model()
-       override m.forward(value) = 
-           // TODO: this is fake for sizes
-           value.maxpool3d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding, ?strides=strides, ?paddings=paddings) //failwith "TBD"; value
 
     type DepthwiseConv2d(inChannels: int, channelMultiplier: int, ?kernelSize: int, ?kernelSizes: seq<int>, ?stride: int, ?padding: int, ?strides: seq<int>, ?paddings: seq<int>) =
        inherit Model()
@@ -282,8 +256,6 @@ module DiffSharpExtensions =
         member _.makeStateParameter(name: string) : Parameter = failwith "TBD"
         member _.appendCallback(callback: OptimizerWeightStepState * OptimizerState -> unit) = failwith "TBD"
         member _.makeOptimizer() = failwith "TBD"
-
-    let scalar (x: scalar) : scalar = x
 
     type Embedding(embeddings: Tensor) =
         member val t = 
