@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
-#r @"..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
 
 open Datasets
 open DiffSharp
@@ -26,17 +26,18 @@ let dataset = BostonHousing()
 // Create Model
 type RegressionModel() = 
     inherit Model()
-    let layer1 = Linear(inFeatures=13, outFeatures=64, activation=dsharp.relu)
-    let layer2 = Linear(inFeatures=64, outFeatures=32, activation=dsharp.relu)
+    let layer1 = Linear(inFeatures=13, outFeatures=64) --> dsharp.relu
+    let layer2 = Linear(inFeatures=64, outFeatures=32) --> dsharp.relu
     let layer3 = Linear(inFeatures=32, outFeatures=1)
     
+    do base.register()
     override _.forward(input) =
         input |> layer1.forward |> layer2.forward |> layer3.forward
 
 let model = RegressionModel()
 
 // Train Model
-let optimizer = RMSProp(model, learningRate=0.001)
+let optimizer = RMSProp(model, learningRate=dsharp.scalar 0.001)
 model.mode <- Mode.Train
 
 let epochCount = 500

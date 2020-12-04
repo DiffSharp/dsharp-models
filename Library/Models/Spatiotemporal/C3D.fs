@@ -27,12 +27,12 @@ type C3D(classCount: int) =
     
     // Model presumes input of [[1, 12, 256, 256, 3])
     
-    let conv1 = Conv3d(3, 32, kernelSize=3, activation=dsharp.relu)
-    let conv2 = Conv3d(32, 64, kernelSize=3, activation=dsharp.relu)
-    let conv3 = Conv3d(64, 128, kernelSize=3, activation=dsharp.relu)
-    let conv4 = Conv3d(128, 128, kernelSize=3, activation=dsharp.relu)
-    let conv5 = Conv3d(128, 256, kernelSize=2, activation=dsharp.relu)
-    let conv6 = Conv3d(256, 256, kernelSize=2, activation=dsharp.relu)
+    let conv1 = Conv3d(3, 32, kernelSize=3) --> dsharp.relu
+    let conv2 = Conv3d(32, 64, kernelSize=3) --> dsharp.relu
+    let conv3 = Conv3d(64, 128, kernelSize=3) --> dsharp.relu
+    let conv4 = Conv3d(128, 128, kernelSize=3) --> dsharp.relu
+    let conv5 = Conv3d(128, 256, kernelSize=2) --> dsharp.relu
+    let conv6 = Conv3d(256, 256, kernelSize=2) --> dsharp.relu
     
     let pool = MaxPool3d(kernelSizes=[1;2;2], strides = [1; 2; 2])
     let flatten = Flatten()

@@ -44,7 +44,7 @@ type DeepQNetwork() =
   let l1, l2: Dense
 
   init(observationSize: int, hiddenSize: int, actionCount: int) = 
-    l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation=dsharp.relu)
+    l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize) --> dsharp.relu
     l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount, activation= id)
 
 

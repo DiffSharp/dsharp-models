@@ -28,9 +28,7 @@ module DiffSharpExtensions =
 
         member t.reshape(shape: Shape) = t.view(shape)
 
-        member t.cat(t2: Tensor, dim: int) : Tensor =
-            dsharp.cat([t;t2], dim)
-            //t.split(([|  |]: int[]), dim=dim)
+        member t.cat(t2: Tensor, dim: int) = dsharp.cat([t;t2], dim)
 
         member t.sqr() = t * t
 
@@ -75,23 +73,19 @@ module DiffSharpExtensions =
                 res <- m.forward res
             res
 
-        member t.argmax(dim: int) : Tensor = failwith "TBD - argmax along dimension"
-
         member a.chunk(count: int, ?dim: int) =
             let dim = defaultArg dim 0
             let n = a.shape.[dim]
-            let n = 5
-            let count = 3
             let sz = (n + count - 1) / count
             let sizes = [| for i in 0 .. count-1 do let k = min (n - i * sz) sz in if k > 0 then yield k |]
             a.split(sizes, dim=dim)
 
-    type Sequential([<ParamArray>] models: Model[]) =
+    type Sequential(models: seq<Model>) =
         inherit Model()
+        let models = Seq.toArrayQuick models
         do base.add(Array.map box models)
         override _.forward(input) = 
             (input, models) ||> Array.fold (fun input m -> m.forward input)
-        new (models: seq<Model>) = Sequential(Seq.toArrayQuick models)
     
     type Function(f: Tensor -> Tensor) =
         inherit Model()
@@ -121,8 +115,9 @@ module DiffSharpExtensions =
         static member MaxPool3d(?kernelSize: int, ?stride: int, ?padding: int, ?kernelSizes: seq<int>, ?strides: seq<int>, ?paddings: seq<int>) =
            Function (fun value -> value.maxpool3d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding, ?kernelSizes=kernelSizes, ?strides=strides, ?paddings=paddings))
 
+        static member UpSampling2d(size: int) = Function (fun value -> failwith "TBD")
+
     type dsharp with 
-        static member gelu(input: Tensor) = input.gelu()
 
         static member permute(input: Tensor, [<ParamArray>] permutation: seq<int>) = input.permute(permutation)
 
@@ -153,8 +148,6 @@ module DiffSharpExtensions =
             // needs "groups"
             input.conv2d(filters, ?stride=stride, ?strides=strides, ?padding=padding, ?paddings=paddings, ?dilation=dilation, ?dilations=dilations)
 
-        //static member scalar(t: scalar, ?dtype, ?device, ?backend) = dsharp.full(1, t, ?dtype=dtype, ?device=device, ?backend=backend)
-
         /// <summary>Returns a tensor filled with random numbers from a normal distribution with the given mean and standard deviation.</summary>
         /// <param name="shape">The desired shape of returned tensor.</param>
         /// <param name="stddev">The desired standard deviation of returned tensor.</param>
@@ -176,44 +169,48 @@ module DiffSharpExtensions =
             else 
                 failwith "TBD"
 
-        static member silu(input:Tensor) : Tensor = input.silu()
-
-        static member hardswish(input:Tensor) : Tensor = input.hardswish()
-
-        static member relu6(input:Tensor) : Tensor = input.relu6()
-
     [<Extension>]
     type ModelExtensions() =
+
+        [<Extension>]
+        static member register(model: Model<'In, 'Out>, ?included: obj list, ?excluded: obj list) = 
+            // TODO
+            ()
+
         [<Extension>]
         static member grad(model: Model<Tensor, Tensor>, input, loss: Tensor -> Tensor) = 
+            model.noDiff()
             model.reverseDiff()
             let output = model.forward(input)
             (loss output).reverse()
             model.parameters.derivative
 
         [<Extension>]
-        static member gradv(model: Model<Tensor, Tensor>, input, loss: Tensor -> Tensor) = 
+        static member valueWithGradient(model: Model<Tensor, Tensor>, loss: (* apply*) (Tensor -> Tensor) -> Tensor) = 
+            model.noDiff()
             model.reverseDiff()
-            let output = model.forward(input)
-            (loss output).reverse()
+            let output = loss model.forward
+            output.reverse()
             output, model.parameters.derivative
-            //model.reverseDiff()
-            //dsharp.gradv (fun t -> model.forwardLoss (fun a b -> dsharp.mseLoss(a,b)) input t model.parameters) input
 
         [<Extension>]
-        static member appliedForBackpropagation(model: Model<Tensor, Tensor>, input) : Tensor * (Tensor -> Tensor * Tensor)= 
-            failwith "tbd"
-            //m.reverseDiff()
-            //dsharp.gradv (fun t -> loss (m.forward t)) input
-
-    type UpSampling2d(size: int) =
-       inherit Model()
-       override m.forward(value) = failwith "TBD"; value
+        static member appliedForBackpropagation(model: Model<Tensor, Tensor>, input: Tensor) : Tensor * (Tensor -> Tensor * Tensor)= 
+            model.noDiff()
+            let tag = GlobalNestingLevel.Current
+            model.reverseDiff()
+            let input = input.reverseDiff(tag)
+            let output = model.forward(input)
+            output, (fun δloss -> 
+                output.reverse(δloss)
+                model.parameters.derivative, input.derivative) 
 
     type LayerNorm(numFeatures: int, axis: int) =
        inherit Model()
        let p_offset = Parameter(dsharp.zero())
        let p_scale = Parameter(dsharp.zero())
+
+       do base.register()
+
        member _.offset = p_offset
        member _.scale = p_scale
        override m.forward(value) = failwith "TBD"; value
@@ -245,6 +242,8 @@ module DiffSharpExtensions =
         member _.Item 
             with get (state: OptimizerWeightStepState, parameter: Parameter) : Tensor = failwith "TBD"
             and set (state: OptimizerWeightStepState, parameter: Parameter) (v: Tensor) = failwith "TBD"
+
+    /// swift for tensorflow stuff
 
     type ParameterGroupOptimizer() =
         inherit Optimizer()

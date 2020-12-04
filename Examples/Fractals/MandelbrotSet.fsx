@@ -21,9 +21,7 @@ open DiffSharp
 
 open DiffSharp
 
-let mandelbrotSet(
-  iterations: int, tolerance: double, region: ComplexRegion, imageSize: ImageSize, device: Device
-) : Tensor =
+let mandelbrotSet(iterations: int, tolerance: double, region: ComplexRegion, imageSize: ImageSize, device: Device) : Tensor =
   let xs = Tensor(
     linearSpaceFrom: region.realMinimum, region.realMaximum, count: imageSize.width, device=device
   ).expand([imageSize.width, imageSize.height])

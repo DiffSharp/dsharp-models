@@ -61,7 +61,7 @@ let softmaxCrossEntropyReshaped<Scalar>(logits:Tensor, labels=Tensor (*<int32>*)
 let trainingLoop: TrainingLoop = TrainingLoop(
   training: dataset.training,
   validation: dataset.validation,
-  optimizer: Adam(gpt.model, learningRate=0.001),
+  optimizer: Adam(gpt.model, learningRate=dsharp.scalar 0.001),
   lossFunction: softmaxCrossEntropyReshaped,
   metrics: [.accuracy])
 

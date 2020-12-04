@@ -24,6 +24,7 @@
 
 open System.IO
 open DiffSharp
+open DiffSharp.Model
 open DiffSharp.Optim
 open Datasets
 open Dataset
@@ -43,8 +44,8 @@ module options =
 
 let dataset = CycleGANDataset(trainBatchSize= 1, testBatchSize= 1)
 
-let generatorG = ResNetGenerator(inputChannels=3, outputChannels=3, blocks=9, ngf=64)
-let generatorF = ResNetGenerator(inputChannels=3, outputChannels=3, blocks=9, ngf=64)
+let generatorG = ResNetGenerator(inChannels=3, outChannels=3, blocks=9, ngf=64)
+let generatorF = ResNetGenerator(inChannels=3, outChannels=3, blocks=9, ngf=64)
 let discriminatorX = NetD(inChannels=3, lastConvFilters=64)
 let discriminatorY = NetD(inChannels=3, lastConvFilters=64)
 
@@ -58,7 +59,7 @@ let lambdaL1 = dsharp.scalar(10)
 let _zeros = dsharp.zero()
 let _ones = dsharp.one()
 
-let step = 0
+let mutable step = 0
 
 let validationImage = (fst dataset.TrainingSamples.[0]).unsqueeze(0)
 let validationImageURL = __SOURCE_DIRECTORY__ </> ("sample.jpg")
@@ -66,11 +67,13 @@ let validationImageURL = __SOURCE_DIRECTORY__ </> ("sample.jpg")
 // MARK: Train
 
 for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
-    print($"Epoch {epoch} started at: \(Date())")
-    model.mode <- Mode.Train
-    
+    printfn $"Epoch {epoch} started at: \(Date())"
+
     for batch in epochBatches do
-        model.mode <- Mode.Train
+        generatorG.mode <- Mode.Train
+        generatorF.mode <- Mode.Train
+        discriminatorX.mode <- Mode.Train
+        discriminatorY.mode <- Mode.Train
         
         let inputX = batch.domainA
         let inputY = batch.domainB
@@ -78,31 +81,31 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         // we do it outside of GPU scope so that dataset shuffling happens on CPU side
         let concatanatedImages = inputX.cat(inputY)
 
-        let scaledImages = resize(images: concatanatedImages, size: (286, 286), method: .nearest)
+        let scaledImages = resize(images=concatanatedImages, size=(286, 286), method="nearest")
         let croppedImages = scaledImages.slice(lowerBounds=dsharp.tensor([0, int32(random() % 30), int32(random() % 30), 0]),
                                                sizes=[2, 256, 256, 3])
-        if Bool.random() then
-            croppedImages = croppedImages.reversed(inAxes: 2)
 
-        let realX = croppedImages[0].unsqueeze(0)
-        let realY = croppedImages[1].unsqueeze(0)
+        let croppedImages =  if Bool.random() then croppedImages.reversed(inAxes=2) else croppedImages 
 
-        let onesd = _ones.expand([1, 30, 30, 1])
-        let zerosd = _zeros.expand([1, 30, 30, 1])
+        let realX = croppedImages.[0].unsqueeze(0)
+        let realY = croppedImages.[1].unsqueeze(0)
 
-        let _fakeX = Tensorf.zero
-        let _fakeY = Tensorf.zero
+        let onesd = _ones.expand([1; 30; 30; 1])
+        let zerosd = _zeros.expand([1; 30; 30; 1])
+
+        let mutable _fakeX = dsharp.zero()
+        let mutable _fakeY = dsharp.zero()
 
         let (gLoss, δgeneratorG) =
-            generatorG.gradv(fun g ->
+            generatorG.valueWithGradient(fun g ->
                 let fakeY = g(realX)
-                let cycledX = generatorF(fakeY)
-                let fakeX = generatorF(realY)
+                let cycledX = generatorF.forward(fakeY)
+                let fakeX = generatorF.forward(realY)
                 let cycledY = g(fakeX)
 
                 let cycleConsistencyLoss = (abs(realX - cycledX).mean() + abs(realY - cycledY).mean()) * lambdaL1
 
-                let discFakeY = discriminatorY(fakeY)
+                let discFakeY = discriminatorY.forward(fakeY)
                 let generatorLoss = dsharp.sigmoidCrossEntropy(logits=discFakeY, labels=onesd)
 
                 let sameY = g(realY)
@@ -110,22 +113,22 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
 
                 let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
 
-                _fakeX = fakeX
+                _fakeX <- fakeX
 
                 totalLoss)
 
 
         let (fLoss, δgeneratorF) = 
-            generatorF.gradv (fun g ->
+            generatorF.valueWithGradient (fun g ->
                 let fakeX = g(realY)
-                let cycledY = generatorG(fakeX)
-                let fakeY = generatorG(realX)
+                let cycledY = generatorG.forward(fakeX)
+                let fakeY = generatorG.forward(realX)
                 let cycledX = g(fakeY)
 
                 let cycleConsistencyLoss = (abs(realY - cycledY).mean()
                     + abs(realX - cycledX).mean()) * lambdaL1
 
-                let discFakeX = discriminatorX(fakeX)
+                let discFakeX = discriminatorX.forward(fakeX)
                 let generatorLoss = dsharp.sigmoidCrossEntropy(logits=discFakeX, labels=onesd)
 
                 let sameX = g(realX)
@@ -133,12 +136,12 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
 
                 let totalLoss = cycleConsistencyLoss + generatorLoss + identityLoss
 
-                _fakeY = fakeY
+                _fakeY <- fakeY
                 totalLoss)
 
 
         let (xLoss, δdiscriminatorX) = 
-            discriminatorX.gradv (fun d ->
+            discriminatorX.valueWithGradient (fun d ->
                 let discFakeX = d(_fakeX)
                 let discRealX = d(realX)
 
@@ -149,61 +152,61 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
 
 
         let (yLoss, δdiscriminatorY) =
-            discriminatorY.gradv (fun d ->
+            discriminatorY.valueWithGradient (fun d ->
                 let discFakeY = d(_fakeY)
                 let discRealY = d(realY)
 
-                let totalLoss = 0.5 * (sigmoidCrossEntropy(logits=discFakeY, labels=zerosd)
+                let totalLoss = 0.5 * (dsharp.sigmoidCrossEntropy(logits=discFakeY, labels=zerosd)
                     + dsharp.sigmoidCrossEntropy(logits=discRealY, labels=onesd))
 
                 totalLoss)
 
-        optimizerGG.update(&generatorG, along=δgeneratorG)
-        optimizerGF.update(&generatorF, along=δgeneratorF)
-        optimizerDX.update(&discriminatorX, along=δdiscriminatorX)
-        optimizerDY.update(&discriminatorY, along=δdiscriminatorY)
+        optimizerGG.step() //update(&generatorG, along=δgeneratorG)
+        optimizerGF.step() //update(&generatorF, along=δgeneratorF)
+        optimizerDX.step() //update(&discriminatorX, along=δdiscriminatorX)
+        optimizerDY.step() //update(&discriminatorY, along=δdiscriminatorY)
 
         // MARK: Inference
 
         if step % options.sampleLogPeriod = 0 then
-            model.mode <- Mode.Eval
+            generatorG.mode <- Mode.Eval
+            generatorF.mode <- Mode.Eval
+            discriminatorX.mode <- Mode.Eval
+            discriminatorY.mode <- Mode.Eval
             
             let fakeSample = generatorG.forward(validationImage) * 0.5 + 0.5
 
             let fakeSampleImage = fakeSample.[0] * 255
             fakeSampleImage.save(validationImageURL, format="rgb")
 
-            print("GeneratorG loss: \(gLoss.scalars[0])")
-            print("GeneratorF loss: \(fLoss.scalars[0])")
-            print("DiscriminatorX loss: \(xLoss.scalars[0])")
-            print("DiscriminatorY loss: \(yLoss.scalars[0])")
-
+            printfn $"GeneratorG loss: {gLoss.[0].toScalar()}"
+            printfn $"GeneratorF loss: {fLoss.[0].toScalar()}"
+            printfn $"DiscriminatorX loss: {xLoss.[0].toScalar()}"
+            printfn $"DiscriminatorY loss: {yLoss.[0].toScalar()}"
 
         step <- step + 1
 
 // MARK: Final test
 
-let aResultsFolder = Directory.CreateDirectory(__SOURCE_DIRECTORY__ + "/testA_results")
-let bResultsFolder = Directory.CreateDirectory(__SOURCE_DIRECTORY__ + "/testB_results")
+let aResultsFolder = Directory.CreateDirectory(__SOURCE_DIRECTORY__ + "/testA_results").FullName
+let bResultsFolder = Directory.CreateDirectory(__SOURCE_DIRECTORY__ + "/testB_results").FullName
 
-let testStep = 0
+let mutable testStep = 0
 for testBatch in dataset.testing do
     let realX = testBatch.domainA
     let realY = testBatch.domainB
 
-    let fakeY = generatorG(realX)
-    let fakeX = generatorF(realY)
+    let fakeY = generatorG.forward(realX)
+    let fakeX = generatorF.forward(realY)
 
-    let resultX = realX.cat(fakeY, alongAxis: 2) * 0.5 + 0.5
-    let resultY = realY.cat(fakeX, alongAxis: 2) * 0.5 + 0.5
+    let resultX = realX.cat(fakeY, dim=2) * 0.5 + 0.5
+    let resultY = realY.cat(fakeX, dim=2) * 0.5 + 0.5
 
-    let imageX = resultX[0] * 255
-    let imageY = resultY[0] * 255
+    let imageX = resultX.[0] * 255
+    let imageY = resultY.[0] * 255
 
-    imageX.save(aResultsFolder </> ($"\(String(testStep)).jpg", isDirectory: false),
-                format="rgb")
-    imageY.save(bResultsFolder </> ($"\(String(testStep)).jpg", isDirectory: false),
-                format="rgb")
+    imageX.saveImage(aResultsFolder </> $"{testStep}.jpg", format="rgb")
+    imageY.saveImage(bResultsFolder </> $"{testStep}.jpg", format="rgb")
 
     testStep <- testStep + 1
 

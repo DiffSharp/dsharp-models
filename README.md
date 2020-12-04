@@ -9,9 +9,12 @@ A parallel checkout of DiffSharp is currently required:
 
 	git clone https://github.com/DiffSharp/DiffSharp -b feature/merged
 
+You then prepare the library code and various native assets into `bin\Debug\netcoreapp3.1\publish`:
+
 	git clone https://github.com/DiffSharp/dsharp-models
 	cd dsharp-models
 	dotnet build
+	dotnet publish
 
 ## Using shape checking
 

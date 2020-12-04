@@ -26,34 +26,26 @@ type NetD(inChannels: Int, lastConvFilters: Int) =
     let kw = 4I
 
     let module1 = 
-        Sequential(
-            Function (fun t -> t),
-            Conv2d(inChannels, lastConvFilters, kernelSize=kw, stride=2I, padding=kw/2I),
-            Function dsharp.leakyRelu,
+        Sequential [
+            Conv2d(inChannels, lastConvFilters, kernelSize=kw, stride=2I, padding=kw/2I) --> dsharp.leakyRelu
 
-            Function (fun t -> t),
-            Conv2d(lastConvFilters, 2*lastConvFilters, kernelSize=kw, stride=2I, padding=kw/2I),
-            BatchNorm2d(numFeatures=2*lastConvFilters),
-            Function dsharp.leakyRelu,
+            Conv2d(lastConvFilters, 2*lastConvFilters, kernelSize=kw, stride=2I, padding=kw/2I)
+            BatchNorm2d(numFeatures=2*lastConvFilters) --> dsharp.leakyRelu
 
-            Function (fun t -> t),
-            Conv2d(2*lastConvFilters, 4*lastConvFilters, kernelSize=kw, stride=2I, padding=kw/2I),
-            BatchNorm2d(numFeatures=4*lastConvFilters),
-            Function dsharp.leakyRelu
-        )
+            Conv2d(2*lastConvFilters, 4*lastConvFilters, kernelSize=kw, stride=2I, padding=kw/2I)
+            BatchNorm2d(numFeatures=4*lastConvFilters) --> dsharp.leakyRelu
+        ]
 
     let module2 = 
-        Sequential (
-            module1,
-            Conv2d(inChannels=4*lastConvFilters, outChannels=8*lastConvFilters, kernelSize=4I, stride=1I, padding=1I),
-            BatchNorm2d(numFeatures=8*lastConvFilters),
-            Function dsharp.leakyRelu,
+        Sequential [
+            module1
+            Conv2d(inChannels=4*lastConvFilters, outChannels=8*lastConvFilters, kernelSize=4I, stride=1I, padding=1I)
+            BatchNorm2d(numFeatures=8*lastConvFilters) --> dsharp.leakyRelu
             
-            Conv2d(inChannels=8*lastConvFilters, outChannels=1I, kernelSize=4I, stride=1I, padding=1I),
-            Function (fun t -> t)
-        )
+            Conv2d(inChannels=8*lastConvFilters, outChannels=1I, kernelSize=4I, stride=1I, padding=1I)
+        ]
 
-    do base.add [module2]
+    do base.register()
 
     new (inChannels: int, lastConvFilters: int) =
         NetD(inChannels=Int inChannels, lastConvFilters=Int lastConvFilters)

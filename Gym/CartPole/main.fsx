@@ -52,7 +52,7 @@ type Net() =
     let l1, l2: Dense
 
     init(observationSize: int, hiddenSize: int, actionCount: int) = 
-        l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation=dsharp.relu)
+        l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize) --> dsharp.relu
         l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount)
 
 
@@ -175,8 +175,8 @@ let actionCount = int(env.action_space.n).unwrapped()
 let net = Net(
     observationSize: int(observationSize), hiddenSize=hiddenSize, actionCount=actionCount)
 // SGD optimizer reaches convergence with ~125 mini batches, while Adam uses ~25.
-// let optimizer = SGD<Net, Float>(learningRate=0.1, momentum=0.9)
-let optimizer = Adam(net, learningRate=0.01)
+// let optimizer = SGD<Net, Float>(learningRate=dsharp.scalar 0.1, momentum=0.9)
+let optimizer = Adam(net, learningRate=dsharp.scalar 0.01)
 let batchIndex = 0
 
 while true do

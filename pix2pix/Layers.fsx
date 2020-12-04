@@ -62,7 +62,7 @@ type ConvLayer(inChannels: int, outChannels: int, kernelSize: int, stride: int, 
 
     let _padding = defaultArg padding (kernelSize / 2)
     /// Padding layer.
-    let pad = ZeroPadding2d(padding=((_padding, _padding), (_padding, _padding)))
+    let pad = ZeroPadding2d(_padding, _padding)
     /// Convolution layer.
     let conv2d = Conv2d(inChannels, outChannels, kernelSize,strides = [stride; stride])
 
@@ -74,120 +74,62 @@ type ConvLayer(inChannels: int, outChannels: int, kernelSize: int, stride: int, 
         input |> pad.forward |> conv2d.forward
 
 
-type UNetSkipConnectionInnermost() = 
+type UNetSkipConnectionInnermost(inChannels: int, innerChannels: int, outChannels: int) = 
     inherit Model()
-    let downConv: Conv2d
-    let upConv: ConvTranspose2d
-    let upNorm: BatchNorm<Float>
-    
-    public init(inChannels: int,
-                innerChannels: int,
-                outChannels: int) = 
-        self.downConv = Conv2d(kernelSize=(4, 4, inChannels, innerChannels),
-                               stride=2,
-                               padding=kernelSize/2 (* "same " *),
-                               filterInitializer: { dsharp.randn($0,
-                                                            stddev=dsharp.scalar(0.02)))
-        self.upNorm = BatchNorm2d(numFeatures=outChannels)
+    let downConv = Conv2d(inChannels=inChannels, outChannels=innerChannels, kernelSize=4, stride=2, padding=2)
+                            (* filterInitializer: { dsharp.randn($0,stddev=dsharp.scalar(0.02)) *) 
+    let upNorm = BatchNorm2d(numFeatures=outChannels)
         
-        self.upConv = ConvTranspose2d(kernelSize=(4, 4, innerChannels, outChannels),
-                                       stride=2,
-                                       padding=kernelSize/2 (* "same " *),
-                                       filterInitializer: { dsharp.randn($0,
-                                                                    stddev=dsharp.scalar(0.02)))
+    let upConv = ConvTranspose2d(inChannels=innerChannels, outChannels=outChannels, kernelSize=4, stride=2, padding=2) (* ,
+                                    filterInitializer: { dsharp.randn($0,stddev=dsharp.scalar(0.02)) *)
 
-    
-    
     override _.forward(input) =
-        let x = leakyRelu(input)
-        x = self.downConv(x)
-        x = dsharp.relu(x)
-        x = x |> self.upConv, self.upNorm)
+        let x = input |> dsharp.leakyRelu
+        let x = x |> downConv.forward
+        let x = x |> dsharp.relu
+        let x = x |> upConv.forward |> upNorm.forward
+        input.cat(x, dim=3)
 
-        input.cat(x, alongAxis: 3)
-
-
-
-
-type UNetSkipConnection<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor, Sublayer.Output =: Tensor =
-    let downConv: Conv2d
-    let downNorm: BatchNorm<Float>
-    let upConv: ConvTranspose2d
-    let upNorm: BatchNorm<Float>
+type UNetSkipConnection<'Sublayer when 'Sublayer :> Model>(inChannels: int,
+                innerChannels: int,
+                outChannels: int,
+                submodule: 'Sublayer,
+                ?useDropOut: bool) =
+    inherit Model()
+    let useDropOut = defaultArg useDropOut false
     let dropOut = Dropout2d(p=0.5)
-    let useDropOut: bool
     
-    let submodule: Sublayer
-    
-    public init(inChannels: int,
-                innerChannels: int,
-                outChannels: int,
-                submodule: Sublayer,
-                useDropOut: bool = false) = 
-        self.downConv = Conv2d(kernelSize=(4, 4, inChannels, innerChannels),
-                               stride=2,
-                               padding=kernelSize/2 (* "same " *),
-                               filterInitializer: { dsharp.randn($0, stddev=dsharp.scalar(0.02)))
-        self.downNorm = BatchNorm2d(numFeatures=innerChannels)
-        self.upNorm = BatchNorm2d(numFeatures=outChannels)
+    let downConv = Conv2d(inChannels, innerChannels, 4, stride=2, padding=2) (* filterInitializer: { dsharp.randn($0, stddev=dsharp.scalar(0.02)) *) 
+    let downNorm = BatchNorm2d(numFeatures=innerChannels)
+    let upNorm = BatchNorm2d(numFeatures=outChannels)
         
-        self.upConv = ConvTranspose2d(kernelSize=(4, 4, outChannels, innerChannels * 2),
-                                       stride=2,
-                                       padding=kernelSize/2 (* "same " *),
-                                       filterInitializer: { dsharp.randn($0,
-                                                                    stddev=dsharp.scalar(0.02)))
-    
-        self.submodule = submodule
-        
-        self.useDropOut = useDropOut
-
-    
+    let upConv = ConvTranspose2d(outChannels, innerChannels * 2, 4, stride=2, padding=2)
+                                    //filterInitializer: { dsharp.randn($0, stddev=dsharp.scalar(0.02)))
     
     override _.forward(input) =
-        let x = leakyRelu(input)
-        x = x |> self.downConv, self.downNorm, self.submodule)
-        x = dsharp.relu(x)
-        x = x |> self.upConv, self.upNorm)
+        let x = input |> dsharp.leakyRelu
+        let x = x |> downConv.forward |> downNorm.forward |> submodule.forward
+        let x = dsharp.relu(x)
+        let x = x |> upConv.forward |> upNorm.forward
         
-        if self.useDropOut then
-            x = self.dropOut(x)
-
+        let x = if useDropOut then dropOut.forward(x) else x
         
-        input.cat(x, alongAxis: 3)
+        input.cat(x, dim=3)
 
-
-
-type UNetSkipConnectionOutermost<Sublayer: Layer>: Layer where Sublayer.TangentVector.VectorSpaceScalar = Float, Sublayer.Input = Tensor, Sublayer.Output =: Tensor =
-    let downConv: Conv2d
-    let upConv: ConvTranspose2d
-    
-    let submodule: Sublayer
-    
-    public init(inChannels: int,
+type UNetSkipConnectionOutermost<'Sublayer when 'Sublayer :> Model>(inChannels: int,
                 innerChannels: int,
                 outChannels: int,
-                submodule: Sublayer) = 
-        self.downConv = Conv2d(kernelSize=(4, 4, inChannels, innerChannels),
-                               stride=2,
-                               padding=kernelSize/2 (* "same " *),
-                               filterInitializer: { dsharp.randn($0,
-                                                            stddev=dsharp.scalar(0.02)))
-        self.upConv = ConvTranspose2d(kernelSize=(4, 4, outChannels, innerChannels * 2),
-                                       stride=2,
-                                       padding=kernelSize/2 (* "same " *),
-                                       activation= tanh,
-                                       filterInitializer: { dsharp.randn($0,
-                                                                    stddev=dsharp.scalar(0.02)))
+                submodule: 'Sublayer) = 
+    inherit Model()
     
-        self.submodule = submodule
-
-    
+    let downConv = Conv2d(inChannels, innerChannels, kernelSize=4, stride=2, padding=2)
+                            //filterInitializer: { dsharp.randn($0,stddev=dsharp.scalar(0.02)))
+    let upConv = ConvTranspose2d(outChannels, innerChannels * 2, kernelSize=4, stride=2, padding=2)
+                                    //activation= tanh,
+                                    //filterInitializer: { dsharp.randn($0,stddev=dsharp.scalar(0.02)))
     
     override _.forward(input) =
-        let x = input |> self.downConv, self.submodule)
-        x = dsharp.relu(x)
-        x = self.upConv(x)
-
+        let x = input |> downConv.forward |> submodule.forward
+        let x = dsharp.relu x
+        let x = upConv.forward x
         x
-
-

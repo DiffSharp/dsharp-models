@@ -22,6 +22,7 @@ open DiffSharp.Model
 open Models.ImageClassification.DenseNet121
 open Models.ImageClassification.EfficientNet
 open Models.ImageClassification.LeNet_5
+open Models.ImageClassification.MobileNetV1
 
 let mnistBatchSize = 2
 let mnistInput = [1; 28; 28]
@@ -203,6 +204,32 @@ type LayerTests() =
     member _.LeNet_Gradient_Torch_GPU() =
         if dsharp.isDeviceTypeSupported(DeviceType.CUDA, Backend.Torch) then 
             makeGradientTest((fun () -> LeNet()), mnistInput, mnistOutput, Backend.Torch, Device.GPU, mnistBatchSize)
+
+    [<Fact>]
+    member _.MobileNetV1_Eval_Reference() =
+        makeEvalTest((fun () -> MobileNetV1(classCount=10)), mnistInput, mnistOutput, Backend.Reference, Device.CPU, mnistBatchSize)
+
+    [<Fact>]
+    member _.MobileNetV1_Gradient_Reference() =
+        makeGradientTest((fun () -> MobileNetV1(classCount=10)), mnistInput, mnistOutput, Backend.Reference, Device.CPU, mnistBatchSize)
+
+    [<Fact>]
+    member _.MobileNetV1_Eval_Torch_CPU() =
+        makeEvalTest((fun () -> MobileNetV1(classCount=10)), mnistInput, mnistOutput, Backend.Torch, Device.CPU, mnistBatchSize)
+
+    [<Fact>]
+    member _.MobileNetV1_Gradient_Torch_CPU() =
+        makeGradientTest((fun () -> MobileNetV1(classCount=10)), mnistInput, mnistOutput, Backend.Torch, Device.CPU, mnistBatchSize)
+
+    [<Fact>]
+    member _.MobileNetV1_Eval_Torch_GPU() =
+        if dsharp.isDeviceTypeSupported(DeviceType.CUDA, Backend.Torch) then 
+            makeEvalTest((fun () -> MobileNetV1(classCount=10)), mnistInput, mnistOutput, Backend.Torch, Device.GPU, mnistBatchSize)
+
+    [<Fact>]
+    member _.MobileNetV1_Gradient_Torch_GPU() =
+        if dsharp.isDeviceTypeSupported(DeviceType.CUDA, Backend.Torch) then 
+            makeGradientTest((fun () -> MobileNetV1(classCount=10)), mnistInput, mnistOutput, Backend.Torch, Device.GPU, mnistBatchSize)
 (*
 open Models.ImageClassification
 

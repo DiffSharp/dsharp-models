@@ -17,22 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Catch\main.fsx" />
-    <None Include="CycleGAN\Utils.fsx" />
-    <None Include="DCGAN\main.fsx" />
-    <None Include="GAN\main.fsx" />
-    <None Include="PersonLab\Utils.fsx" />
-    <None Include="PersonLab\Backbone.fsx" />
-    <None Include="PersonLab\Decoder.fsx" />
-    <None Include="PersonLab\Heads.fsx" />
-    <None Include="PersonLab\Personlab.fsx" />
-    <None Include="PersonLab\Pose.fsx" />
-    <None Include="PersonLab\main.fsx" />
-    <None Include="pix2pix\Dataset.fsx" />
-    <None Include="pix2pix\Discriminator.fsx" />
-    <None Include="pix2pix\Generator.fsx" />
-    <None Include="pix2pix\Layers.fsx" />
-    <None Include="pix2pix\main.fsx" />
     <None Include="Autoencoder\Autoencoder1D\main.fsx" />
     <None Include="Autoencoder\Autoencoder2D\main.fsx" />
     <None Include="Autoencoder\VAE1D\main.fsx" />
@@ -41,14 +25,17 @@
     <None Include="CycleGAN\Models\Discriminator.fsx" />
     <None Include="CycleGAN\Models\Generator.fsx" />
     <None Include="CycleGAN\main.fsx" />
+    <None Include="Catch\main.fsx" />
+    <None Include="DCGAN\main.fsx" />
+    <None Include="GAN\main.fsx" />
     <None Include="Examples\BERT-CoLA\main.fsx" />
-    <None Include="Examples\Custom-CIFAR10\main.fsx" />
     <None Include="Examples\Custom-CIFAR10\Models.fsx" />
+    <None Include="Examples\Custom-CIFAR10\main.fsx" />
     <None Include="Examples\Fractals\ComplexTensor.fsx" />
     <None Include="Examples\Fractals\ImageUtilities.fsx" />
     <None Include="Examples\Fractals\JuliaSet.fsx" />
-    <None Include="Examples\Fractals\main.fsx" />
     <None Include="Examples\Fractals\MandelbrotSet.fsx" />
+    <None Include="Examples\Fractals\main.fsx" />
     <None Include="Examples\GPT2-Inference\main.fsx" />
     <None Include="Examples\GPT2-WikiText2\main.fsx" />
     <None Include="Examples\LeNet-MNIST\main.fsx" />
@@ -76,10 +63,10 @@
     <None Include="FastStyleTransfer\Utility\ImportableLayer.fsx" />
     <None Include="Gym\Blackjack\main.fsx" />
     <None Include="Gym\CartPole\main.fsx" />
+    <None Include="Gym\DQN\ReplayBuffer.fsx" />
     <None Include="Gym\DQN\Agent.fsx" />
     <None Include="Gym\DQN\Gathering.fsx" />
     <None Include="Gym\DQN\main.fsx" />
-    <None Include="Gym\DQN\ReplayBuffer.fsx" />
     <None Include="Gym\FrozenLake\main.fsx" />
     <None Include="Gym\PPO\ActorCritic.fsx" />
     <None Include="Gym\PPO\Agent.fsx" />
@@ -100,6 +87,18 @@
     <None Include="MiniGo\Strategies\Policy.fsx" />
     <None Include="MiniGo\Strategies\RandomPolicy.fsx" />
     <None Include="MiniGo\main.fsx" />
+    <None Include="PersonLab\Utils.fsx" />
+    <None Include="PersonLab\Backbone.fsx" />
+    <None Include="PersonLab\Decoder.fsx" />
+    <None Include="PersonLab\Heads.fsx" />
+    <None Include="PersonLab\Personlab.fsx" />
+    <None Include="PersonLab\Pose.fsx" />
+    <None Include="PersonLab\main.fsx" />
+    <None Include="pix2pix\Dataset.fsx" />
+    <None Include="pix2pix\Layers.fsx" />
+    <None Include="pix2pix\Discriminator.fsx" />
+    <None Include="pix2pix\Generator.fsx" />
+    <None Include="pix2pix\main.fsx" />
     <!--
     <None Include="Tests\CheckpointTests\CheckpointIndexReaderTests.fsx" />
     <None Include="Tests\CheckpointTests\CheckpointReaderTests.fsx" />

@@ -37,7 +37,7 @@ where
   let model = Model()
   model.move(device)
   // TODO: Split out the optimizer as a separate specification.
-  let optimizer = SGD(model, learningRate=0.1)
+  let optimizer = SGD(model, learningRate=dsharp.scalar 0.1)
   optimizer = SGD(copying: optimizer, to: device)
 
   let dataset = ClassificationDataset(batchSize=batchSize, device=device)

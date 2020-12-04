@@ -51,15 +51,16 @@ type InvertedResidual(filters: (int * int), stride: int) =
     let filters0, filters1 = filters
     let branchChannels = filters1 / 2
     let branch = 
-        Sequential(
-            ZeroPadding2d(1,1),
-            DepthwiseConv2d(filters0, 1, kernelSize=3, stride = stride (* ,padding="valid" *)),
-            BatchNorm2d(numFeatures=filters0),
-            Conv2d(filters0, branchChannels, kernelSize=1, stride=1 (* , padding="valid" *),bias=false),
-            BatchNorm2d(numFeatures=branchChannels))
+        Sequential [
+            ZeroPadding2d(1,1)
+            DepthwiseConv2d(filters0, 1, kernelSize=3, stride = stride (* ,padding="valid" *))
+            BatchNorm2d(numFeatures=filters0)
+            Conv2d(filters0, branchChannels, kernelSize=1, stride=1 (* , padding="valid" *),bias=false)
+            BatchNorm2d(numFeatures=branchChannels)
+        ]
 
-    let inputChannels = if includeBranch then filters0 else branchChannels
-    let conv1 = Conv2d(inputChannels, branchChannels, kernelSize=1, stride=1 (* , padding="valid" *), bias=false)
+    let inChannels = if includeBranch then filters0 else branchChannels
+    let conv1 = Conv2d(inChannels, branchChannels, kernelSize=1, stride=1 (* , padding="valid" *), bias=false)
     let conv2 = Conv2d(branchChannels, branchChannels, kernelSize=1, stride=1 (* , padding="valid" *), bias=false)
     let depthwiseConv = DepthwiseConv2d(branchChannels, 1, kernelSize=3, stride=stride (* , padding="valid" *))
     let batchNorm1 = BatchNorm2d(numFeatures=branchChannels)
@@ -82,39 +83,39 @@ type InvertedResidual(filters: (int * int), stride: int) =
 
 type ShuffleNetV2(stagesRepeat, stagesOutputChannels, classCount: int) =
     inherit Model()
-    let zeroPad: ZeroPadding2d = ZeroPadding2d(1,1)
+    let zeroPad = ZeroPadding2d(1,1)
     
     let (stagesRepeat0, stagesRepeat1, stagesRepeat2) = stagesRepeat
     let (stagesOutputChannels0, stagesOutputChannels1, stagesOutputChannels2, stagesOutputChannels3, stagesOutputChannels4) = stagesOutputChannels
     let globalPool = GlobalAvgPool2d()
     
-    let inputChannels = 3
-    let outputChannels = stagesOutputChannels0
-    let conv1 = Conv2d(inputChannels, outputChannels, kernelSize=3, stride=1)
+    let inChannels = 3
+    let outChannels = stagesOutputChannels0
+    let conv1 = Conv2d(inChannels, outChannels, kernelSize=3, stride=1)
     let maxPool = MaxPool2d(kernelSize=3, stride=2)
     let conv2 = Conv2d(stagesOutputChannels3, stagesOutputChannels4, kernelSize=1, stride=1,bias=false)
     let dense = Linear(inFeatures=stagesOutputChannels4, outFeatures=classCount)
-    let batchNorm1 = BatchNorm2d(numFeatures=outputChannels)
-    let inputChannels = outputChannels
-    let outputChannels = stagesOutputChannels1
+    let batchNorm1 = BatchNorm2d(numFeatures=outChannels)
+    let inChannels = outChannels
+    let outChannels = stagesOutputChannels1
     let invertedResidualBlocksStage1 = 
-        [| InvertedResidual(filters=(inputChannels, outputChannels),stride=2)
+        [| InvertedResidual(filters=(inChannels, outChannels),stride=2)
            for _ in 1..stagesRepeat0 do
-                InvertedResidual(filters=(outputChannels, outputChannels), stride=1) |]
+                InvertedResidual(filters=(outChannels, outChannels), stride=1) |]
 
-    let inputChannels = outputChannels
-    let outputChannels = stagesOutputChannels2
+    let inChannels = outChannels
+    let outChannels = stagesOutputChannels2
     let invertedResidualBlocksStage2 = 
-        [| InvertedResidual(filters=(inputChannels, outputChannels),stride=2)
+        [| InvertedResidual(filters=(inChannels, outChannels),stride=2)
            for _ in 1..stagesRepeat1 do
-                InvertedResidual(filters=(outputChannels, outputChannels), stride=1) |]
+                InvertedResidual(filters=(outChannels, outChannels), stride=1) |]
 
-    let inputChannels = outputChannels
-    let outputChannels = stagesOutputChannels3
+    let inChannels = outChannels
+    let outChannels = stagesOutputChannels3
     let invertedResidualBlocksStage3 = 
-        [| InvertedResidual(filters=(inputChannels, outputChannels), stride=2)
+        [| InvertedResidual(filters=(inChannels, outChannels), stride=2)
            for _ in 1..stagesRepeat2 do
-                InvertedResidual(filters=(outputChannels, outputChannels), stride=1) |]
+                InvertedResidual(filters=(outChannels, outChannels), stride=1) |]
     
     override _.forward(input) =
         let output = dsharp.relu(input |> zeroPad.forward |> conv1.forward |> batchNorm1.forward |> zeroPad.forward |> maxPool.forward)

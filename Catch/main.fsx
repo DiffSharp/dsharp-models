@@ -42,7 +42,11 @@ type CatchAgent(learningRate, initialReward) =
     //interface Agent
     //type Action = CatchAction
 
-    let model = Sequential(Linear(inFeatures=3, outFeatures=50, activation=dsharp.sigmoid), Linear(inFeatures=50, outFeatures=3, activation=dsharp.sigmoid))
+    let model = 
+        Linear(inFeatures=3, outFeatures=50) 
+        --> dsharp.sigmoid 
+        --> Linear(inFeatures=50, outFeatures=3)
+        --> dsharp.sigmoid
 
     let learningRate: double = learningRate
     let optimizer = Adam(model, dsharp.tensor(learningRate))
@@ -53,16 +57,15 @@ type CatchAgent(learningRate, initialReward) =
     member _.step(observation: Observation, reward: Reward) = 
         previousReward <- reward
 
-        let x = dsharp.tensor(observation).rankLifted()
+        let x = dsharp.tensor(observation).unsqueeze(0)
         let (ŷ, backprop) = model.appliedForBackpropagation(x)
-        let maxIndex = ŷ.argmax().toScalar()
+        let maxIndex = ŷ.argmax().[0]
 
         let δloss = -log(dsharp.tensor(ŷ.max(), dtype=Dtype.Float32)).expand( ŷ.shape) * previousReward
         let (δmodel, _) = backprop(δloss)
-        optimizer.updateRule(model, along=δmodel)
+        optimizer.step()
 
         enum<CatchAction>(int(maxIndex))
-
 
     /// Returns the perfect action, given an observation.
     /// If the ball is left of the paddle, returns `left`.
@@ -123,7 +126,7 @@ type CatchEnvironment(rowCount: int, columnCount: int) =
 
     do reset() |> ignore
 
-    member _.step(newObservation: Tensor, reward: Reward) = 
+    member _.step(action) = 
         // Update state.
         match action with
         | CatchAction.Left when paddlePosition.x > 0 ->
@@ -138,14 +141,14 @@ type CatchEnvironment(rowCount: int, columnCount: int) =
         let currentReward = reward
         // Return observation and reward.
         if ballPosition.y = rowCount then
-            (observation, currentReward)
+            (reset(), currentReward)
         else
-            (newObservation, currentReward)
+            (observation, currentReward)
 
     member env.run() = 
         let mutable winCount = 0
         let mutable totalWinCount = 0
-        let agent = CatchAgent(initialReward=reward, learningRate=0.05)
+        let agent = CatchAgent(initialReward=reward, learningRate=dsharp.scalar 0.05)
 
         // Setup environment and agent.
         agent.Model.mode <- Mode.Train
@@ -168,7 +171,7 @@ type CatchEnvironment(rowCount: int, columnCount: int) =
                           \(double(totalWinCount) / double(gameCount)) \
                           [{totalWinCount}/{gameCount}]
                           """)
-                    winCount = 0
+                    winCount <- 0
 
         print($"""
               Win rate (final): \(double(totalWinCount) / double(gameCount)) \

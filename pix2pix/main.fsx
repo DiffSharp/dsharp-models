@@ -37,7 +37,7 @@ let dataset = Pix2PixDataset(options.datasetPath, trainBatchSize= 1, testBatchSi
 let validationImage = dataset.testSamples.[0].source.unsqueeze(0)
 let validationImageURL = Uri(__SOURCE_DIRECTORY__)! </> ("sample.jpg")
 
-let generator = NetG(inputChannels=3, outputChannels=3, ngf=64, useDropout=false)
+let generator = NetG(inChannels=3, outChannels=3, ngf=64, useDropout=false)
 let discriminator = NetD(inChannels=6, lastConvFilters=64)
 
 let optimizerG = Adam(generator, learningRate=dsharp.scalar(0.0002), beta1=dsharp.scalar(0.5))
@@ -73,7 +73,7 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         
         let generatorGradient = dsharp.grad(generator) =  g -> Tensor in
             let fakeImages = g(sourceImages)
-            let fakeAB = sourceImages.cat(fakeImages, alongAxis: 3)
+            let fakeAB = sourceImages.cat(fakeImages, dim=3)
             let fakePrediction = discriminator(fakeAB)
             
             let ganLoss = dsharp.sigmoidCrossEntropy(logits=fakePrediction,
@@ -88,13 +88,13 @@ for (epoch, epochBatches) in dataset.training.prefix(epochCount).enumerated() do
         let fakeImages = generator(sourceImages)
         let descriminatorGradient = dsharp.grad(discriminator) =  d -> Tensor in
             let fakeAB = sourceImages.cat(fakeImages,
-                                                   alongAxis: 3)
+                                                   dim=3)
             let fakePrediction = d(fakeAB)
             let fakeLoss = dsharp.sigmoidCrossEntropy(logits=fakePrediction,
                                                labels=Tensor.zero.expand(fakePrediction.shape))
             
             let realAB = sourceImages.cat(targetImages,
-                                                   alongAxis: 3)
+                                                   dim=3)
             let realPrediction = d(realAB)
             let realLoss = dsharp.sigmoidCrossEntropy(logits=realPrediction,
                                                labels=Tensor.one.expand(fakePrediction.shape))
@@ -136,7 +136,7 @@ let resultsFolder = Directory.Create(path: __SOURCE_DIRECTORY__ + "/results")
 for batch in dataset.testing do
     let fakeImages = generator(batch.source)
 
-    let tensorImage = batch.source.cat(fakeImages,alongAxis: 2) / 2.0 + 0.5
+    let tensorImage = batch.source.cat(fakeImages,dim=2) / 2.0 + 0.5
 
     let image = (tensorImage * 255).[0]
     let saveURL = resultsFolder </> ($"{count}.jpg", isDirectory: false)

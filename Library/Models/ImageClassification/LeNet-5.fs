@@ -29,13 +29,13 @@ open DiffSharp.ShapeChecking
 [<ShapeCheck()>]
 type LeNet() =
     inherit Model()
-    let conv1 = Conv2d(1, 6, kernelSize=5, padding=5/2 (* "same " *), activation=dsharp.relu)
+    let conv1 = Conv2d(1, 6, kernelSize=5, padding=5/2 (* "same " *)) --> dsharp.relu
     let pool1 = AvgPool2d(kernelSize=2, stride=2)
-    let conv2 = Conv2d(6, 16, kernelSize=5, activation=dsharp.relu)
+    let conv2 = Conv2d(6, 16, kernelSize=5) --> dsharp.relu
     let pool2 = AvgPool2d(kernelSize=2, stride=2)
     let flatten = Flatten()
-    let fc1 = Linear(inFeatures=400, outFeatures=120, activation=dsharp.relu)
-    let fc2 = Linear(inFeatures=120, outFeatures=84, activation=dsharp.relu)
+    let fc1 = Linear(inFeatures=400, outFeatures=120) --> dsharp.relu
+    let fc2 = Linear(inFeatures=120, outFeatures=84) --> dsharp.relu
     let fc3 = Linear(inFeatures=84, outFeatures=10)
 
     // Note, we may automate this next line
