@@ -33,18 +33,18 @@ let dataset = FashionMNIST(batchSize=batchSize, flattening=true)
 
 // An autoencoder.
 let autoencoder = 
-    Sequential (
+    Sequential [
           // The encoder.
-          Linear(inFeatures=imageHeight * imageWidth, outFeatures=128, activation=dsharp.relu),
-          Linear(inFeatures=128, outFeatures=64, activation=dsharp.relu),
-          Linear(inFeatures=64, outFeatures=12, activation=dsharp.relu),
-          Linear(inFeatures=12, outFeatures=3, activation=dsharp.relu),
+          Linear(inFeatures=imageHeight * imageWidth, outFeatures=128) --> dsharp.relu
+          Linear(inFeatures=128, outFeatures=64) --> dsharp.relu
+          Linear(inFeatures=64, outFeatures=12) --> dsharp.relu
+          Linear(inFeatures=12, outFeatures=3) --> dsharp.relu
           // The decoder.
-          Linear(inFeatures=3, outFeatures=12, activation=dsharp.relu),
-          Linear(inFeatures=12, outFeatures=64, activation=dsharp.relu),
-          Linear(inFeatures=64, outFeatures=128, activation=dsharp.relu),
-          Linear(inFeatures=128, outFeatures=imageHeight * imageWidth, activation=dsharp.tanh)
-    )
+          Linear(inFeatures=3, outFeatures=12) --> dsharp.relu
+          Linear(inFeatures=12, outFeatures=64) --> dsharp.relu
+          Linear(inFeatures=64, outFeatures=128) --> dsharp.relu
+          Linear(inFeatures=128, outFeatures=imageHeight * imageWidth) --> dsharp.tanh
+    ]
 
 let optimizer = RMSProp(autoencoder)
 

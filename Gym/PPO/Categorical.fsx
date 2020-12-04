@@ -115,7 +115,7 @@ type Categorical<Scalar: TensorFlowIndex>: DifferentiableDistribution, KeyPathIt
       numSamples: Tensor (*<int32>*)(1),
       seed: Int64(seed.graph),
       seed2: Int64(seed.op))
-    let flattenedSamples = multinomial.gathering(atIndices: Tensor (*<int32>*)(0), alongAxis: 1)
+    let flattenedSamples = multinomial.gathering(atIndices: Tensor (*<int32>*)(0), dim=1)
     flattenedSamples.unflattenedBatch(
       outerDims: int[](self.logProbabilities.shape.dimensions[0..<outerDimCount]))
 

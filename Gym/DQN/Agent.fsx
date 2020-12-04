@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"..\..\..\DiffSharp\tests\DiffSharp.Benchmarks.Python\bin\Release\netcoreapp3.1\Python.Runtime.dll"
+#r "System.Runtime.Extensions.dll"
+
 open DiffSharp
 
 // Force unwrapping with `!` does not provide source location when unwrapping `nil`, so we instead
@@ -38,7 +44,7 @@ type DeepQNetwork() =
   let l1, l2: Dense
 
   init(observationSize: int, hiddenSize: int, actionCount: int) = 
-    l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize, activation=dsharp.relu)
+    l1 = Linear(inFeatures=observationSize, outFeatures=hiddenSize) --> dsharp.relu
     l2 = Linear(inFeatures=hiddenSize, outFeatures=actionCount, activation= id)
 
 

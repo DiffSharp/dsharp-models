@@ -42,13 +42,14 @@ let latentDim = 20
 type VAE() =
     inherit Model()
     // Encoder
-    let encoderDense1 = Linear(inFeatures= inputDim, outFeatures=hiddenDim, activation=dsharp.relu)
+    let encoderDense1 = Linear(inFeatures= inputDim, outFeatures=hiddenDim) --> dsharp.relu
     let encoderDense2_1 = Linear(inFeatures=hiddenDim, outFeatures=latentDim)
     let encoderDense2_2 = Linear(inFeatures=hiddenDim, outFeatures=latentDim)
 
-    let decoderDense1 = Linear(inFeatures= latentDim, outFeatures=hiddenDim, activation=dsharp.relu)
+    let decoderDense1 = Linear(inFeatures= latentDim, outFeatures=hiddenDim) --> dsharp.relu
     let decoderDense2 = Linear(inFeatures=hiddenDim, outFeatures=inputDim)
 
+    do base.register()
     member _.call(input: Tensor) =
         // Encode
         let intermediateInput = encoderDense1.forward(input)

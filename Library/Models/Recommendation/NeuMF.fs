@@ -62,7 +62,7 @@ type NeuMF(numUsers: int,
 
     let mlpLayers = 
         [| for (inputSize, outputSize) in Array.zip mlpLayerSizes mlpLayerSizes.[1..] do
-             Linear(inFeatures=inputSize, outFeatures=outputSize, activation=dsharp.relu) |]
+             Linear(inFeatures=inputSize, outFeatures=outputSize) --> dsharp.relu |]
 
     let neuMFLayer = Linear(inFeatures=(mlpLayerSizes |> Array.last) + numLatentFeatures, outFeatures=1)
 

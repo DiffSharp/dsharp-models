@@ -33,7 +33,7 @@ open TrainingLoop
 
 let dataset = Imagenette(batchSize= 64, inputSize= Resized320, outFeatures=224, device=device)
 let model = MobileNetV2(classCount=10)
-let optimizer = SGD(model, learningRate=0.002, momentum=0.9)
+let optimizer = SGD(model, learningRate=dsharp.scalar 0.002, momentum=0.9)
 
 let trainingLoop = TrainingLoop(
   training: dataset.training,

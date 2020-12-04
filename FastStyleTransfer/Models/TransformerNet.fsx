@@ -14,10 +14,10 @@ open Normalization
 type ResidualBlock(channels: int) = 
     inherit Model()
     /// Convolution & instance normalization layers.
-    let conv1 = ConvLayer(inChannels=channels, outChannels: channels, kernelSize: 3, stride=1)
-    let in1 = InstanceNorm2d(numFeatures=channels)
-    let conv2 = ConvLayer(inChannels=channels, outChannels: channels, kernelSize: 3, stride=1)
-    let in2 = InstanceNorm2d(numFeatures=channels)
+    let conv1 = ConvLayer(inChannels=channels, outChannels=channels, kernelSize=3, stride=1)
+    let in1 = InstanceNorm2d(featureCount=channels)
+    let conv2 = ConvLayer(inChannels=channels, outChannels=channels, kernelSize=3, stride=1)
+    let in2 = InstanceNorm2d(featureCount=channels)
 
     /// Returns the output obtained from applying the layer to the given input.
     ///
@@ -25,8 +25,6 @@ type ResidualBlock(channels: int) =
     /// - Returns: The output.
     override _.forward(input) =
         input + input |> conv1, in1, relu, conv2, in2)
-
-
 
 /// Creates 2D upsampling layer.
 ///
@@ -68,9 +66,9 @@ type TransformerNet() =
     // Convolution & instance normalization layers.
     let conv1 = ConvLayer(inChannels=3, outChannels: 32, kernelSize: 9, stride=1)
     let in1 = InstanceNorm2d(numFeatures=32)
-    let conv2 = ConvLayer(inChannels=32, outChannels: 64, kernelSize: 3, stride=2)
+    let conv2 = ConvLayer(inChannels=32, outChannels: 64, kernelSize=3, stride=2)
     let in2 = InstanceNorm2d(numFeatures=64)
-    let conv3 = ConvLayer(inChannels=64, outChannels: 128, kernelSize: 3, stride=2)
+    let conv3 = ConvLayer(inChannels=64, outChannels: 128, kernelSize=3, stride=2)
     let in3 = InstanceNorm2d(numFeatures=128)
 
     // Residual block layers.
@@ -83,11 +81,11 @@ type TransformerNet() =
     // Upsampling & instance normalization layers.
     let deconv1 = UpsampleConvLayer(
         inChannels=128, outChannels: 64,
-        kernelSize: 3, stride=1, scaleFactor: 2.0)
+        kernelSize=3, stride=1, scaleFactor: 2.0)
     let in4 = InstanceNorm2d(numFeatures=64)
     let deconv2 = UpsampleConvLayer(
         inChannels=64, outChannels: 32,
-        kernelSize: 3, stride=1, scaleFactor: 2.0)
+        kernelSize=3, stride=1, scaleFactor: 2.0)
     let in5 = InstanceNorm2d(numFeatures=32)
     let deconv3 = UpsampleConvLayer(
         inChannels=32, outChannels: 3,

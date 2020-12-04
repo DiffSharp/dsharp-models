@@ -33,7 +33,7 @@ open TrainingLoop
 
 let dataset = Imagewoof(batchSize= 32, inputSize= Resized320, outFeatures=224, device=device)
 let model = VGG16(classCount=10)
-let optimizer = SGD(model, learningRate=0.02, momentum=0.9, decay=0.0005)
+let optimizer = SGD(model, learningRate=dsharp.scalar 0.02, momentum=0.9, decay=0.0005)
 
 let scheduleLearningRate<L: TrainingLoopProtocol>(
   _ loop: inout L, event: TrainingLoopEvent

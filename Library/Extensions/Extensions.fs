@@ -14,7 +14,11 @@ module DiffSharpExtensions =
 
     type FilePath = string
     type RandomNumberGenerator = System.Random
+
     let (</>) (a: FilePath) (b: string) : FilePath = Path.Combine(a,b)
+
+    let scalar (x: scalar) : scalar = x
+
     type Tensor with 
         member t.ndims = t.dim
 
@@ -24,9 +28,7 @@ module DiffSharpExtensions =
 
         member t.reshape(shape: Shape) = t.view(shape)
 
-        member t.cat(t2: Tensor, dim: int) : Tensor =
-            dsharp.cat([t;t2], dim)
-            //t.split(([|  |]: int[]), dim=dim)
+        member t.cat(t2: Tensor, dim: int) = dsharp.cat([t;t2], dim)
 
         member t.sqr() = t * t
 
@@ -57,10 +59,10 @@ module DiffSharpExtensions =
             (t, Array.rev (Array.sort dims)) ||> Array.fold (fun input dim -> dsharp.stddev(input, dim, ?keepDim=keepDim))
 
         member t.moments () =
-               dsharp.mean(t), dsharp.stddev(t)
+            dsharp.mean(t), dsharp.stddev(t)
 
         member t.moments (dim: int, ?keepDim: bool) =
-               t.mean(dim, ?keepDim=keepDim), t.stddev(dim, ?keepDim=keepDim)
+            t.mean(dim, ?keepDim=keepDim), t.stddev(dim, ?keepDim=keepDim)
 
         member t.moments (dims: seq<int>, ?keepDim: bool) =
             t.mean(dims, ?keepDim=keepDim), t.stddev(dims, ?keepDim=keepDim)
@@ -71,40 +73,19 @@ module DiffSharpExtensions =
                 res <- m.forward res
             res
 
-        member t.gelu() : Tensor = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
+        member a.chunk(count: int, ?dim: int) =
+            let dim = defaultArg dim 0
+            let n = a.shape.[dim]
+            let sz = (n + count - 1) / count
+            let sizes = [| for i in 0 .. count-1 do let k = min (n - i * sz) sz in if k > 0 then yield k |]
+            a.split(sizes, dim=dim)
 
-        member t.silu() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
-
-        member t.hardswish() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
-
-        member t.relu6() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
-
-        member t.hardsigmoid() = 
-            if t.backend = Backend.ShapeChecking then t else failwith "tbd - TorchSharp in progress"
-
-        member t.argmax(dim: int) : Tensor = failwith "TBD"
-
-        member t.permute(permutation: seq<int>) : Tensor = 
-            if t.backend = Backend.ShapeChecking then 
-                let idxs = Array.ofSeq permutation
-                let newShape = Array.permute (fun i -> idxs.[i]) t.shapex.Dims
-                t.zerosLike(Shape newShape)
-            else 
-                failwith "TBD"
-
-        member t.split(count: int, dim: int) : Tensor[] = failwith "TBD"
-            //t.split(([|  |]: int[]), dim=dim)
-
-    type Sequential([<ParamArray>] models: Model[]) =
+    type Sequential(models: seq<Model>) =
         inherit Model()
+        let models = Seq.toArrayQuick models
         do base.add(Array.map box models)
         override _.forward(input) = 
             (input, models) ||> Array.fold (fun input m -> m.forward input)
-        new (models: seq<Model>) = Sequential(Seq.toArrayQuick models)
     
     type Function(f: Tensor -> Tensor) =
         inherit Model()
@@ -113,15 +94,30 @@ module DiffSharpExtensions =
 
         override m.forward(value) = f value
 
-    type Flatten() =
-        inherit Model()
+    [<AutoOpen>]
+    type Functions =
+        static member ZeroPadding2d(p0: int, p1: int) =
+           Function (fun value -> value.pad([0; 0; p0; p1]))
 
-        override _.ToString() = sprintf "Flatten()"
+        static member AvgPool2d(kernelSize: int, ?stride: int, ?padding: int) =
+            Function (fun input -> input.avgpool2d(kernelSize, ?stride=stride, ?padding=padding))
 
-        override m.forward(value) = value.flatten(startDim=(if value.dim=1 then 0 else 1))
+        static member GlobalAvgPool2d() =
+            // See https://discuss.pytorch.org/t/global-average-pooling-in-pytorch/6721/18
+            Function (fun x -> dsharp.mean(x.view([ x.shapex.[0]; x.shapex.[1]; -1I]), dim=2))
+           
+        static member Flatten() =
+            Function (fun value -> value.flatten(startDim=(if value.dim=1 then 0 else 1)))
+
+        static member MaxPool2d(?kernelSize: int, ?stride: int, ?padding: int, ?kernelSizes: seq<int>, ?strides: seq<int>, ?paddings: seq<int>) =
+           Function (fun value -> value.maxpool2d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding, ?kernelSizes=kernelSizes, ?strides=strides, ?paddings=paddings))
+
+        static member MaxPool3d(?kernelSize: int, ?stride: int, ?padding: int, ?kernelSizes: seq<int>, ?strides: seq<int>, ?paddings: seq<int>) =
+           Function (fun value -> value.maxpool3d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding, ?kernelSizes=kernelSizes, ?strides=strides, ?paddings=paddings))
+
+        static member UpSampling2d(size: int) = Function (fun value -> failwith "TBD")
 
     type dsharp with 
-        static member gelu(input: Tensor) = input.gelu()
 
         static member permute(input: Tensor, [<ParamArray>] permutation: seq<int>) = input.permute(permutation)
 
@@ -152,14 +148,17 @@ module DiffSharpExtensions =
             // needs "groups"
             input.conv2d(filters, ?stride=stride, ?strides=strides, ?padding=padding, ?paddings=paddings, ?dilation=dilation, ?dilations=dilations)
 
-        //static member scalar(t: scalar, ?dtype, ?device, ?backend) = dsharp.full(1, t, ?dtype=dtype, ?device=device, ?backend=backend)
-
-        static member randn(shape: seq<int>, ?stddev: scalar, ?mean: scalar, ?dtype, ?device, ?backend) =
+        /// <summary>Returns a tensor filled with random numbers from a normal distribution with the given mean and standard deviation.</summary>
+        /// <param name="shape">The desired shape of returned tensor.</param>
+        /// <param name="stddev">The desired standard deviation of returned tensor.</param>
+        /// <param name="mean">The desired mean of returned tensor.</param>
+        /// <param name="dtype">The desired element type of returned tensor. Default: if None, uses Dtype.Default.</param>
+        /// <param name="device">The desired device of returned tensor. Default: if None, uses Device.Default.</param>
+        /// <param name="backend">The desired backend of returned tensor. Default: if None, uses Backend.Default.</param>
+        static member randn(shape: seq<int>, stddev: scalar, ?mean: scalar, ?dtype, ?device, ?backend) =
             let _backend = defaultArg backend Backend.Default
-            if _backend = Backend.ShapeChecking then 
-                dsharp.randn(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend)
-            else 
-                failwith "TBD"
+            let mean = defaultArg mean (0.0 :> scalar)
+            dsharp.randn(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend) * stddev + mean
 
         static member rand(shape: seq<int>, low: scalar, high: scalar, ?dtype, ?device, ?backend) =
             dsharp.rand(shape=shape, ?dtype=dtype, ?device=device, ?backend=backend)
@@ -170,68 +169,51 @@ module DiffSharpExtensions =
             else 
                 failwith "TBD"
 
-        static member silu(input:Tensor) : Tensor = input.silu()
-
-        static member hardswish(input:Tensor) : Tensor = input.hardswish()
-
-        static member relu6(input:Tensor) : Tensor = input.relu6()
-
     [<Extension>]
     type ModelExtensions() =
+
         [<Extension>]
-        static member grad(model: Model<Tensor, Tensor>, input, loss) = 
+        static member register(model: Model<'In, 'Out>, ?included: obj list, ?excluded: obj list) = 
+            // TODO
+            ()
+
+        [<Extension>]
+        static member grad(model: Model<Tensor, Tensor>, input, loss: Tensor -> Tensor) = 
+            model.noDiff()
             model.reverseDiff()
-            dsharp.grad (fun t -> loss (model.forward t)) input
+            let output = model.forward(input)
+            (loss output).reverse()
+            model.parameters.derivative
 
         [<Extension>]
-        static member gradv(model: Model<Tensor, Tensor>, input, loss) = 
+        static member valueWithGradient(model: Model<Tensor, Tensor>, loss: (* apply*) (Tensor -> Tensor) -> Tensor) = 
+            model.noDiff()
             model.reverseDiff()
-            dsharp.gradv (fun t -> loss (model.forward t)) input
+            let output = loss model.forward
+            output.reverse()
+            output, model.parameters.derivative
 
         [<Extension>]
-        static member appliedForBackpropagation(model: Model<Tensor, Tensor>, input) : Tensor * (Tensor -> Tensor * Tensor)= 
-            failwith "tbd"
-            //m.reverseDiff()
-            //dsharp.gradv (fun t -> loss (m.forward t)) input
-
-    type ZeroPadding2d(p0: int, p1: int) =
-       inherit Model()
-       override m.forward(value) = 
-           value.pad([0; 0; p0; p1])
-
-    type AvgPool2d(kernelSize: int, ?stride: int, ?padding: int) =
-       inherit Model()
-       
-       override m.forward(value) = value.maxpool2d(kernelSize, ?stride=stride, ?padding=padding) //failwith "TBD"; value
-
-    type GlobalAvgPool2d() =
-       inherit Model()
-       override m.forward(value) = 
-           // TODO: this is fake
-           value.zerosLike(Shape [value.shapex.[0]; value.shapex.[1]])
-            //value.maxpool2d(kernelSizes=[value.shapex.[2]; value.shapex.[3]]).view([value.shapex.[0]; value.shapex.[1]]) //failwith "TBD"; value
-
-    type UpSampling2d(size: int) =
-       inherit Model()
-       override m.forward(value) = failwith "TBD"; value
+        static member appliedForBackpropagation(model: Model<Tensor, Tensor>, input: Tensor) : Tensor * (Tensor -> Tensor * Tensor)= 
+            model.noDiff()
+            let tag = GlobalNestingLevel.Current
+            model.reverseDiff()
+            let input = input.reverseDiff(tag)
+            let output = model.forward(input)
+            output, (fun δloss -> 
+                output.reverse(δloss)
+                model.parameters.derivative, input.derivative) 
 
     type LayerNorm(numFeatures: int, axis: int) =
        inherit Model()
        let p_offset = Parameter(dsharp.zero())
        let p_scale = Parameter(dsharp.zero())
+
+       do base.register()
+
        member _.offset = p_offset
        member _.scale = p_scale
        override m.forward(value) = failwith "TBD"; value
-
-    type MaxPool2d(?kernelSize: int, ?stride: int, ?padding: int) =
-       inherit Model()
-       override m.forward(value) = value.maxpool2d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding) //failwith "TBD"; value
-
-    type MaxPool3d(?kernelSize: int, ?stride: int, ?padding: int, ?kernelSizes: seq<int>, ?strides: seq<int>, ?paddings: seq<int>) =
-       inherit Model()
-       override m.forward(value) = 
-           // TODO: this is fake for sizes
-           value.maxpool3d(?kernelSize=kernelSize, ?stride=stride, ?padding=padding, ?strides=strides, ?paddings=paddings) //failwith "TBD"; value
 
     type DepthwiseConv2d(inChannels: int, channelMultiplier: int, ?kernelSize: int, ?kernelSizes: seq<int>, ?stride: int, ?padding: int, ?strides: seq<int>, ?paddings: seq<int>) =
        inherit Model()
@@ -261,6 +243,8 @@ module DiffSharpExtensions =
             with get (state: OptimizerWeightStepState, parameter: Parameter) : Tensor = failwith "TBD"
             and set (state: OptimizerWeightStepState, parameter: Parameter) (v: Tensor) = failwith "TBD"
 
+    /// swift for tensorflow stuff
+
     type ParameterGroupOptimizer() =
         inherit Optimizer()
         /// <summary>TBD</summary>
@@ -271,8 +255,6 @@ module DiffSharpExtensions =
         member _.makeStateParameter(name: string) : Parameter = failwith "TBD"
         member _.appendCallback(callback: OptimizerWeightStepState * OptimizerState -> unit) = failwith "TBD"
         member _.makeOptimizer() = failwith "TBD"
-
-    let scalar (x: scalar) : scalar = x
 
     type Embedding(embeddings: Tensor) =
         member val t = 
@@ -296,3 +278,4 @@ module DiffSharpExtensions =
     let truncatedNormalInitializer(standardDeviation: Tensor) : Shape -> Tensor = failwith "TBD"
 
     type TangentVector(x:obj) = class end
+

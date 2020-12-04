@@ -32,9 +32,9 @@ type MLP(dims: int[], ?sigmoidLastLayer: bool) =
     let blocks =
         [| for i in 0..dims.Length-2 do
             if sigmoidLastLayer && i = dims.Length - 2 then
-                Linear(inFeatures=dims.[i], outFeatures=dims.[i+1], activation=dsharp.sigmoid)
+                Linear(inFeatures=dims.[i], outFeatures=dims.[i+1]) --> dsharp.sigmoid
             else
-                Linear(inFeatures=dims.[i], outFeatures=dims.[i+1], activation=dsharp.relu) |]
+                Linear(inFeatures=dims.[i], outFeatures=dims.[i+1]) --> dsharp.relu |]
  
     override _.forward(input) =
         (input, blocks) ||> Array.fold (fun last layer -> layer.forward last) 

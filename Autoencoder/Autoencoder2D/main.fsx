@@ -48,8 +48,9 @@ type Autoencoder2D() =
     let decoder5 = Conv2d(8, 16, kernelSize=3)
     let decoder6 = UpSampling2d(size=2)
 
-    let output = Conv2d(16, 1, kernelSize=3, padding=3/2, activation=dsharp.sigmoid)
-     
+    let output = Conv2d(16, 1, kernelSize=3, padding=3/2) --> dsharp.sigmoid
+    do base.register()
+ 
     override _.forward(input) =
         let resize = input.view([batchSize; 28; 28; 1])
         let encoder =

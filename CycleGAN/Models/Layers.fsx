@@ -40,7 +40,7 @@ type InstanceNorm2d(numFeatures: int, ?epsilon: Tensor) =
     /// Learnable parameter offset for affine transformation.
     let offset = dsharp.zeros [numFeatures] |> Parameter
 
-    do base.add([scale; offset])
+    do base.register([scale; offset])
 
     //[<ShapeCheck("N,100,H,W")>]
     override _.forward(input: Tensor) =
@@ -65,7 +65,8 @@ type ResNetBlock(channels: int, ?useDropOut: bool) =
     let norm2 = InstanceNorm2d(numFeatures=channels)
 
     let dropOut = Dropout(0.5)
-    do base.add([conv1; norm1; conv2; norm2])
+
+    do base.register()
 
     [<ShapeCheck("N,100,H,W")>]
     override _.forward(input: Tensor) =

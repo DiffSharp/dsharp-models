@@ -22,8 +22,8 @@ open DiffSharp.ShapeChecking
 open Layers
 
 [<ShapeCheck(3, 3, 5, 7)>]
-type ResNetGenerator(inputChannels:int,
-        outputChannels: int,
+type ResNetGenerator(inChannels:int,
+        outChannels: int,
         blocks: int,
         ngf: int,
         ?useDropout: bool) =
@@ -32,7 +32,7 @@ type ResNetGenerator(inputChannels:int,
     let useDropout = defaultArg useDropout false
     let useBias = true
 
-    let conv1 = Conv2d(inputChannels, ngf, kernelSize=7, stride=1, bias=useBias)
+    let conv1 = Conv2d(inChannels, ngf, kernelSize=7, stride=1, bias=useBias)
     let norm1 = InstanceNorm2d(numFeatures=ngf)
 
     let mult = 1
@@ -59,9 +59,9 @@ type ResNetGenerator(inputChannels:int,
     let upConv2 = ConvTranspose2d(ngf * mult, ngf * mult / 2, kernelSize=3, stride=2, padding=1, outputPadding=1, bias=useBias)
     let upNorm2 = InstanceNorm2d(numFeatures=ngf * mult / 2)
 
-    let lastConv = Conv2d(ngf, outputChannels, kernelSize = 7, bias=useBias, padding=3)
+    let lastConv = Conv2d(ngf, outChannels, kernelSize=7, bias=useBias, padding=3)
 
-    do base.add [ conv1; norm1; conv2; norm2; conv3; norm3; yield! Array.map box resblocks; upConv1; upNorm1; upConv2; upNorm2; lastConv ]
+    do base.register()
 
     [<ShapeCheck("N, 3, 748, 748")>]
     override _.forward(input: Tensor) = 

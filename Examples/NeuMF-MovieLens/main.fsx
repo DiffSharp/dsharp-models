@@ -27,7 +27,7 @@ let regs: double[] = [| 0.0; 0.0; 0.0; 0.0 |]
 let model = NeuMF(
     numUsers: numUsers, numItems: numItems, numLatentFeatures: 8, matrixRegularization: 0.0, mlpLayerSizes: size,
     mlpRegularizations: regs)
-let optimizer = Adam(model, learningRate=0.001)
+let optimizer = Adam(model, learningRate=dsharp.scalar 0.001)
 let itemCount = Dictionary(
     uniqueKeysWithValues: zip(
         dataset.testUsers, Array.replicate dataset.testUsers.count 0.0))

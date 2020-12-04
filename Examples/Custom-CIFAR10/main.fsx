@@ -28,7 +28,7 @@ let batchSize = 100
 
 let dataset = CIFAR10(batchSize=batchSize)
 let model = KerasModel()
-let optimizer = RMSProp(model, learningRate=0.0001, decay=1e-6)
+let optimizer = RMSProp(model, learningRate=dsharp.scalar 0.0001, decay=1e-6)
 
 print("Starting training..")
 
@@ -39,13 +39,13 @@ for (epoch, epochBatches) in dataset.training.prefix(100).enumerated() do
     for batch in epochBatches do
         let (images, labels) = (batch.data, batch.label)
         let (loss, gradients) = 
-           valueWithGradient<| fun model -> 
+           model.valueWithGradient (fun model -> 
             let logits = model(images)
-            softmaxCrossEntropy(logits=logits, labels=labels)
+            softmaxCrossEntropy(logits=logits, labels=labels))
 
-        trainingLossSum <- trainingLossSum + loss.toScalar()
+        trainingLossSum <- trainingLossSum + loss.toDouble()
         trainingBatchCount <- trainingBatchCount + 1
-        optimizer.update(&model, along=gradients)
+        optimizer.step()
 
     model.mode <- Mode.Eval
     let mutable testLossSum: double = 0.0
@@ -59,7 +59,7 @@ for (epoch, epochBatches) in dataset.training.prefix(100).enumerated() do
         testBatchCount <- testBatchCount + 1
 
         let correctPredictions = logits.argmax(dim=1) .== labels
-        correctGuessCount <- correctGuessCount + int(dsharp.tensor(correctPredictions).sum().toScalar())
+        correctGuessCount <- correctGuessCount + dsharp.tensor(correctPredictions).sum().toInt32()
         totalGuessCount <- totalGuessCount + batchSize
 
     let accuracy = double(correctGuessCount) / double(totalGuessCount)

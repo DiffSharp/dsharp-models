@@ -28,11 +28,9 @@ type VGGBlock(featureCounts, blockCount: int) =
     let (featureCounts0, featureCounts1, featureCounts2, featureCounts3) = featureCounts
 
     let blocks = 
-        [| Conv2d(featureCounts0, featureCounts1, kernelSize=3, padding=1 (* "same " *), activation=dsharp.relu) 
+        [| Conv2d(featureCounts0, featureCounts1, kernelSize=3, padding=1 (* "same " *)) --> dsharp.relu
            for _ in 1..blockCount-1 do
-              Conv2d(featureCounts2, featureCounts3, kernelSize=3,
-                padding=1 (* "same " *),
-                activation=dsharp.relu) |]
+              Conv2d(featureCounts2, featureCounts3, kernelSize=3,padding=1 (* "same " *)) --> dsharp.relu|]
     
     override _.forward(input) =
         (input, blocks) ||> Array.fold (fun last layer -> layer.forward last) 
@@ -49,8 +47,8 @@ type VGG16(?classCount: int) =
     let layer5 = VGGBlock(featureCounts=(512, 512, 512, 512), blockCount=3)
     let output = Linear(inFeatures=4096, outFeatures=classCount)
     let flatten = Flatten()
-    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096, activation=dsharp.relu)
-    let dense2 = Linear(inFeatures=4096, outFeatures=4096, activation=dsharp.relu)
+    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096) --> dsharp.relu
+    let dense2 = Linear(inFeatures=4096, outFeatures=4096) --> dsharp.relu
 
     override _.forward(input) =
         let backbone = input |> layer1.forward |> layer2.forward |> layer3.forward |> layer4.forward |> layer5.forward
@@ -66,8 +64,8 @@ type VGG19(?classCount: int) =
     let layer4 = VGGBlock(featureCounts=(256, 512, 512, 512), blockCount=4)
     let layer5 = VGGBlock(featureCounts=(512, 512, 512, 512), blockCount=4)
     let flatten = Flatten()
-    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096, activation=dsharp.relu)
-    let dense2 = Linear(inFeatures=4096, outFeatures=4096, activation=dsharp.relu)
+    let dense1 = Linear(inFeatures=512 * 7 * 7, outFeatures=4096) --> dsharp.relu
+    let dense2 = Linear(inFeatures=4096, outFeatures=4096) --> dsharp.relu
     let output = Linear(inFeatures=4096, outFeatures=classCount)
     
     override _.forward(input) =

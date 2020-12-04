@@ -130,20 +130,20 @@ type ResidualBlockV2(inFilters: int, outFilters: int, stride: int, expansion: in
 ///   - classCount: The number of classes the network will be or has been trained to identify.
 ///   - depth: A specific depth for the network, chosen from the enumerated values in 
 ///     ResNet.Depth.
-///   - inputChannels: The number of channels of the input
+///   - inChannels: The number of channels of the input
 ///   - stemFilters: The number of filters in the first three convolutions.
 ///         Resnet-A trick uses 64-64-64, research at fastai suggests 32-32-64 is better
 type ResNetV2(classCount: int, 
         depth: Depth, 
-        ?inputChannels: int, 
+        ?inChannels: int, 
         ?stemFilters: int[]) =
     inherit Model()
     let avgPool = GlobalAvgPool2d()
     let flatten = Flatten()
-    let inputChannels = defaultArg inputChannels 3
+    let inChannels = defaultArg inChannels 3
     let stemFilters = defaultArg stemFilters [|32; 32; 64 |]
 
-    let filters = Array.append [| inputChannels |] stemFilters
+    let filters = Array.append [| inChannels |] stemFilters
     let inputStem = [| for i in 0 .. 2 -> ConvBNV2(inFilters=filters.[i], outFilters=filters.[i+1], kernelSize=3, stride=(if i=0 then 2 else 1)) |]
 
     let maxPool = MaxPool2d(kernelSize=3, stride=2, padding=1 (* "same " *))
