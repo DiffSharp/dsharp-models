@@ -169,13 +169,12 @@ module DiffSharpExtensions =
             else 
                 failwith "TBD"
 
+    type Model<'In, 'Out> with 
+
+        member mm.register(?included: obj list, ?excluded: obj list) = () // TODO
+
     [<Extension>]
     type ModelExtensions() =
-
-        [<Extension>]
-        static member register(model: Model<'In, 'Out>, ?included: obj list, ?excluded: obj list) = 
-            // TODO
-            ()
 
         [<Extension>]
         static member grad(model: Model<Tensor, Tensor>, input, loss: Tensor -> Tensor) = 
