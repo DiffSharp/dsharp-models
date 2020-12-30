@@ -28,7 +28,7 @@ type DatasetUtilities() =
         let extract = defaultArg extract true
         if not extract then 
             use wc = new WebClient()
-            wc.DownloadFile(remoteRoot, localFileName)
+            wc.DownloadFile(Uri(remoteRoot,filename), localFileName)
         else
             failwith "TBD" // let r = new BinaryReader(new GZipStream(File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.Read), CompressionMode.Decompress))
         localFileName
