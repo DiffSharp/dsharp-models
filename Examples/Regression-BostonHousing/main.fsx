@@ -19,6 +19,7 @@
 open Datasets
 open DiffSharp
 open DiffSharp.Model
+open DiffSharp.Util
 
 // open Dataset
 let dataset = BostonHousing()
@@ -42,47 +43,50 @@ model.mode <- Mode.Train
 
 let epochCount = 500
 let batchSize = 32
-let numberOfBatch = int(ceil(Double(dataset.numTrainRecords) / double(batchSize)))
+let numberOfBatch = int(ceil(double(dataset.numTrainRecords) / double(batchSize)))
 let shuffle = true
 
-let meanAbsoluteError(predictions=Tensor, truths: Tensor) =
-    abs(Tensor(predictions - truths)).mean().toScalar()
+let meanAbsoluteError(predictions: Tensor, truths: Tensor) =
+    abs(predictions - truths).mean().toScalar()
+let meanSquaredError(predicted: Tensor, expected: Tensor) =
+    (predicted - expected) |> fun error -> (error * error).mean()
 
 
-print("Starting training..")
+printfn("Starting training..")
 
 for epoch in 1..epochCount do
-    let epochLoss: double = 0
-    let epochMAE: double = 0
-    let batchCount: int = 0
-    let batchArray = Array.replicate false, count: numberOfBatch)
+    let mutable epochLoss: double = 0.0
+    let mutable epochMAE: double = 0.0
+    let mutable batchCount: int = 0
+    let batchArray = Array.replicate numberOfBatch false
     for batch in 0..numberOfBatch-1 do
-        let r = batch
+        let mutable r = batch
         if shuffle then
-            while true do
-                r = Int.random(0..numberOfBatch-1)
+            let mutable continueLooping = true
+            while continueLooping do
+                r <- Random.Integer(0,numberOfBatch-1)
                 if not batchArray.[r] then
-                    batchArray.[r] = true
-                    break
+                    batchArray.[r] <- true
+                    continueLooping <- false
 
         let batchStart = r * batchSize
-        let batchEnd = min(dataset.numTrainRecords, batchStart + batchSize)
+        let batchEnd = min dataset.numTrainRecords (batchStart + batchSize)
         let (loss, grad) = valueWithGradient<| fun model -> =  (model: RegressionModel) = Tensor in
             let logits = model(dataset.xTrain[batchStart..<batchEnd])
             meanSquaredError(predicted=logits, expected=dataset.yTrain[batchStart..<batchEnd])
 
         optimizer.update(&model, along=grad)
         
-        let logits = model(dataset.xTrain[batchStart..<batchEnd])
-        epochMAE <- epochMAE + meanAbsoluteError(predictions=logits, truths: dataset.yTrain[batchStart..<batchEnd])
-        epochLoss <- epochLoss + loss.toScalar()
+        let logits = model.forward(dataset.xTrain.[batchStart..batchEnd-1])
+        epochMAE <- epochMAE + meanAbsoluteError(logits, dataset.yTrain.[batchStart..batchEnd-1]).toDouble()
+        epochLoss <- epochLoss + loss.toScalar().toDouble()
         batchCount <- batchCount + 1
 
-    epochMAE /= double(batchCount)
-    epochLoss /= double(batchCount)
+    epochMAE <-  epochMAE / double(batchCount)
+    epochLoss <- epochLoss / double(batchCount)
 
     if epoch = epochCount-1 then
-        print($"MSE: {epochLoss}, MAE: {epochMAE}, Epoch: \(epoch+1)")
+        printfn $"MSE: {epochLoss}, MAE: {epochMAE}, Epoch: {epoch+1}"
 
 
 
@@ -92,9 +96,9 @@ print("Evaluating model..")
 
 model.mode <- Mode.Eval
 
-let prediction = model(dataset.xTest)
+let prediction = model.forward(dataset.xTest)
 
-let evalMse = meanSquaredError(predicted=prediction, expected=dataset.yTest).toScalar()/double(dataset.numTestRecords)
-let evalMae = meanAbsoluteError(predictions=prediction, truths: dataset.yTest)/double(dataset.numTestRecords)
+let evalMse = meanSquaredError(prediction, dataset.yTest).toScalar().toDouble()/double(dataset.numTestRecords)
+let evalMae = meanAbsoluteError(prediction, dataset.yTest).toDouble()/double(dataset.numTestRecords)
 
 print($"MSE: {evalMse}, MAE: {evalMae}")
