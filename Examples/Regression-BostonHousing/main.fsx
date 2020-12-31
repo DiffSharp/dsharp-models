@@ -77,7 +77,7 @@ for epoch in 1..epochCount do
 
         optimizer.update(&model, along=grad)
         
-        let logits = model.forward(dataset.xTrain.[batchStart..batchEnd-1])
+        let logits = model(dataset.xTrain.[batchStart..batchEnd-1])
         epochMAE <- epochMAE + meanAbsoluteError(logits, dataset.yTrain.[batchStart..batchEnd-1]).toDouble()
         epochLoss <- epochLoss + loss.toScalar().toDouble()
         batchCount <- batchCount + 1
@@ -96,7 +96,7 @@ print("Evaluating model..")
 
 model.mode <- Mode.Eval
 
-let prediction = model.forward(dataset.xTest)
+let prediction = model(dataset.xTest)
 
 let evalMse = meanSquaredError(prediction, dataset.yTest).toScalar().toDouble()/double(dataset.numTestRecords)
 let evalMae = meanAbsoluteError(prediction, dataset.yTest).toDouble()/double(dataset.numTestRecords)
