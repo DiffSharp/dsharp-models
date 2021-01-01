@@ -22,7 +22,7 @@ Try your luck:
 
 	git clone https://github.com/fsprojects/FSharp.Compiler.PortaCode
 	cd FSharp.Compiler.PortaCode
-	dotnet build FSharp.Compiler.PortaCode
+	dotnet build FsLive
 	cd ..
 
 	cd dsharp-models\Library
