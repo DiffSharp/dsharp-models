@@ -1,16 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <IsPackable>true</IsPackable>
     <PlatformTarget>x64</PlatformTarget>
     <IsPublishable>false</IsPublishable>
+
+    <!-- ANALYZERS: use the freshly built compiler to make sure we have analyzer support -->
+    <FscToolExe>fsc.exe</FscToolExe>
+    <FscToolPath>C:\GitHub\dsyme\fsharp\artifacts\bin\fsc\Debug\net472</FscToolPath>
+    <DisableAutoSetFscCompilerPath>true</DisableAutoSetFscCompilerPath>
+    <DotnetFscCompilerPath></DotnetFscCompilerPath>
   </PropertyGroup>
 
   <ItemGroup>
+
+    <!-- ANALYZERS: reference the analyzer by a direct reference  -->
+    <FscCompilerTools Include="e:\GitHub\dsyme\FSharp.Compiler.PortaCode\FSharp.Tools.LiveChecks.Analyzer\bin\Debug\netstandard2.0"/>
+
     <ProjectReference Include="..\..\DiffSharp\tools\DiffSharp.Backends.ShapeChecking\DiffSharp.Backends.ShapeChecking.fsproj" />
     <ProjectReference Include="..\..\DiffSharp\src\DiffSharp.Core\DiffSharp.Core.fsproj" />
-	<PackageReference Update="FSharp.Core" Version="$(FSharpCoreVersion)" />
+	  <PackageReference Update="FSharp.Core" Version="$(FSharpCoreVersion)" />
   <!--
 	<PackageReference Update="DiffSharp.Core" Version="$(DiffSharpVersion)" />
 	<PackageReference Update="DiffSharp.Backends.ShapeChecking" Version="$(FSharpCoreVersion)" />

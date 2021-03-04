@@ -26,7 +26,7 @@ open DiffSharp.ShapeChecking
 // Note: this implementation connects all the feature maps in the second convolutional layer.
 // Additionally, ReLU is used instead of dsharp.sigmoid activations.
 
-[<ShapeCheck()>]
+//[<ShapeCheck()>]
 type LeNet() =
     inherit Model()
     let conv1 = Conv2d(1, 6, kernelSize=5, padding=5/2 (* "same " *)) --> dsharp.relu

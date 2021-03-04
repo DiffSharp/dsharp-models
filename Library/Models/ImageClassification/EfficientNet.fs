@@ -149,7 +149,7 @@ type Kind =
 
 /// default settings are efficientnetB0 (baseline) network
 /// resolution is here to show what the network can take as input, it doesn't set anything!
-[<ShapeCheck(15)>]
+//[<ShapeCheck(15)>]
 type EfficientNet(?classCount: int,
         ?width: double,
         ?depth: double,

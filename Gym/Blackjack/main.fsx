@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"..\..\bin\Debug\net5.0\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\net5.0\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\net5.0\publish\Library.dll"
 #r "System.Runtime.Extensions.dll"
 #r "System.Reflection.Emit.dll"
-#r @"..\..\..\DiffSharp\tests\DiffSharp.Benchmarks.Python\bin\Release\netcoreapp3.1\Python.Runtime.dll"
+#r @"..\..\..\DiffSharp\tests\DiffSharp.Benchmarks.Python\bin\Release\net5.0\Python.Runtime.dll"
 
 open DiffSharp
 open Python
