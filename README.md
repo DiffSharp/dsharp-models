@@ -5,39 +5,26 @@ A collection of models for trialling the DiffSharp API and shape checking toolin
 
 ## Playing around
 
-A parallel checkout of DiffSharp is currently required:
+A parallel checkout of dotnet/fsharp and DiffSharp/DiffSharp are currently required:
 
-	git clone https://github.com/DiffSharp/DiffSharp -b feature/merged
+        git clone https://github.com/dotnet/fsharp -b feature/analyzers
+	cd fsharp
+	.\build -pack -deploy
+	cd ..
 
-You then prepare the library code and various native assets into `bin\Debug\net5.0\publish`:
-
-	git clone https://github.com/DiffSharp/dsharp-models
-	cd dsharp-models
-	dotnet build
-	dotnet publish
-
-## Using shape checking
-
-Try your luck:
-
-	git clone https://github.com/fsprojects/FSharp.Compiler.PortaCode
+        git clone https://github.com/fsprojects/FSharp.Compiler.PortaCode -b feature/analyzers
 	cd FSharp.Compiler.PortaCode
 	dotnet build FSharp.Compiler.PortaCode
 	cd ..
+	
+        git clone https://github.com/DiffSharp/DiffSharp -b feature/merged
 
-	cd dsharp-models\Library
-	..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net5.0\fslive.exe --livecheck
-	(leave running)
+	git clone https://github.com/DiffSharp/dsharp-models
+	dotnet build
+	# You then prepare the library code and various native assets into `bin\Debug\net5.0\publish`:
+        dotnet publish
 
-	cd examples
-	..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net5.0\fslive.exe --livecheck vae.fsx
-    open vae.fsx and edit
+	devenv dsharp-models.sln /RootSuffix RoslynDev
 
-	For IDE support:
-	  git clone https://github.com/dotnet/fsharp -b feature/livecheck+fxspec
-	  cd fsharp
-	  devenv VisualFSharp.sln
-	  build Release (Build-->Build)
-	  start without debugging (Shift-F5)
 
-	  open dsharp-models.sln in new VS instance that appears
+
