@@ -11,13 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"..\..\bin\Debug\net5.0\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\net5.0\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\net5.0\publish\Library.dll"
+#compilertool @"e:\GitHub\dsyme\FSharp.Compiler.PortaCode\FSharp.Tools.LiveChecks.Analyzer\bin\Debug\netstandard2.0"
 
 open DiffSharp
 open DiffSharp.Model
 open DiffSharp.ShapeChecking
+open System
 
 [<ShapeCheck(3, "K")>]
 type NetD(inChannels: Int, lastConvFilters: Int) =

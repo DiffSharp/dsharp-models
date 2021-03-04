@@ -52,7 +52,7 @@ let makeGradientBenchmark(layer: Model, inputDimensions: seq<int>, outputDimensi
     let output = makeRandomTensor(batchSize, outputDimensions, device)
     let mutable sink = dsharp.zero(device=device)
     let result = layer.grad(input, (fun t -> dsharp.mseLoss(t, output)))
-    sink <- sink + result
+    sink <- sink + result.flatten()
 
 
 [<ShortRunJob>]
@@ -63,11 +63,11 @@ type LayerBenchmarks() =
 
     [<Benchmark>]
     member _.DenseNet121_Eval() =
-        makeEvalBenchmark(DenseNet121(classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeEvalBenchmark(DenseNet121(classCount=1000I), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.DenseNet121_Gradient() =
-        makeGradientBenchmark(DenseNet121(classCount=1000), imageNetInput, imageNetOutput) (Device.CPU, 4)
+        makeGradientBenchmark(DenseNet121(classCount=1000I), imageNetInput, imageNetOutput) (Device.CPU, 4)
 
     [<Benchmark>]
     member _.EfficientNetB0_Eval() =

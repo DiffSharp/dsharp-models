@@ -12,16 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Core.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\DiffSharp.Backends.ShapeChecking.dll"
-#r @"..\..\bin\Debug\netcoreapp3.1\publish\Library.dll"
+#r @"..\..\bin\Debug\net5.0\publish\DiffSharp.Core.dll"
+#r @"..\..\bin\Debug\net5.0\publish\DiffSharp.Backends.ShapeChecking.dll"
+#r @"..\..\bin\Debug\net5.0\publish\Library.dll"
 #r @"System.Runtime.Extensions.dll"
+#compilertool @"e:\GitHub\dsyme\FSharp.Compiler.PortaCode\FSharp.Tools.LiveChecks.Analyzer\bin\Debug\netstandard2.0"
+
+
+// #r "nuget: DiffSharp.Core"
+// #r "nuget: DiffSharp.Backends.ShapeChecking"
+// #r "nuget: FSharp.Tools.LiveChecks.Analyzer"
 
 open Datasets
 
 open DiffSharp
 open DiffSharp.Model
 open DiffSharp.Optim
+open DiffSharp.ShapeChecking
 open TrainingLoop
 
 let epochCount = 10
@@ -30,6 +37,10 @@ let imageHeight = 28
 let imageWidth = 28
 
 let dataset = FashionMNIST(batchSize=batchSize, flattening=true)
+
+[<ShapeCheck(10)>]
+let f (x: Tensor) = x
+
 
 // An autoencoder.
 let autoencoder = 
@@ -47,6 +58,8 @@ let autoencoder =
     ]
 
 let optimizer = RMSProp(autoencoder)
+
+(*
 
 /// Saves a validation input and an output image once per epoch;
 /// it's ensured that each epoch will save different images as long as 
@@ -89,3 +102,4 @@ let trainingLoop =
        callbacks=[saveImage])
 
 trainingLoop.fit(autoencoder, epoch=epochCount)
+*)

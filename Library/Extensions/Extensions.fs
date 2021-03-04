@@ -201,7 +201,7 @@ module DiffSharpExtensions =
             let output = model.forward(input)
             output, (fun δloss -> 
                 output.reverse(δloss)
-                model.parameters.derivative, input.derivative) 
+                model.parameters.derivative.flatten(), input.derivative) 
 
     type LayerNorm(numFeatures: int, axis: int) =
        inherit Model()

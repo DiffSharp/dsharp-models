@@ -59,35 +59,35 @@ let makeGradientTest(layer: (unit -> #Model), inputDimensions: seq<int>, outputD
     let output = makeRandomTensor(batchSize, outputDimensions, backend, device)
     let mutable sink = dsharp.zero(backend=backend, device=device)
     let result = layer.grad(input, (fun result -> dsharp.mseLoss(result, output)))
-    sink <- sink + result
+    sink <- sink + result.flatten()
 
 type LayerTests() =
 
     [<Fact(Skip="too slow") >]
     member _.DenseNet121_Eval_Reference() =
-        makeEvalTest((fun () -> DenseNet121(classCount=imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Reference, Device.CPU, imageNetBatchSize)
+        makeEvalTest((fun () -> DenseNet121(classCount=Int imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Reference, Device.CPU, imageNetBatchSize)
 
     [<Fact>]
     member _.DenseNet121_Eval_Torch_CPU() =
-        makeEvalTest((fun () -> DenseNet121(classCount=imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Torch, Device.CPU, imageNetBatchSize)
+        makeEvalTest((fun () -> DenseNet121(classCount=Int imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Torch, Device.CPU, imageNetBatchSize)
 
     [<Fact>]
     member _.DenseNet121_Eval_Torch_GPU() =
         if dsharp.isDeviceTypeSupported(DeviceType.CUDA, Backend.Torch) then 
-            makeEvalTest((fun () -> DenseNet121(classCount=imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Torch, Device.GPU, imageNetBatchSize)
+            makeEvalTest((fun () -> DenseNet121(classCount=Int imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Torch, Device.GPU, imageNetBatchSize)
 
     [<Fact(Skip="too slow") >]
     member _.DenseNet121_Gradient_Reference() =
-        makeGradientTest((fun () -> DenseNet121(classCount=imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Reference, Device.CPU, imageNetBatchSize)
+        makeGradientTest((fun () -> DenseNet121(classCount=Int imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Reference, Device.CPU, imageNetBatchSize)
 
     [<Fact>]
     member _.DenseNet121_Gradient_Torch_CPU() =
-        makeGradientTest((fun () -> DenseNet121(classCount=imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Torch, Device.CPU, imageNetBatchSize)
+        makeGradientTest((fun () -> DenseNet121(classCount=Int imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Torch, Device.CPU, imageNetBatchSize)
 
     [<Fact>]
     member _.DenseNet121_Gradient_Torch_GPU() =
         if dsharp.isDeviceTypeSupported(DeviceType.CUDA, Backend.Torch) then 
-            makeGradientTest((fun () -> DenseNet121(classCount=imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Torch, Device.GPU, imageNetBatchSize)
+            makeGradientTest((fun () -> DenseNet121(classCount=Int imageNetClassCount)), imageNetInput, imageNetOutput, Backend.Torch, Device.GPU, imageNetBatchSize)
 
     [<Fact(Skip="too slow") >]
     member _.EfficientNetB0_Eval_Reference() =

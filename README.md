@@ -9,7 +9,7 @@ A parallel checkout of DiffSharp is currently required:
 
 	git clone https://github.com/DiffSharp/DiffSharp -b feature/merged
 
-You then prepare the library code and various native assets into `bin\Debug\netcoreapp3.1\publish`:
+You then prepare the library code and various native assets into `bin\Debug\net5.0\publish`:
 
 	git clone https://github.com/DiffSharp/dsharp-models
 	cd dsharp-models
@@ -26,11 +26,11 @@ Try your luck:
 	cd ..
 
 	cd dsharp-models\Library
-	..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\netcoreapp3.1\fslive.exe --livecheck
+	..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net5.0\fslive.exe --livecheck
 	(leave running)
 
 	cd examples
-	..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\netcoreapp3.1\fslive.exe --livecheck vae.fsx
+	..\..\FSharp.Compiler.PortaCode\FsLive.Cli\bin\Debug\net5.0\fslive.exe --livecheck vae.fsx
     open vae.fsx and edit
 
 	For IDE support:
