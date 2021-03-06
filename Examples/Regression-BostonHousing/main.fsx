@@ -19,82 +19,58 @@
 open Datasets
 open DiffSharp
 open DiffSharp.Model
+open DiffSharp.Data
+
+// Defining default hyper parameters
+let batchSize = 50
+let numEpochs = 200
+let learningRate = 0.0001
+let sizeHidden1 = 100
+let sizeHidden2 = 50
+let sizeHidden3 = 10
+let sizeHidden4 = 1
+
 
 // open Dataset
 let dataset = BostonHousing()
+let trainIter = DataLoader(TensorDataset(dataset.xTrain,dataset.yTrain),batchSize=batchSize, shuffle = true)
 
 // Create Model
 type RegressionModel() = 
     inherit Model()
-    let layer1 = Linear(inFeatures=13, outFeatures=64) --> dsharp.relu
-    let layer2 = Linear(inFeatures=64, outFeatures=32) --> dsharp.relu
-    let layer3 = Linear(inFeatures=32, outFeatures=1)
+    let layer1 = Linear(inFeatures=13, outFeatures=sizeHidden1) --> dsharp.relu
+    let layer2 = Linear(inFeatures=sizeHidden1, outFeatures=sizeHidden2) --> dsharp.relu
+    let layer3 = Linear(inFeatures=sizeHidden2, outFeatures=sizeHidden3) --> dsharp.relu
+    let layer4 = Linear(inFeatures=sizeHidden3,outFeatures=sizeHidden4)
     
-    do base.register()
+    do base.add([layer1;layer2;layer3;layer4],
+                ["layer1";"layer2";"layer3";"layer4"])
     override _.forward(input) =
-        input |> layer1.forward |> layer2.forward |> layer3.forward
+        input |> layer1.forward |> layer2.forward |> layer3.forward |> layer4.forward
 
 let model = RegressionModel()
-
-// Train Model
-let optimizer = RMSProp(model, learningRate=dsharp.scalar 0.001)
 model.mode <- Mode.Train
 
-let epochCount = 500
-let batchSize = 32
-let numberOfBatch = int(ceil(Double(dataset.numTrainRecords) / double(batchSize)))
-let shuffle = true
+let criterion (outputs, labels) = dsharp.mseLoss(outputs,labels)
+// Train Model
+let optimizer = Optim.SGD(model, learningRate= dsharp.scalar learningRate)
 
-let meanAbsoluteError(predictions=Tensor, truths: Tensor) =
-    abs(Tensor(predictions - truths)).mean().toScalar()
+for epoch in 1..numEpochs do
+    let mutable runningLoss = 0.0
+    for _batch, inputs, labels in trainIter.epoch() do
+        model.reverseDiff()
+        // forward pass
+        let outputs = model.forward(inputs)
+        // defining loss
+        let loss = criterion(outputs,labels)
+        // computing gradients
+        loss.reverse()
+        // accumulating running loss
+        runningLoss <- runningLoss + loss.toDouble()
+        // updated weights based on computed gradients
+        optimizer.step()
+    if epoch % 20 = 0 then
+        printfn $"Epoch {epoch}/{numEpochs} running accumulative loss across all batches: %.3f{runningLoss}"
 
-
-print("Starting training..")
-
-for epoch in 1..epochCount do
-    let epochLoss: double = 0
-    let epochMAE: double = 0
-    let batchCount: int = 0
-    let batchArray = Array.replicate false, count: numberOfBatch)
-    for batch in 0..numberOfBatch-1 do
-        let r = batch
-        if shuffle then
-            while true do
-                r = Int.random(0..numberOfBatch-1)
-                if not batchArray.[r] then
-                    batchArray.[r] = true
-                    break
-
-        let batchStart = r * batchSize
-        let batchEnd = min(dataset.numTrainRecords, batchStart + batchSize)
-        let (loss, grad) = valueWithGradient<| fun model -> =  (model: RegressionModel) = Tensor in
-            let logits = model(dataset.xTrain[batchStart..<batchEnd])
-            meanSquaredError(predicted=logits, expected=dataset.yTrain[batchStart..<batchEnd])
-
-        optimizer.update(&model, along=grad)
-        
-        let logits = model(dataset.xTrain[batchStart..<batchEnd])
-        epochMAE <- epochMAE + meanAbsoluteError(predictions=logits, truths: dataset.yTrain[batchStart..<batchEnd])
-        epochLoss <- epochLoss + loss.toScalar()
-        batchCount <- batchCount + 1
-
-    epochMAE /= double(batchCount)
-    epochLoss /= double(batchCount)
-
-    if epoch = epochCount-1 then
-        print($"MSE: {epochLoss}, MAE: {epochMAE}, Epoch: \(epoch+1)")
-
-
-
-// Evaluate Model
-
-print("Evaluating model..")
-
-model.mode <- Mode.Eval
-
-let prediction = model(dataset.xTest)
-
-let evalMse = meanSquaredError(predicted=prediction, expected=dataset.yTest).toScalar()/double(dataset.numTestRecords)
-let evalMae = meanAbsoluteError(predictions=prediction, truths: dataset.yTest)/double(dataset.numTestRecords)
-
-print($"MSE: {evalMse}, MAE: {evalMae}")
+let outputs = model.forward(dataset.xTest)
+let err = sqrt(dsharp.mseLoss(outputs,dataset.yTest))
