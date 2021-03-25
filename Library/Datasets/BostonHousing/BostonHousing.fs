@@ -32,7 +32,7 @@ type BostonHousing() =
 
         if not (File.Exists(downloadPath)) || Directory.GetFiles(downloadPath) |> Array.isEmpty  then
             DatasetUtilities.downloadResource(
-                filename=downloadFile,
+                filename=Path.GetFileName(downloadFile),
                 remoteRoot= remoteURL, localStorageDirectory=downloadPath,
                 extract=false)
             |> ignore
@@ -40,32 +40,42 @@ type BostonHousing() =
         File.ReadAllText(downloadFile, Encoding.UTF8)
 
     // Convert Space Separated CSV with no Header
-    let dataRecords = data.Split("\n") |> Array.map (fun s -> s.Split(" ") |> Array.map float)
+    let dataRecords = 
+        data.Split("\n") 
+        |> Array.filter(fun line -> line <> "")
+        |> Array.map (fun s -> 
+            s.Split(" ") 
+            |> Array.filter(fun x -> x <> "") 
+            |> Array.map float)
 
-    let numRecords = dataRecords.Length
-    let numColumns = dataRecords.[0].Length
+    let nRecords = dataRecords.Length
+    let nColumns = dataRecords.[0].Length
 
-    let dataFeatures = dataRecords |> Array.map (fun arr -> arr.[0..numColumns - 2])
-    let dataLabels = dataRecords |> Array.map (fun arr -> arr.[(numColumns - 1)..])
+    let dataFeatures = dataRecords |> Array.map (fun arr -> arr.[0..nColumns - 2])
+    let dataLabels = dataRecords |> Array.map (fun arr -> arr.[(nColumns - 1)..])
 
     // Normalize
     let trainPercentage: double = 0.8
 
-    let numTrainRecords = int(ceil(double(numRecords) * trainPercentage))
-    let numTestRecords = numRecords - numTrainRecords
+    let nTrainRecords = int(ceil(double(nRecords) * trainPercentage))
+    let nTestRecords = nRecords - nTrainRecords
 
-    let xTrainPrelim = dataFeatures.[0..numTrainRecords-1] |> Array.concat
-    let xTestPrelim = dataFeatures.[numTrainRecords..]  |> Array.concat
-    let yTrainPrelim = dataLabels.[0..numTrainRecords-1]  |> Array.concat
-    let yTestPrelim = dataLabels.[numTrainRecords..] |> Array.concat
+    let xTrainPrelim = dataFeatures.[0..nTrainRecords-1] |> Array.concat
+    let xTestPrelim = dataFeatures.[nTrainRecords..]  |> Array.concat
+    let yTrainPrelim = dataLabels.[0..nTrainRecords-1]  |> Array.concat
+    let yTestPrelim = dataLabels.[nTrainRecords..] |> Array.concat
 
-    let xTrainDeNorm = dsharp.tensor(xTrainPrelim, dtype=Dtype.Float32).view([numTrainRecords; numColumns - 1])
-    let xTestDeNorm = dsharp.tensor(xTestPrelim, dtype=Dtype.Float32).view([numTestRecords; numColumns - 1])
+    let xTrainDeNorm = dsharp.tensor(xTrainPrelim, dtype=Dtype.Float32).view([nTrainRecords; nColumns - 1])
+    let xTestDeNorm = dsharp.tensor(xTestPrelim, dtype=Dtype.Float32).view([nTestRecords; nColumns - 1])
 
     let mean = xTrainDeNorm.mean(dim=0)
     let std = xTrainDeNorm.stddev(dim=0)
 
+    member val numRecords = nRecords
+    member val numColumns = nColumns
+    member val numTrainRecords = nTrainRecords
+    member val numTestRecords = nTestRecords
     member val xTrain = (xTrainDeNorm - mean) / std
     member val xTest = (xTestDeNorm - mean) / std
-    member val yTrain = dsharp.tensor(yTrainPrelim, dtype=Dtype.Float32).view([numTrainRecords; 1])
-    member val yTest = dsharp.tensor(yTestPrelim, dtype=Dtype.Float32).view([numTestRecords; 1])
+    member val yTrain = dsharp.tensor(yTrainPrelim, dtype=Dtype.Float32).view([nTrainRecords; 1])
+    member val yTest = dsharp.tensor(yTestPrelim, dtype=Dtype.Float32).view([nTestRecords; 1])
