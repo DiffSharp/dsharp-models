@@ -14,7 +14,7 @@ A parallel checkout of dotnet/fsharp and DiffSharp/DiffSharp are currently requi
 
         git clone https://github.com/fsprojects/FSharp.Compiler.PortaCode -b feature/analyzers
 	cd FSharp.Compiler.PortaCode
-	dotnet build FSharp.Compiler.PortaCode
+	dotnet build FsLive
 	cd ..
 	
         git clone https://github.com/DiffSharp/DiffSharp -b feature/merged
